@@ -1,0 +1,43 @@
+# This game's descriptor: what a server runs when it installs this repository's pack.
+#
+# It travels INSIDE the pack (dot-ci's package.sh --pack keeps it at the root), so a
+# server started with `TMC_GAMES=<owner>/<repo>` needs nothing but the content origin:
+# `./server install-games` fetches the pack, verifies it, and writes this file to
+# content/<repo>/game.yml, where an operator can then edit cvars and player counts.
+#
+# content_id, version and kind are STAMPED by the installer from the pack it verified --
+# the site addresses a pack as <site username>/<repo> and a re-sync publishes 1.2.0+r2,
+# neither of which this file can know. What is written here for them is a placeholder.
+#
+# Paths are relative to the pack's mount point, which is also this repository's root.
+
+content_id: gamemann/game-murder-mystery
+version: 0.0.0
+kind: pack
+
+name: Murder Mystery
+max_players: 24
+
+scene: scenes/mm_server.tscn
+client_scene: game/mm.tscn
+module: game/mm_module.gd
+
+# No maps pack is named here. Which maps a server runs is the server owner's choice, made in
+# their deployment's map config (dot-server-deploy's cfg/content.yml: gamemann/murder-mystery-maps
+# for this game's own, and gamemann/hide-n-seek-maps, the Prop Hunt maps and the Playground
+# maps, which it converts); the module fetches what the server names. This game's own pack
+# ships only its built-in practice house.
+
+cvars:
+  mm_round_seconds: "180"
+  mm_grace_seconds: "10"
+  mm_players_per_murderer: "12"
+  mm_murderer_weapon: "knife"
+  mm_bots: "1"
+  bot_quota: "5"
+
+# This game's maps are small documents the server sends each client, so a host fetches the
+# map packs its server owner names BEFORE the game loads (into the server-only packs)
+# rather than on a map change: nobody is admitted to a server playing only the built-in map.
+metadata:
+  maps_delivery: server
