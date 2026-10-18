@@ -405,7 +405,10 @@ func _test_the_hit() -> void:
 	_section("the gun: a shot at the murderer kills them and the bystanders win")
 	var game := await _round(FOUR)
 	var winners: Array = []
-	game.round_over.connect(func(_n: int, winner: int, _why: String) -> void: winners.append(winner))
+	var named: Array = []
+	game.round_over.connect(func(_n: int, winner: int, _why: String) -> void:
+		winners.append(winner)
+		named.append_array(game.revealed))
 	var m := _p(game, &"u1m")
 	var g := _p(game, &"u2g")
 	_park(game, [&"u3b", &"u4b"])
@@ -421,7 +424,8 @@ func _test_the_hit() -> void:
 	await _step(game, 4)
 	_check(winners == [MmGame.BYSTANDERS], "the murderer dead is the bystanders' round")
 	_check(g.points >= points + game.config.hero_points + game.config.winner_points, "and the hero is paid for it")
-	_check(game.revealed.has(m.display_name), "the murderer's name is out at the end", str(game.revealed))
+	# Read when the round ends: with intermission 0 the next draw clears it on the same tick.
+	_check(named.has(m.display_name), "the murderer's name is out at the end", str(named))
 	_finished()
 
 
@@ -577,6 +581,8 @@ func _test_progress() -> void:
 	await _step(game, 2)
 	_aim(g, KITCHEN_A + Vector3(0.0, 1.6, -4.0))
 	var _missed := game.attack_now(g.player_id)
+	# Out of the way: b picks the gun up where g stood, and a shot from there would hit g first.
+	g.place_at(PARK + Vector3(3.0, 0.0, 0.0), 0.0)
 	b.place_at(KITCHEN_A, 0.0)
 	await _step(game, TICK_RATE)
 	m.place_at(KITCHEN_B, 0.0)
@@ -588,7 +594,7 @@ func _test_progress() -> void:
 		"a stab is a kill for one and a death for the other")
 	_check(of.call(g.player_id, MmProgress.MISSES) == 1.0, "a miss is counted")
 	_check(of.call(b.player_id, MmProgress.PICKUPS) == 1.0 and of.call(b.player_id, MmProgress.HEROICS) == 1.0,
-		"and the gun picked up and the murderer shot", "%s %s" % [of.call(b.player_id, MmProgress.PICKUPS), of.call(b.player_id, MmProgress.HEROICS)])
+		"and the gun picked up and the murderer shot", "%s %s (hit %s, murderer alive %s, gun %s, phase %s)" % [of.call(b.player_id, MmProgress.PICKUPS), of.call(b.player_id, MmProgress.HEROICS), _hit, m.is_alive(), b.has_gun, game.phase])
 
 	var declared := MmProgress.ids()
 	var unread: Array = []
@@ -787,7 +793,7 @@ func _test_toys() -> void:
 		_drive(walker, Vector2.ZERO)
 		await _step(game, 1)
 		highest = maxf(highest, walker.controller.state.position.y)
-	_check(highest > 2.0, "landing on the trampoline throws a person up", "%.2f m at the top" % highest)
+	_check(highest > 2.0, "landing on the trampoline throws a person up", "%.2f m at the top (at %s; toy %s %s at %s of %d, built %s)" % [highest, walker.controller.state.position, tramp.index, tramp.kind, tramp.global_position, toys.toys.size(), _rebuilt])
 	_check(tramp.count >= 2, "and every bounce is counted, which is what a client hears", str(tramp.count))
 
 	# A roundabout: a person standing on it a metre from the hub goes round with it, in their

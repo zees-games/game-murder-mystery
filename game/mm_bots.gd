@@ -1000,7 +1000,7 @@ func _shut_door(player: MmPlayer, command: DotFpsCommand, state: Dictionary) -> 
 		return false
 	var panel_at: Vector3 = (doors.call("panel_transform", index, 0.0) as Transform3D).origin
 	command.move = Vector2.ZERO
-	command.set_button(DotFpsCommand.BUTTON_CROUCH, bool(state["crouch"]))
+	command.set_button(DotFpsCommand.BUTTON_CROUCH, bool(state.get("crouch", false)))
 	_look(player, command, panel_at)
 	var facing: int = doors.call("door_for", player.eye_position(), player.aim_direction())
 	state["use_now"] = facing == index and not bool(doors.call("moving", index, int(game.get("_tick"))))
