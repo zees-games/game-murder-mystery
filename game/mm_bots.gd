@@ -172,7 +172,6 @@ func _prepare() -> void:
 		annotations = null
 		_job = null
 		_job_done = false
-		_pool.clear()
 		# The walls, floors and furniture, never the doors: a door baked shut is a doorway the
 		# mesh does not go through.
 		var still: Array = [map.get("_solid"), map.get("_furniture")]
