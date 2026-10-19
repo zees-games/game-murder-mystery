@@ -94,9 +94,10 @@ func _net_config() -> DotNetConfig:
 	config.snapshot_rate = MmGame.NET_SNAPSHOT_RATE
 	config.world_extent = MmGame.NET_WORLD_EXTENT
 	config.enable_prediction = true
-	# [b]Off for now.[/b] The gun is one shot every few seconds at walking pace and is resolved on
-	# the server's present; rewinding for it is a follow-up (docs/design.md "Not done yet").
-	config.enable_lag_compensation = false
+	# On for the same reason as everywhere: a shot is aimed at bodies as the shooter drew them.
+	# The rewind itself is MmGame's own trail (`unlag_tick_for`), since a stab and a shot are the
+	# server's measurement, not dot-combat shots; this keeps dot-net's history in step.
+	config.enable_lag_compensation = true
 	# Everybody playing, and nothing else: the furniture is the map document, not entities, so
 	# a snapshot is a full server's players and room to spare.
 	config.max_entities_per_snapshot = 64
@@ -314,6 +315,9 @@ func _add_tunables(world: MmGame) -> void:
 	# (easy, medium, hard, nightmare; medium by default) and every `bot_*` setting it bundles,
 	# the names every game in the family uses. On the game as metadata, never the registry.
 	var _bot_cvars := DotBotSettings.of(world).bind_cvars(add_cvar, DotConVar.FLAG_NOTIFY, add_command)
+	_tunable("mm_max_unlag_ms", world.max_unlag_ms,
+		"How far back a stab or shot looks at the other players for the shooter's latency, in ms (0 off)",
+		func(value: float) -> void: world.max_unlag_ms = maxf(value, 0.0))
 	_tunable("mm_grace_seconds", config.grace_seconds,
 		"Seconds at the top of a round when nobody can draw or shoot (a map may ask for less)",
 		func(value: float) -> void: config.grace_seconds = clampf(value, 0.0, 60.0))

@@ -96,6 +96,23 @@ const DIED_SHOT := &"shot"
 const HIT_HEIGHT := 1.85
 const HIT_RADIUS := 0.4
 
+## Lag compensation. How far back a stab or a shot looks at the other bodies, in ms, for a
+## shooter's latency (`mm_max_unlag_ms`; 0 judges everything on the present). A command carries
+## how far behind its tick the client drew everybody ([member MmPlayer.view_lag]); the server
+## puts the others where they were then, capped here so a client claiming more still only gets
+## this. The shooter is never moved. Bots and local players send -1 and see the present.
+var max_unlag_ms: float = 1000.0
+
+## Ticks of position kept per body: two seconds at 64.
+const UNLAG_HISTORY := 128
+
+## id -> [PackedVector3Array positions, PackedInt32Array ticks], a ring per body.
+var _trail: Dictionary = {}
+
+## The fractional tick [method body_position] looks back to while a stab or a shot is judged, or
+## -1 for the present.
+var _rewind_to: float = -1.0
+
 signal player_added(player_id: StringName)
 signal player_removed(player_id: StringName)
 signal round_began(number: int, map_id: StringName)
@@ -653,6 +670,8 @@ func remove_player(player_id: StringName) -> void:
 	if combat != null and is_instance_valid(combat) and player.entity_id != 0:
 		combat.forget(player.entity_id)
 		var _closed := entities.close(player.entity_id, DotEntityTable.REASON_OWNER_LEFT)
+
+	var _gone := _trail.erase(player_id)
 
 	if match_node != null:
 		match_node.remove_player(String(player_id))
@@ -1289,7 +1308,9 @@ func _stab(murderer: MmPlayer) -> void:
 	murderer.ready_at = _now() + melee_cooldown()
 	murderer.attacked_at = _now()
 	murderer.attacks += 1
+	_rewind_to = unlag_tick_for(murderer)
 	var victim := stab_target(murderer)
+	_rewind_to = -1.0
 	struck.emit(murderer.player_id)
 
 	if victim != null:
@@ -1313,7 +1334,7 @@ func stab_target(murderer: MmPlayer) -> MmPlayer:
 				or not can_be_harmed(id):
 			continue
 
-		var chest := other.controller.state.position + Vector3(0.0, 1.1, 0.0)
+		var chest := body_position(other) + Vector3(0.0, 1.1, 0.0)
 		var offset := chest - eye
 		var distance := Vector2(offset.x, offset.z).length()
 
@@ -1341,11 +1362,14 @@ func _shoot(gunner: MmPlayer) -> void:
 	var from := gunner.eye_position()
 	var aim := gunner.aim_direction()
 	var wall := _wall_along(from, aim, config.gun_range)
+	_rewind_to = unlag_tick_for(gunner)
 	var hit := shot_target(gunner, from, aim, wall)
 	var to := from + aim * wall
 
 	if hit != null:
-		to = hit.controller.state.position + Vector3(0.0, 1.2, 0.0)
+		to = body_position(hit) + Vector3(0.0, 1.2, 0.0)
+
+	_rewind_to = -1.0
 
 	shot.emit(gunner.player_id, from, to, hit.player_id if hit != null else &"")
 
@@ -1390,7 +1414,7 @@ func shot_target(gunner: MmPlayer, from: Vector3, aim: Vector3, limit: float) ->
 		if other == gunner or not other.is_alive() or other.watching or not can_be_harmed(id):
 			continue
 
-		var feet := other.controller.state.position
+		var feet := body_position(other)
 		var height := lerpf(HIT_HEIGHT, MmPlayer.BODY_CROUCH, other.controller.state.crouch_fraction)
 		var along := _ray_capsule(from, aim, feet, height, HIT_RADIUS)
 
@@ -1697,6 +1721,83 @@ func tick_once(tick: int) -> void:
 	_step(delta_for_tick())
 
 
+## Every body's position for this tick, for [method unlag_position_at].
+func _record_trail() -> void:
+	for id: StringName in players:
+		var player: MmPlayer = players[id]
+		var ring: Array = _trail.get(id, [])
+
+		if ring.is_empty():
+			var positions := PackedVector3Array()
+			positions.resize(UNLAG_HISTORY)
+			var ticks := PackedInt32Array()
+			ticks.resize(UNLAG_HISTORY)
+			ticks.fill(-1)
+			ring = [positions, ticks]
+
+		# Packed arrays are values: taken out, written, put back.
+		var positions: PackedVector3Array = ring[0]
+		var ticks: PackedInt32Array = ring[1]
+		var slot := _tick % UNLAG_HISTORY
+		var before := (_tick - 1) % UNLAG_HISTORY
+		var here := player.controller.state.position
+
+		# A respawn or a fall is a teleport: rewinding across it would stand a body where it
+		# died, so the trail starts again from here.
+		if ticks[before] == _tick - 1 and positions[before].distance_to(here) > 10.0:
+			ticks.fill(-1)
+
+		positions[slot] = here
+		ticks[slot] = _tick
+		ring[0] = positions
+		ring[1] = ticks
+		_trail[id] = ring
+
+
+## Where [param id] was at [param at] (a fractional tick), or null when the trail does not reach.
+func unlag_position_at(id: StringName, at: float) -> Variant:
+	var ring: Array = _trail.get(id, [])
+
+	if ring.is_empty():
+		return null
+
+	var positions: PackedVector3Array = ring[0]
+	var ticks: PackedInt32Array = ring[1]
+	var lo := floori(at)
+	var a := lo % UNLAG_HISTORY
+	var b := (lo + 1) % UNLAG_HISTORY
+
+	if ticks[a] != lo:
+		return null
+
+	if ticks[b] != lo + 1:
+		return positions[a]
+
+	return positions[a].lerp(positions[b], at - float(lo))
+
+
+## The tick a stab or shot by [param shooter] is judged at: the present less the lag their client
+## reported, capped at [member max_unlag_ms]; -1 for the present.
+func unlag_tick_for(shooter: MmPlayer) -> float:
+	if max_unlag_ms <= 0.0 or shooter.view_lag < 0.0:
+		return -1.0
+
+	var cap := max_unlag_ms * 0.001 * float(tick_rate)
+	return float(_tick) - minf(shooter.view_lag, cap)
+
+
+## Where [param other] is, for a stab or a shot being judged: where they were at [member _rewind_to]
+## when that is set and the trail reaches, else where they are.
+func body_position(other: MmPlayer) -> Vector3:
+	if _rewind_to >= 0.0:
+		var then: Variant = unlag_position_at(other.player_id, _rewind_to)
+
+		if then != null:
+			return then
+
+	return other.controller.state.position
+
+
 func current_tick() -> int:
 	return _tick
 
@@ -1725,6 +1826,9 @@ func _step(delta: float) -> void:
 
 		if player.is_alive() and not player.watching:
 			player.simulate(_tick, delta)
+
+	if authoritative:
+		_record_trail()
 
 	_advance_toys(delta)
 

@@ -126,6 +126,11 @@ var held_until: float = -1.0
 var wants_use: bool = false
 var use_was_held: bool = false
 var wants_attack: bool = false
+
+## How many ticks behind the present this person's client drew everybody else when it last sent
+## a command, or -1 (a bot, a local player, nothing measured): what a stab or a shot of theirs is
+## rewound by. Set by the net bridge; the game caps it.
+var view_lag: float = -1.0
 var attack_was_held: bool = false
 var wants_holster: bool = false
 var holster_was_held: bool = false

@@ -4,6 +4,7 @@ const MmCatalogue := preload("../game/mm_catalogue.gd")
 const MmConfig := preload("../game/mm_config.gd")
 const MmEvents := preload("../game/net/mm_events.gd")
 const MmGame := preload("../game/mm_game.gd")
+const MmNetCommand := preload("../game/net/mm_net_command.gd")
 const MmMapDoc := preload("../game/mm_map_doc.gd")
 const MmNetBridge := preload("../game/net/mm_net_bridge.gd")
 const MmPlayer := preload("../game/mm_player.gd")
@@ -24,8 +25,8 @@ const MmRequest := preload("../game/net/mm_request.gd")
 ##
 ## Sections and checks are both counted; mg-smash-copter's notes say why the second matters.
 
-const SECTIONS := 13
-const CHECKS := 71
+const SECTIONS := 14
+const CHECKS := 82
 
 const CLIENT_PEER := 7
 const SESSION := 42
@@ -85,6 +86,7 @@ func _run() -> void:
 		await _test_a_stab_crosses()
 		await _test_a_shot_crosses()
 		await _test_the_round_ends()
+		await _test_a_shot_is_rewound()
 		await _test_the_toys_cross()
 		await _test_a_client_without_the_map()
 		await _test_leaving()
@@ -433,6 +435,84 @@ func _test_a_shot_crosses() -> void:
 	var holder: MmPlayer = _client_game.players[_stand_in.player_id]
 	_check(guns.size() == 2 and not bool(guns[1][1]) and _stand_in.has_gun and holder.has_gun,
 		"a bystander walks onto it and picks it up, and the client sees it go and the gun in their hand", str(guns))
+	_finished()
+
+
+## A shot is judged against the bodies where the shooter saw them, up to a limit. The client's
+## latency is simulated by the view lag its command would carry: the target steps aside, and
+## the gunner aims at the spot it saw them in.
+func _test_a_shot_is_rewound() -> void:
+	_section("a shot is rewound to what the shooter saw, and no further than the limit")
+
+	var sent := MmNetCommand.new()
+	sent.move = DotFpsCommand.new()
+	sent.move.buttons = MmPlayer.ATTACK_BUTTON
+	sent.view_lag_q = 25
+	var writer := DotNetWriter.new()
+	sent._write(writer)
+	var got := MmNetCommand.new()
+	got._read(DotNetReader.new(writer.to_bytes()))
+	_check(got.view_lag_q == 25 and absf(got.view_lag_ticks() - 6.25) < 0.001, "the view lag crosses with a button down")
+	var idle := MmNetCommand.new()
+	idle.view_lag_q = 25
+	var idle_writer := DotNetWriter.new()
+	idle._write(idle_writer)
+	var idle_got := MmNetCommand.new()
+	idle_got._read(DotNetReader.new(idle_writer.to_bytes()))
+	_check(idle_got.view_lag_q == -1, "and is not sent when nothing is pressed")
+
+	# Two murderers, so a kill does not end the round before the section does.
+	await _into_play({_me(): &"murderer", _stand_in.player_id: &"murderer", _second.player_id: &"gunner"})
+	var gunner := _second
+	var target := _stand_in
+	var seen_at := KITCHEN_A
+	var moved_to := KITCHEN_A + Vector3(0.0, 0.0, 1.5)
+	gunner.place_at(KITCHEN_B, 0.0)
+	_server_me().place_at(LIVING, 0.0)
+	target.place_at(seen_at, 0.0)
+	await _steps(10)
+	target.place_at(moved_to, 0.0)
+	var lag := 6
+	await _steps(lag)
+	_look(gunner, seen_at + Vector3(0.0, 1.0, 0.0))
+	var from := gunner.eye_position()
+	var aim := gunner.aim_direction()
+
+	_server_game._rewind_to = -1.0
+	_check(_server_game.shot_target(gunner, from, aim, 100.0) != target,
+		"on the present, a shot at where the target was seen misses it")
+	gunner.view_lag = float(lag)
+	_server_game._rewind_to = _server_game.unlag_tick_for(gunner)
+	var rewound := _server_game.shot_target(gunner, from, aim, 100.0)
+	_server_game._rewind_to = -1.0
+	_check(rewound == target, "rewound by the lag the shooter saw, it hits",
+		"tick %d, to %.1f" % [_server_game.current_tick(), _server_game.unlag_tick_for(gunner)])
+
+	_server_game.max_unlag_ms = 1000.0 * 2.0 / float(SERVER_TICK_RATE)
+	_server_game._rewind_to = _server_game.unlag_tick_for(gunner)
+	var capped := _server_game.shot_target(gunner, from, aim, 100.0)
+	_server_game._rewind_to = -1.0
+	_check(capped != target, "a lag beyond the limit is capped, and the shot misses",
+		"cap %d ticks, lag %d" % [2, lag])
+	_server_game.max_unlag_ms = 0.0
+	gunner.view_lag = float(lag)
+	_check(_server_game.unlag_tick_for(gunner) == -1.0, "a limit of zero judges everything on the present")
+	_server_game.max_unlag_ms = 1000.0
+
+	gunner.view_lag = -1.0
+	_check(_server_game.unlag_tick_for(gunner) == -1.0, "a shooter with no measured lag is judged on the present")
+	_check(Vector2(_server_game.body_position(target).x - moved_to.x, _server_game.body_position(target).z - moved_to.z).length() < 0.01, "and bodies read where they are")
+
+	# The real shot, through attack_now: the gun, the cooldown and the kill, all on the rewound target.
+	gunner.view_lag = float(lag)
+	gunner.ready_at = 0.0
+	var fired := _server_game.attack_now(gunner.player_id)
+	_check(fired and not target.is_alive(), "and a real shot at the remembered spot kills the target",
+		"fired %s" % fired)
+	_check(gunner.is_alive() and _server_game.team_of(target.player_id) == MmGame.MURDERERS,
+		"and it was a murderer, so the gunner lives")
+	_check(_server_game.max_unlag_ms == 1000.0 and _server_game._rewind_to == -1.0, "the rewind is put back after a shot")
+	gunner.view_lag = -1.0
 	_finished()
 
 

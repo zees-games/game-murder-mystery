@@ -85,6 +85,9 @@ var _seen_warp: int = -1
 ## rather than stopping dead. The controller says the same of its own command.
 var last_move: DotFpsCommand = DotFpsCommand.new()
 
+## The newest command's view lag in ticks, or -1; see [member MmNetCommand.view_lag_q].
+var last_view_lag: float = -1.0
+
 var last_state_tick: int = -1
 
 
@@ -124,6 +127,7 @@ func _net_apply_input(input: DotNetInput, _tick: int) -> void:
 
 	if command != null:
 		last_move = command.move
+		last_view_lag = command.view_lag_ticks()
 
 
 ## On the authority the whole game ticks as one — every player moves, then the catches, the

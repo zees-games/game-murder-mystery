@@ -800,10 +800,24 @@ func ensure_game_ticked(tick: int) -> void:
 			behaviour.player.wants_use = behaviour.last_move.is_pressed(MmPlayer.USE_BUTTON)
 			behaviour.player.wants_attack = behaviour.last_move.is_pressed(MmPlayer.ATTACK_BUTTON)
 			behaviour.player.wants_holster = behaviour.last_move.is_pressed(MmPlayer.HOLSTER_BUTTON)
+			behaviour.player.view_lag = behaviour.last_view_lag
 
 	game.tick_once(tick)
 
 # --- The client tick -------------------------------------------------------
+
+## How far behind [param tick] this client is drawing everybody else, in quarter ticks: what the
+## server rewinds the other bodies by when this tick's stab or shot fires. Remote players are
+## drawn at the receive timeline less the interpolation delay, and the command is for a tick ahead
+## of the server by the input lead, so the difference is the lead, the flight time and the
+## interpolation delay. -1 when there is nothing to measure against yet.
+func view_lag_q(tick: int) -> int:
+	if net == null or net.interpolator == null or not net.clock.is_synced():
+		return -1
+
+	var drawn := float(net.clock.received_tick()) - net.interpolator.delay_ticks()
+	return clampi(int(roundf((float(tick) - drawn) * 4.0)), 0, MmNetCommand.MAX_VIEW_LAG_Q)
+
 
 func client_tick(tick: int, command: DotFpsCommand) -> void:
 	if net == null or net.is_server or game == null:
@@ -815,6 +829,7 @@ func client_tick(tick: int, command: DotFpsCommand) -> void:
 	packet.tick = tick
 	packet.delta = net.clock.tick_duration()
 	packet.move = command if command != null else DotFpsCommand.new()
+	packet.view_lag_q = view_lag_q(tick)
 
 	# Into the local history BEFORE predicting: reconciliation replays it.
 	net.local_inputs().push(packet)
