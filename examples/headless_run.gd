@@ -29,7 +29,7 @@ const MmWeapons := preload("../game/mm_weapons.gd")
 
 const SECTIONS := 24
 
-const CHECKS := 149
+const CHECKS := 150
 
 const TICK_RATE := 64
 const TICK := 1.0 / float(TICK_RATE)
@@ -970,6 +970,54 @@ func _test_the_client() -> void:
 			detail = "%s ground=%.2f centre.y=%.2f lowest=%.2f" % [bodies[0].describe(), ground_y, at.y, bodies[0].lowest_point()]
 		_check(down and ground_y > -INF and bodies[0].centre().y - ground_y < 0.8 and bodies[0].lowest_point() - ground_y > -0.25,
 			"once it settles, the body lies on the ground under it: not standing, not through it", detail)
+		# The same fall again and again, nobody pushing, at four facings. This is what the pinned
+		# seed above dodged, and the seed was never the cause: a face plant spins the whole body
+		# 1.6 rad/s about its toes and draws nothing from the seed. About one fall in six stays up
+		# on its feet with no wall in the way (the spin dies in a few frames, the box still flush
+		# with the floor; seen at facings with nothing within 2 m ahead), so it is dot-player-char's
+		# to fix (nightly ragdoll-faceplant-upright-1). A body that has a wall ahead is excused.
+		# This stays armed: a game whose falls all stay up, or a fix that makes none, shows here.
+		var upright := 0
+		var excused := 0
+		var detail_up: Array[String] = []
+		var sweep_n := 12
+		for s in sweep_n:
+			ragdolls.clear()
+			victim.figure.visible = true
+			victim.place_at(spot[0], float(s % 4) * 45.0)
+			for i in 4:
+				await get_tree().physics_frame
+			var d := DotPlayerDeath.decide(world.ragdoll_rules.reactions(), false, 0.0, Vector3.ZERO,
+				DotPlayerDeath.seed_of(victim.entity_id, 1000 + s * 37), null, -1.0, &"face_plant")
+			var fwd: Vector3 = -victim.figure.global_basis.z
+			var b := ragdolls.spawn(victim.figure, d, Vector3.ZERO)
+			for i in 240:
+				await get_tree().physics_frame
+				if b == null or not is_instance_valid(b) or b.settled:
+					break
+			if b == null or not is_instance_valid(b):
+				upright += 1
+				detail_up.append("%d:gone" % s)
+				continue
+			var c: Vector3 = b.centre()
+			var gh := world.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(
+				c + Vector3.UP * 0.3, c + Vector3.DOWN * 6.0,
+				world.physics.layer_mask(&"world") | world.physics.layer_mask(&"prop")))
+			var gy := (gh["position"] as Vector3).y if not gh.is_empty() else -INF
+			if c.y - gy < 0.8 and b.lowest_point() - gy > -0.25:
+				continue
+			var blocked := false
+			for h in [0.3, 0.9, 1.5]:
+				var at: Vector3 = spot[0] + Vector3.UP * h
+				blocked = blocked or not world.get_world_3d().direct_space_state.intersect_ray(
+					PhysicsRayQueryParameters3D.create(at, at + fwd * 2.0, 0xffff)).is_empty()
+			if blocked:
+				excused += 1
+			else:
+				upright += 1
+				detail_up.append("%d: centre.y=%.2f lowest=%.2f ground=%.2f" % [s, c.y, b.lowest_point(), gy])
+		_check(upright <= sweep_n / 3, "a face plant with nobody pushing lies down at %d facings (a wall ahead excused)" % sweep_n,
+			"%d stayed up, %d excused: %s" % [upright, excused, str(detail_up)])
 	else:
 		for k in 3:
 			_check(false, "a stand-in drawn to slay")
