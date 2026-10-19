@@ -88,6 +88,8 @@ const REPICK := 5.0
 
 ## A bystander unarmed picks up a gun it can see within this many metres.
 const FETCH_GUN := 25.0
+## How long after a gun falls the bystanders know where, seen or not.
+const FETCH_HEARD_FOR := 20.0
 
 ## How long a bystander runs from what it saw.
 const FLEE_FOR := 6.0
@@ -668,7 +670,11 @@ func _fetch_gun(player: MmPlayer, command: DotFpsCommand, state: Dictionary) -> 
 	var best := Vector3.INF
 	for drop_id: int in drops:
 		var spot: Vector3 = drops[drop_id]["at"]
-		if spot.distance_to(at) > FETCH_GUN or not _los(player.eye_position(), spot + Vector3(0.0, 0.2, 0.0)):
+		# A gun that has just fallen is known about: the shot or the scream is heard, and the
+		# room tells where. Only a long-lying one has to be seen to be remembered, and a gun
+		# usually falls where the murderer is, out of every bystander's line of sight.
+		var fresh := float(game.call("_now")) - float(drops[drop_id]["since"]) < FETCH_HEARD_FOR
+		if spot.distance_to(at) > FETCH_GUN or not (fresh or _los(player.eye_position(), spot + Vector3(0.0, 0.2, 0.0))):
 			continue
 		if best == Vector3.INF or spot.distance_to(at) < best.distance_to(at):
 			best = spot
@@ -1738,7 +1744,12 @@ func _give_up_goal(player: MmPlayer, state: Dictionary) -> void:
 
 func _note_lingering(state: Dictionary, at: Vector3, t: float) -> void:
 	var anchor: Vector3 = state.get("linger_at", Vector3.INF)
-	if anchor == Vector3.INF or Vector2(at.x - anchor.x, at.z - anchor.z).length() > STUCK_LEFT:
+	# Walking is what is timed. A bot that stood still a while (a murderer biding its time, a
+	# bystander at its goal) and walks off again has not been "stuck" there all along: without
+	# this its old spot read as twelve seconds of lingering the moment it moved a step.
+	var last := float(state.get("linger_last", t))
+	state["linger_last"] = t
+	if anchor == Vector3.INF or t - last > 1.0 or Vector2(at.x - anchor.x, at.z - anchor.z).length() > STUCK_LEFT:
 		state["linger_at"] = at
 		state["linger_since"] = t
 		return

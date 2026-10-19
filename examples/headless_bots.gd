@@ -106,12 +106,15 @@ func _run() -> void:
 	var fetched := 0
 	var spread := 0.0
 	var stuck := 0.0
+	var stuck_where := ""
 	for r in results:
 		draws += int(r["draws"])
 		stabs += int(r["stabs"])
 		lines += int(r["lines"])
 		spread += float(r["spread"]) / n
-		stuck = maxf(stuck, float(r["stuck"]))
+		if float(r["stuck"]) > stuck:
+			stuck = float(r["stuck"])
+			stuck_where = str(r["stuck_where"])
 		if int(r["drops"]) > 0:
 			fetch_chances += 1
 			fetched += 1 if int(r["fetched"]) > 0 else 0
@@ -122,7 +125,7 @@ func _run() -> void:
 	_check(fetch_chances == 0 or fetched > 0, "a gun on the floor is fetched", "in %d of %d rounds it lay there" % [fetched, fetch_chances])
 	_check(draws <= stabs * 3 + results.size() * 2, "a murderer draws to strike, not to wave it about", "%d draws, %d stabs" % [draws, stabs])
 	_check(spread <= MAX_SPREAD and lines > 0, "the bystanders keep together and talk", "%.1f m to the nearest, %d lines" % [spread, lines])
-	_check(stuck <= MAX_STUCK, "nobody stays stuck for long", "%.1f s" % stuck)
+	_check(stuck <= MAX_STUCK, "nobody stays stuck for long", "%.1f s, %s" % [stuck, stuck_where])
 	_completed += 1
 
 	print("")
@@ -197,6 +200,7 @@ func _round(map_id: String, index: int, difficulty: String) -> Dictionary:
 	for key: String in ["draws", "stabs", "shots", "fetched", "lines"]:
 		result[key] = int(counts.get(key, 0))
 	result["stuck"] = game.bots.longest_stuck
+	result["stuck_where"] = "%s at %s" % [game.bots.longest_stuck_who, str(game.bots.longest_stuck_at.snapped(Vector3.ONE * 0.1))] if game.bots.longest_stuck > 0.0 else ""
 	remove_child(game)
 	game.free()
 	await get_tree().process_frame
