@@ -125,7 +125,7 @@ static func import(source: Dictionary) -> Dictionary:
 				boxes.append(_playground_box(raw as Dictionary))
 		doc["boxes"] = boxes
 		doc["props"] = []
-		var at: Variant = source.get("spawn", [0.0, 1.0, 0.0])
+		var at: Variant = _playground_spawn_on_floor(source.get("spawn", [0.0, 1.0, 0.0]), boxes)
 		var yaw := float(source.get("spawn_yaw", 0.0))
 		for i in range(8):
 			spawns.append({"at": at, "yaw": yaw + 45.0 * i})
@@ -145,6 +145,36 @@ static func import(source: Dictionary) -> Dictionary:
 
 	doc["spawns"] = {"players": spawns.slice(0, MAX_SPAWNS)}
 	return doc
+
+
+## A Playground spawn hangs a metre above its floor (a person is dropped in), where ours is the feet.
+## Left as it is, eight people start in the air and a spawn audit finds nothing under them, so the
+## point is lowered to the highest unturned solid box top under it, within 1.5 m. No box found, no change.
+static func _playground_spawn_on_floor(spawn: Variant, boxes: Array) -> Variant:
+	if not (spawn is Array) or (spawn as Array).size() != 3:
+		return spawn
+
+	var p := v3(spawn)
+	var best := -INF
+
+	for box: Variant in boxes:
+		var b: Dictionary = box
+		var turn: Variant = b.get("turn")
+		# A turn of no degrees (the editor writes one on every box) is still a level top.
+		if turn is Array and (turn as Array).size() == 4 and absf(float(turn[3])) > 0.01:
+			continue
+		if b.get("solid", true) == false:
+			continue
+		var centre := v3(b["at"])
+		var half := v3(b["size"]) * 0.5
+		var top := centre.y + half.y
+		if absf(p.x - centre.x) <= half.x and absf(p.z - centre.z) <= half.z and top <= p.y + 0.1 and top >= p.y - 1.5:
+			best = maxf(best, top)
+
+	if best == -INF:
+		return spawn
+
+	return [p.x, best + 0.02, p.z]
 
 
 static func _playground_box(b: Dictionary) -> Dictionary:
