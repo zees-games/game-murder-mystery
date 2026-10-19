@@ -804,6 +804,16 @@ func _on_round_started(number: int) -> void:
 		progress.on_round_began()
 
 	_set_phase(Phase.GRACE)
+
+	# Told after the phase moves: the net bridge sends nothing to a seat while the phase is IDLE
+	# (a role is only a thing in a round), so a first round told from inside the draw went out
+	# to nobody.
+	var drawn: Array = players.keys()
+	drawn.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
+
+	for id: StringName in drawn:
+		role_drawn.emit(id, team_of(id), (players[id] as MmPlayer).has_gun)
+
 	round_began.emit(number, map.id())
 
 	DotLog.info(CHANNEL, "round began", {
@@ -930,7 +940,6 @@ func _draw_roles() -> void:
 		_set_side(id, MURDERERS if murderers.has(id) else BYSTANDERS)
 		player.has_gun = gunners.has(id)
 		player.retune()
-		role_drawn.emit(id, team_of(id), player.has_gun)
 
 
 func _set_side(id: StringName, side: int) -> void:
