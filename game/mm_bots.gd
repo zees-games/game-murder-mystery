@@ -73,6 +73,9 @@ const WITNESS_RANGE := 28.0
 ## Seconds left in the round under which a murderer stops waiting for a clean moment.
 const DESPERATE := 45.0
 
+## Seconds before the blood shows at which a murderer stops waiting.
+const DESPERATE_LEAD := 20.0
+
 ## Suspicion, 0..100, at which a gunner shoots.
 const SURE := 60.0
 
@@ -446,7 +449,10 @@ func drive() -> void:
 		_step_round_people(player, command, players)
 		player.controller.apply_command(command)
 		player.wants_attack = bool(state["attack"])
-		player.wants_holster = bool(state["holster"])
+		# The game toggles on the press, so a key still down from the last tick is no new press;
+		# without the gap a murderer that holstered and wanted it out again next tick held the key
+		# for the rest of the round and never drew.
+		player.wants_holster = bool(state["holster"]) and not player.wants_holster
 		# Pressed and let go on alternate ticks, so the game sees an edge each time.
 		if bool(state.get("use_now", false)):
 			state["use_now"] = false
@@ -788,7 +794,10 @@ func _murder(player: MmPlayer, command: DotFpsCommand, state: Dictionary, player
 
 	var at := player.controller.state.position
 	var seconds_left := float(game.call("seconds_left"))
-	var desperate := phase == 2 and seconds_left < DESPERATE
+	# Before the blood shows, not after: from the first stage a gunner shoots the stained one on
+	# sight, so a murderer that waited for a clean moment past it was shot never having struck.
+	var blood_lead: float = float(game.get("config").blood_seconds) + DESPERATE_LEAD
+	var desperate := phase == 2 and seconds_left < maxf(DESPERATE, blood_lead)
 
 	if phase != 2:
 		# The grace: be one of the crowd.
@@ -810,7 +819,11 @@ func _murder(player: MmPlayer, command: DotFpsCommand, state: Dictionary, player
 	var chest := target.controller.state.position + Vector3(0.0, 1.1, 0.0)
 	var distance := Vector2(chest.x - at.x, chest.z - at.z).length()
 	var witnesses := _witnesses(player, target, players)
-	var clean := witnesses == 0 or (desperate and witnesses <= 1)
+	# Desperate means it stops waiting for a clean moment (header, "Late in the round"). On an
+	# open map the bystanders keep together in plain sight of one another, so a count of
+	# witnesses never falls to one and a murderer that still waited for it watched them until
+	# the clock ran out.
+	var clean := witnesses == 0 or desperate
 	var reach := float(game.call("melee_reach"))
 
 	if clean and distance < 7.0:
@@ -826,8 +839,11 @@ func _murder(player: MmPlayer, command: DotFpsCommand, state: Dictionary, player
 		_unstick(player, command, state)
 		return
 
-	# Not clean: weapon away, and follow at a stroll, as though going the same way.
-	_put_away(player, state)
+	# Not clean: weapon away, and follow at a stroll, as though going the same way. Desperate, it
+	# keeps the weapon out: holstering at 7 m and drawing again inside it, every frame, is the
+	# draw count of a murderer that never gets to strike.
+	if not desperate:
+		_put_away(player, state)
 	state["mode"] = &"stalking"
 	if distance > 5.0:
 		var _there := _walk_to(player, command, state, target.controller.state.position, distance > 18.0)
