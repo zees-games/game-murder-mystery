@@ -905,19 +905,52 @@ func _test_the_client() -> void:
 	_check(victim != null and ragdolls != null and ragdolls.rules == world.ragdoll_rules,
 		"the client keeps the dead under the game's sv_ragdoll* rules")
 	if victim != null:
-		world._kill(victim, null, MmGame.DIED_SLAIN)
+		# Every part of this is pinned, because the fall is a physics outcome and it differed
+		# run to run: the seat is the map's first spawn (the ones the seating picked included
+		# a table top, where a body jittered for six seconds), the killer stands a metre off as
+		# a stab or a shot would have it (a death with no direction pushes nothing, and a one-
+		# piece face plant pushed nowhere stands up), and the tick the reaction is seeded from
+		# is fixed, since it moved with the machine's load.
+		var spot: Array = world.map.spawn(MmGame.SPAWN_GROUP, 0)
+		victim.place_at(spot[0], 0.0)
+		var killer: MmPlayer = null
+		for id: StringName in world.players:
+			if world.players[id] != victim and world.players[id] != client.get("player"):
+				killer = world.players[id]
+				break
+		if killer != null:
+			killer.place_at(spot[0] - Vector3(1.0, 0.0, 0.0), 90.0)
+		for i in 60:
+			await get_tree().physics_frame
+		var was_tick: int = world._tick
+		world._tick = 600
+		world._kill(victim, killer, MmGame.DIED_SLAIN)
+		world._tick = was_tick
 		await get_tree().process_frame
 		_check(victim.death != null and DotPlayerDeathReactions.stock().has(victim.death.reaction),
 			"the world picked how the body falls", str(victim.death.describe()) if victim.death != null else "none")
 		var bodies := ragdolls.live()
 		_check(bodies.size() == 1 and not victim.figure.visible,
 			"and the client laid the body down from the figure, which is hidden", str(bodies.size()))
-		for i in 90:
+		# Until it settles, not for a fixed second: how long a fall takes depends on the reaction
+		# the seed picked and where it lands, and a count of frames judged some bodies mid-air.
+		# The ragdoll freezes itself at rules.max_sim_time, so this ends.
+		for i in 900:
 			await get_tree().physics_frame
+			if bodies.size() != 1 or not is_instance_valid(bodies[0]) or bodies[0].settled:
+				break
 		var down := bodies.size() == 1 and is_instance_valid(bodies[0])
-		_check(down and bodies[0].centre().y < 0.8 and bodies[0].lowest_point() > -0.25,
-			"a second on, the body lies on the floor: not standing, not through it",
-			str(bodies[0].describe()) if down else "gone")
+		var ground_y := 0.0
+		var detail := "gone"
+		if down:
+			var at: Vector3 = bodies[0].centre()
+			var hit := world.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(
+				at + Vector3.UP * 0.3, at + Vector3.DOWN * 6.0,
+				world.physics.layer_mask(&"world") | world.physics.layer_mask(&"prop")))
+			ground_y = (hit["position"] as Vector3).y if not hit.is_empty() else -INF
+			detail = "%s ground=%.2f centre.y=%.2f lowest=%.2f" % [bodies[0].describe(), ground_y, at.y, bodies[0].lowest_point()]
+		_check(down and ground_y > -INF and bodies[0].centre().y - ground_y < 0.8 and bodies[0].lowest_point() - ground_y > -0.25,
+			"once it settles, the body lies on the ground under it: not standing, not through it", detail)
 	else:
 		for k in 3:
 			_check(false, "a stand-in drawn to slay")
