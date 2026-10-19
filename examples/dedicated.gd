@@ -1,6 +1,7 @@
 extends Node
 
 const MmConfig := preload("../game/mm_config.gd")
+const MmEvents := preload("../game/net/mm_events.gd")
 const MmGame := preload("../game/mm_game.gd")
 const MmNetLink := preload("../game/net/mm_net_link.gd")
 const MmPlayer := preload("../game/mm_player.gd")
@@ -629,6 +630,12 @@ func _test_a_module_reload_keeps_one_link() -> void:
 		if server.playing_sessions().size() > 0 and client.get_node_or_null(NodePath("Dedicated")) == null:
 			receiver = MmNetLink.attached_to(client, null, false)
 			DotGameLink.attach(receiver, client, side, MmNetLink.NODE_NAME)
+			# The server tells a peer nothing until it says READY (its world exists, which
+			# the bridge does when it is built); this stand-in has no bridge, so it says it.
+			var writer := DotNetWriter.new()
+			var _asked: DotResult = _module().get("bridge").net.messages.encode(
+				load("res://game/net/mm_request.gd").new(MmEvents.Ask.READY, PackedByteArray([0])), writer)
+			receiver.send_request(writer.to_bytes())
 			break
 	known.clear()
 
@@ -710,6 +717,11 @@ func _test_loading_cover() -> void:
 	var userid: int = seat[0].userid
 	var key := StringName("u%d" % userid)
 	var victim: MmPlayer = game.players[key]
+	# A seat that joins mid-round is benched: watching, and invulnerable. Every refusal below
+	# would then pass for the wrong reason, and the slay would be refused as the bench's, so
+	# the seat is put in the round first, as a lobby join would be.
+	victim.watching = false
+	game._heal(victim)
 	_check(roster.is_loading(userid), "the server holds the seat as loading from its spawn", str(roster.describe()))
 
 	# The setup and the attempts are one run with no await, so nothing ticks between.
@@ -740,7 +752,8 @@ func _test_loading_cover() -> void:
 	var slay := DotDamage.make(0, victim.entity_id, victim.health.health + 1000.0, null)
 	slay.context = {"admin": true}
 	var _slain := game.combat.apply_damage(slay)
-	_check(not victim.is_alive(), "an operator's slay still lands")
+	_check(not victim.is_alive(), "an operator's slay still lands",
+		"refused=%s %s hp=%s" % [_slain.refused, _slain.refusal if "refusal" in _slain else "", victim.health.health])
 	victim.health.revive()
 	game.phase = was_phase
 
