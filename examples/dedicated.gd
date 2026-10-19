@@ -13,8 +13,8 @@ const MmPlayer := preload("../game/mm_player.gd")
 ## [DotGameModule]'s order runs, a cvar is typed at a console and a round is played by
 ## nothing but the stand-ins the module seats itself.
 
-const SECTIONS := 10
-const CHECKS := 60
+const SECTIONS := 11
+const CHECKS := 70
 
 const SERVER_DIR := "user://mm_dedicated"
 const PORT := 28931
@@ -56,6 +56,7 @@ func _run() -> void:
 		await _test_a_reload_keeps_delivered_maps()
 		await _test_the_map_vote()
 		_test_finish_round_waits_for_a_live_round()
+		await _test_loading_cover()
 		await _test_it_unloads_cleanly()
 
 	_test_no_message_preloads_itself()
@@ -570,6 +571,133 @@ func _test_a_reload_keeps_delivered_maps() -> void:
 		DirAccess.remove_absolute(path)
 		path = path.get_base_dir()
 	DirAccess.remove_absolute("res://dot_cloud")
+	_finished()
+
+
+## [b]A bystander behind its loading cover cannot be killed, and can once the cover lifts.[/b] A
+## real [DotClientLink] joins over the server's ENet socket and says nothing, as a client still
+## loading its level does. The round is put in its play by hand with a stand-in murderer: the
+## stab and a shot must pass it, a kill must be refused, and it must not be drawn murderer or
+## gunner. An operator's slay still lands. The client then sends `game.cover` on the real wire
+## and the same kill lands.
+func _test_loading_cover() -> void:
+	_section("a client behind its loading cover cannot be killed")
+
+	var module := _module()
+	var roster: DotGameRoster = module.get("roster") if module != null else null
+
+	var known: Dictionary = {}
+	for each in server.playing_sessions():
+		known[each.userid] = true
+
+	var side := Node.new()
+	side.name = "CoverClient"
+	add_child(side)
+	get_tree().set_multiplayer(MultiplayerAPI.create_default_interface(), side.get_path())
+	# Under a node named like this suite's own, so the RPC path the server sends resolves in the
+	# client's separate multiplayer tree too.
+	var mirror := Node.new()
+	mirror.name = name
+	side.add_child(mirror)
+	var link := DotClientLink.new()
+	link.name = "Server"
+	link.player_name = "Cover"
+	link.transport_preference = "udp"
+	link.udp_address = "127.0.0.1:%d" % PORT
+	mirror.add_child(link)
+	link.connect_to_server("127.0.0.1:%d" % PORT)
+
+	var seat: Array = [null]
+	for _i in 1800:
+		await get_tree().physics_frame
+		for each in server.playing_sessions():
+			if not known.has(each.userid) and game.players.has(StringName("u%d" % each.userid)):
+				seat[0] = each
+		if seat[0] != null:
+			break
+
+	_check(seat[0] != null and roster != null, "a real client joins over the socket", str(link.last_error))
+
+	var murderer: MmPlayer = null
+	for id: StringName in game.players:
+		if (game.players[id] as MmPlayer).is_bot:
+			murderer = game.players[id]
+			break
+
+	if seat[0] == null or roster == null or murderer == null:
+		for what in ["held as loading", "a stab", "a kill", "the murderer draw", "an operator's slay",
+				"the cover report", "the kill after", "bots and strangers", "leaving"]:
+			_check(false, "%s (no runner joined)" % what)
+		link.disconnect_from_server("done")
+		side.queue_free()
+		_finished()
+		return
+
+	var userid: int = seat[0].userid
+	var key := StringName("u%d" % userid)
+	var victim: MmPlayer = game.players[key]
+	_check(roster.is_loading(userid), "the server holds the seat as loading from its spawn", str(roster.describe()))
+
+	# The setup and the attempts are one run with no await, so nothing ticks between.
+	var was_phase: int = game.phase
+	game.phase = MmGame.Phase.PLAY
+	game._set_side(key, MmGame.BYSTANDERS)
+	game._set_side(murderer.player_id, MmGame.MURDERERS)
+	murderer.place_at(victim.controller.state.position - Vector3(0.0, 0.0, 0.5), 0.0)
+	var target: MmPlayer = game.stab_target(murderer)
+	_check(target != victim, "a stab does not find it", "target=%s" % (target.player_id if target != null else "none"))
+
+	game._kill(victim, murderer, MmGame.DIED_STABBED)
+	_check(victim.is_alive(), "and a kill on it is refused", "alive=%s" % victim.is_alive())
+
+	# The draw leaves a covered seat unarmed and innocent while others can be drawn.
+	var drawn := 0
+	for _i in 12:
+		game._round_seed = _i
+		game.murderer_history.clear()
+		game._draw_roles()
+		if game.team_of(key) == MmGame.MURDERERS or victim.has_gun:
+			drawn += 1
+	_check(drawn == 0, "a covered seat is not drawn murderer or gunner", "%d of 12 draws" % drawn)
+
+	game.phase = MmGame.Phase.PLAY
+	game._set_side(key, MmGame.BYSTANDERS)
+	game._set_side(murderer.player_id, MmGame.MURDERERS)
+	var slay := DotDamage.make(0, victim.entity_id, victim.health.health + 1000.0, null)
+	slay.context = {"admin": true}
+	var _slain := game.combat.apply_damage(slay)
+	_check(not victim.is_alive(), "an operator's slay still lands")
+	victim.health.revive()
+	game.phase = was_phase
+
+	DotGameClient.report_cover(link, false)
+	var lifted := false
+	for _i in 900:
+		await get_tree().physics_frame
+		if not roster.is_loading(userid):
+			lifted = true
+			break
+	_check(lifted, "its cover report crosses the wire and ends the loading state")
+
+	game.phase = MmGame.Phase.PLAY
+	game._set_side(key, MmGame.BYSTANDERS)
+	game._set_side(murderer.player_id, MmGame.MURDERERS)
+	game._kill(victim, murderer, MmGame.DIED_STABBED)
+	_check(not victim.is_alive(), "and the same kill now lands", "alive=%s" % victim.is_alive())
+	game.phase = was_phase
+
+	_check(game.can_be_harmed(murderer.player_id) and game.can_be_harmed(&"u99999"),
+		"a bot, or a seat the roster does not hold, is never loading")
+
+	link.disconnect_from_server("done")
+	var gone := false
+	for _i in 900:
+		await get_tree().physics_frame
+		if not game.players.has(key):
+			gone = true
+			break
+	_check(gone and not roster.is_loading(userid), "it leaves and the roster forgets it")
+	side.queue_free()
 	_finished()
 
 

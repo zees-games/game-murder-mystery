@@ -407,6 +407,15 @@ func _build_combat() -> void:
 
 	combat.trace = trace
 	combat.resolver = DotDamageResolver.with_rules(damage_rules)
+	# dot-game's "still loading": every kill passes here, so a seat behind its client's cover is
+	# neither stabbed, shot nor eliminated, and a round counts the living from health. An
+	# admin's slay or slap is the operator's word, and a fall is a respawn, not a death.
+	combat.resolver.adjust = func(damage: DotDamage) -> void:
+		if damage.context.get("admin", false) or damage.context.get("why", &"") == DIED_FELL:
+			return
+
+		if not can_be_harmed(entities.key_for_id(damage.victim)):
+			damage.refuse("still loading")
 	add_child(combat)
 
 
@@ -704,6 +713,18 @@ func players_on(side: int) -> Array[MmPlayer]:
 	return out
 
 
+## `func(player_id: StringName) -> bool`: whether a player may be hurt now, assigned by the
+## module from dot-game's `can_peer_be_harmed`. Unset offline, in a suite and for a bot, so
+## everybody can be harmed.
+var harm_gate: Callable = Callable()
+
+
+## Whether [param player_id] may be damaged or eliminated now: false while their client is
+## behind its loading cover.
+func can_be_harmed(player_id: StringName) -> bool:
+	return not harm_gate.is_valid() or bool(harm_gate.call(player_id))
+
+
 ## How many of a side are up and in the round. On a client only the totals it was told:
 ## everybody alive (any side), and murderers alive.
 func alive_on(side: int) -> int:
@@ -825,8 +846,17 @@ func _draw_roles() -> void:
 	keys.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
 
 	var want := config.murderers_for(keys.size())
+	# Seats behind a loading cover are not drawn while enough others can be: a murderer that
+	# cannot see would sit out the round. If too few are loaded, everybody is a candidate.
+	var loaded: Array[StringName] = []
+
+	for id in keys:
+		if can_be_harmed(id):
+			loaded.append(id)
+
+	var candidates := loaded if loaded.size() >= want else keys
 	var picked: Dictionary = DotTeamRotation.pick(
-		keys, want, DotTeamRotation.Mode.RANDOM, murderer_history, _round_seed, {}
+		candidates, want, DotTeamRotation.Mode.RANDOM, murderer_history, _round_seed, {}
 	)
 	var murderers: Array[StringName] = []
 
@@ -855,6 +885,14 @@ func _draw_roles() -> void:
 	var stream := random.stream(&"roles")
 	var gunners: Array[StringName] = []
 	var pool := rest.duplicate()
+	var loaded_pool: Array[StringName] = []
+
+	for id in pool:
+		if can_be_harmed(id):
+			loaded_pool.append(id)
+
+	if loaded_pool.size() >= config.gunners_for(keys.size(), rest.size()):
+		pool = loaded_pool
 
 	if not forced_roles.is_empty():
 		for id in rest:
@@ -1262,7 +1300,8 @@ func stab_target(murderer: MmPlayer) -> MmPlayer:
 	for id: StringName in players:
 		var other: MmPlayer = players[id]
 
-		if other == murderer or not other.is_alive() or other.watching or team_of(id) == MURDERERS:
+		if other == murderer or not other.is_alive() or other.watching or team_of(id) == MURDERERS \
+				or not can_be_harmed(id):
 			continue
 
 		var chest := other.controller.state.position + Vector3(0.0, 1.1, 0.0)
@@ -1338,7 +1377,8 @@ func shot_target(gunner: MmPlayer, from: Vector3, aim: Vector3, limit: float) ->
 	for id: StringName in players:
 		var other: MmPlayer = players[id]
 
-		if other == gunner or not other.is_alive() or other.watching:
+		# A covered seat cannot be hit, so a shot passes it and costs the gunner no innocent.
+		if other == gunner or not other.is_alive() or other.watching or not can_be_harmed(id):
 			continue
 
 		var feet := other.controller.state.position

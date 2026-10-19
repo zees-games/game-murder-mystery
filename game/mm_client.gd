@@ -93,6 +93,7 @@ func _ready() -> void:
 
 	link = DotRegistry.get_node_service(LINK_SERVICE)
 	_offline = force_offline or link == null or OS.get_cmdline_user_args().has("--offline")
+	_report_cover()
 
 	game = MmGame.new()
 	game.name = "World"
@@ -141,6 +142,17 @@ func _build_gate() -> void:
 	gate.hold(&"map", "Loading the map")
 	gate.require(&"spawned", func() -> bool:
 		return player != null and camera != null and camera.is_inside_tree(), "Joining")
+
+
+## Tells the server when this client's cover goes up and when it lifts, so a seat still
+## loading is neither stabbed, shot nor drawn a role (dot-game's "still loading"). This client
+## is not on DotGameClient, so it calls the same static report from its own gate.
+func _report_cover() -> void:
+	if _offline or link == null:
+		return
+
+	gate.opened.connect(func() -> void: DotGameClient.report_cover(link, false))
+	gate.closed.connect(func() -> void: DotGameClient.report_cover(link, true))
 
 
 ## A map is built: held from the moment the old one starts to go, released once the new one

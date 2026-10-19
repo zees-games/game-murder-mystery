@@ -67,3 +67,7 @@ The game plays its own maps (`mm_practice` built in; `mm_mansion` and `mm_motel`
 - **dot-server-deploy and dot-bootstrap do not know this game yet** (no content entries; not in `projects.tsv`).
 - **`DotGameClient`**: the client is still `MmClient` on dot-game's committed API; it moves when API 8 is committed.
 - **Tuning with people**: reach, cooldowns, the grace and the blood are first guesses.
+
+## Still loading
+
+A seat whose client is still behind its loading cover cannot see, so the server does not let it be killed or drawn a role. `MmGame.harm_gate` (filled by `MmModule` from dot-game's `can_peer_be_harmed`, unset offline so every bot suite is unchanged) is asked by the combat resolver's `adjust`, the one place every stab, shot and slain shooter passes, and by `stab_target` and `shot_target`, so a swing or a bullet goes past a covered seat and costs a gunner no innocent. An admin's slay or slap carries `context.admin` and passes; a fall is a respawn and passes. The draw (`_draw_roles`) picks murderers and gunners among loaded seats and falls back to everybody when too few are loaded. `MmClient` is not on `DotGameClient`, so it calls `DotGameClient.report_cover` from its own gate's `opened` and `closed`. `examples/dedicated` checks it over a real socket; `tools/render_cover` renders the cover and the frames after it lifts (`screenshots/`).

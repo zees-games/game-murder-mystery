@@ -64,7 +64,7 @@ Read the family [CLAUDE.md](../../CLAUDE.md) first; this file is only what is sp
 - `mm_roles` lists who is what, and answers only the server's own console.
 - `project.godot` carries no comments (the editor drops them). Gravity is `MmConfig.gravity`, written onto the world's own physics space.
 - `MmEvent.MAX_BODY` holds the largest MAP (`MmEvents.MAP_BYTES`); `headless_net` checks it (armed).
-- The dot-game API used is its committed one; the client is `MmClient`, not `DotGameClient` yet.
+- The dot-game API used is its committed one; the client is `MmClient`, not `DotGameClient` yet, so it reports its cover to the server itself (docs/design.md, "Still loading").
 
 ## Not yet done
 

@@ -350,6 +350,7 @@ func _mod_hurt(id: StringName, amount: float) -> DotResult:
 		p.health.invulnerable_until_tick = -1
 		var fatal := DotDamage.make(0, p.entity_id, p.health.health + 1000.0, null)
 		fatal.weapon_id = &"slay"
+		fatal.context = {"admin": true}
 		field.combat.apply_damage(fatal)
 		p.health.invulnerable = was_god
 		p.health.cannot_die = was_buddha
@@ -365,6 +366,7 @@ func _mod_hurt(id: StringName, amount: float) -> DotResult:
 	if amount > 0.0:
 		var hurt := DotDamage.make(0, p.entity_id, amount, null)
 		hurt.weapon_id = &"slap"
+		hurt.context = {"admin": true}
 		field.combat.apply_damage(hurt)
 
 	return DotResult.success(null)

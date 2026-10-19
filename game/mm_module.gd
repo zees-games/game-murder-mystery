@@ -144,6 +144,15 @@ func _game_load() -> DotResult:
 	if world == null:
 		return DotResult.fail(DotError.CODE_STATE, "The registered game is not an MmGame.")
 
+	# dot-game's "still loading": a seat behind its client's cover is neither hurt nor drawn
+	# (see MmGame.harm_gate). Asked by player id, resolved to a peer through the bridge; a bot
+	# or a seat the bridge does not hold has no peer and is never loading.
+	world.harm_gate = func(player_id: StringName) -> bool:
+		if bridge == null:
+			return true
+		var peer := int((bridge as MmNetBridge).peer_for_player(MmNetBridge.session_of(player_id)))
+		return peer <= 0 or can_peer_be_harmed(peer)
+
 	add_command("mm_status", _cmd_status, "Show the round, the map and who is alive")
 	add_command("mm_roles", _cmd_roles, "Show who is what this round (the operator's console only)")
 	add_command("mm_net", _cmd_net, "Show what the netcode is doing")
@@ -452,6 +461,9 @@ func _tunable(
 ## tree before the module loaded, and a server can unload and reload a game module without
 ## the map going away, which is what `module reload` is for.
 func _game_unload() -> void:
+	if game != null and "harm_gate" in game:
+		game.set(&"harm_gate", Callable())
+
 	_bot_ids.clear()
 
 	if vote != null:
