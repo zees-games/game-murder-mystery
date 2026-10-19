@@ -301,6 +301,11 @@ func open_link(parent: Node) -> void:
 		return
 
 	link = MmNetLink.attached_to(parent, self, net != null and net.is_server)
+	# Not parent.add_child: the link must sit under `Server` (RPCs route by path) yet die with
+	# this bridge. A bare add_child left a second link after every module reload, Godot renamed
+	# the live one `@Node@n`, and RPCs to real clients were lost silently. DotGameLink frees it
+	# with the bridge, and without remove_child, which errors while the server tree tears down.
+	DotGameLink.attach(link, parent, self, MmNetLink.NODE_NAME)
 
 
 ## How every dot-net message reaches a peer.

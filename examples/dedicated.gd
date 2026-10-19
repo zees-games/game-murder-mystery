@@ -2,6 +2,7 @@ extends Node
 
 const MmConfig := preload("../game/mm_config.gd")
 const MmGame := preload("../game/mm_game.gd")
+const MmNetLink := preload("../game/net/mm_net_link.gd")
 const MmPlayer := preload("../game/mm_player.gd")
 
 ## The game as a deployed server runs it: a real [DotServer], booted from a config file, with
@@ -13,8 +14,8 @@ const MmPlayer := preload("../game/mm_player.gd")
 ## [DotGameModule]'s order runs, a cvar is typed at a console and a round is played by
 ## nothing but the stand-ins the module seats itself.
 
-const SECTIONS := 11
-const CHECKS := 70
+const SECTIONS := 12
+const CHECKS := 76
 
 const SERVER_DIR := "user://mm_dedicated"
 const PORT := 28931
@@ -56,6 +57,7 @@ func _run() -> void:
 		await _test_a_reload_keeps_delivered_maps()
 		await _test_the_map_vote()
 		_test_finish_round_waits_for_a_live_round()
+		await _test_a_module_reload_keeps_one_link()
 		await _test_loading_cover()
 		await _test_it_unloads_cleanly()
 
@@ -580,6 +582,69 @@ func _test_a_reload_keeps_delivered_maps() -> void:
 		DirAccess.remove_absolute(path)
 		path = path.get_base_dir()
 	DirAccess.remove_absolute("res://dot_cloud")
+	_finished()
+
+
+## [b]A module reload leaves one link, and a real client still hears the server.[/b] The link
+## sits under the server node by name; a bare add_child left one more per reload, the live one
+## renamed `@Node@n`, and every RPC to a real client was dropped without an error.
+func _test_a_module_reload_keeps_one_link() -> void:
+	_section("a module reload leaves one live link")
+	for _i in range(2):
+		var gone := server.modules.unload_module("murder")
+		_check(gone.ok, "the module unloads", gone.error.message if not gone.ok else "")
+		var back: DotResult = await server.modules.load_module("res://game/mm_module.gd")
+		_check(back.ok, "and loads again", back.error.message if not back.ok else "")
+	for _i in range(5):
+		await get_tree().process_frame
+
+	var links := 0
+	for child in server.get_children():
+		if child.get_script() == MmNetLink:
+			links += 1
+	_check(links == 1 and server.has_node(NodePath(String(MmNetLink.NODE_NAME))),
+		"exactly one link, under the name a client routes to", "%d" % links)
+
+	var side := Node.new()
+	side.name = "ReloadClient"
+	add_child(side)
+	get_tree().set_multiplayer(MultiplayerAPI.create_default_interface(), side.get_path())
+	var mirror := Node.new()
+	mirror.name = name
+	side.add_child(mirror)
+	var client := DotClientLink.new()
+	client.name = "Server"
+	client.player_name = "Reload"
+	client.transport_preference = "udp"
+	client.udp_address = "127.0.0.1:%d" % PORT
+	mirror.add_child(client)
+	client.connect_to_server("127.0.0.1:%d" % PORT)
+
+	# The receiving half goes in once the client is seated, as a game scene does: the client
+	# link retires whatever it finds under it when it joins.
+	var known: Dictionary = {}
+	var receiver: MmNetLink = null
+	for _i in 1800:
+		await get_tree().physics_frame
+		if server.playing_sessions().size() > 0 and client.get_node_or_null(NodePath("Dedicated")) == null:
+			receiver = MmNetLink.attached_to(client, null, false)
+			DotGameLink.attach(receiver, client, side, MmNetLink.NODE_NAME)
+			break
+	known.clear()
+
+	var heard := false
+	for _i in 600:
+		await get_tree().physics_frame
+		if receiver != null and receiver.events_received + receiver.snapshots_received > 0:
+			heard = true
+			break
+	_check(heard, "a real client receives the reloaded server's RPCs",
+		"events=%d snapshots=%d" % [receiver.events_received, receiver.snapshots_received] if receiver != null else "never seated")
+
+	client.disconnect_from_server("done")
+	for _i in 120:
+		await get_tree().physics_frame
+	side.queue_free()
 	_finished()
 
 
