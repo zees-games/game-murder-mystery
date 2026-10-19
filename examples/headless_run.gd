@@ -924,12 +924,12 @@ func _test_the_client() -> void:
 	_check(victim != null and ragdolls != null and ragdolls.rules == world.ragdoll_rules,
 		"the client keeps the dead under the game's sv_ragdoll* rules")
 	if victim != null:
-		# Every part of this is pinned, because the fall is a physics outcome and it differed
+		# Most of this is pinned, because the fall is a physics outcome and it differed
 		# run to run: the seat is the map's first spawn (the ones the seating picked included
 		# a table top, where a body jittered for six seconds), the killer stands a metre off as
-		# a stab or a shot would have it (a death with no direction pushes nothing, and a one-
-		# piece face plant pushed nowhere stands up), and the tick the reaction is seeded from
-		# is fixed, since it moved with the machine's load.
+		# a stab or a shot would have it (a death with no direction pushes nothing). The tick the
+		# reaction is seeded from is not pinned any more: a face plant stood up on some ticks
+		# until dot-player-char kept its spin up, and the sweep below covers every facing.
 		var spot: Array = world.map.spawn(MmGame.SPAWN_GROUP, 0)
 		victim.place_at(spot[0], 0.0)
 		var killer: MmPlayer = null
@@ -941,10 +941,7 @@ func _test_the_client() -> void:
 			killer.place_at(spot[0] - Vector3(1.0, 0.0, 0.0), 90.0)
 		for i in 60:
 			await get_tree().physics_frame
-		var was_tick: int = world._tick
-		world._tick = 600
 		world._kill(victim, killer, MmGame.DIED_SLAIN)
-		world._tick = was_tick
 		await get_tree().process_frame
 		_check(victim.death != null and DotPlayerDeathReactions.stock().has(victim.death.reaction),
 			"the world picked how the body falls", str(victim.death.describe()) if victim.death != null else "none")
@@ -1016,7 +1013,7 @@ func _test_the_client() -> void:
 			else:
 				upright += 1
 				detail_up.append("%d: centre.y=%.2f lowest=%.2f ground=%.2f" % [s, c.y, b.lowest_point(), gy])
-		_check(upright <= sweep_n / 3, "a face plant with nobody pushing lies down at %d facings (a wall ahead excused)" % sweep_n,
+		_check(upright == 0, "a face plant with nobody pushing lies down at %d facings (a wall ahead excused)" % sweep_n,
 			"%d stayed up, %d excused: %s" % [upright, excused, str(detail_up)])
 	else:
 		for k in 3:
