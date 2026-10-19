@@ -31,7 +31,7 @@ Read the family [CLAUDE.md](../../CLAUDE.md) first; this file is only what is sp
 | `props/`, `assets/props/` | `kits.json`, the measured `catalogue.json` and `pieces.json`; vendored Kenney models (CC0) |
 | `maps/`, `maps_extra/` | links: `../murder-mystery-maps/maps`; `hide-n-seek`, `prop-hunt`, `playground` to those games' map packs |
 | `examples/` | `headless_run`, `headless_maps`, `headless_bots`, `headless_net`, `dedicated` |
-| `tools/` | `shot.sh` (render a view: `grace`, `bystander`, `murderer`, `gunner`, `stab`, `shot`, `blood`, `end`, `ragdoll`, `door`, `spots`, `overview`, `room`), `camera_check.sh`, `audio_probe`, `measure_props.gd`, `load_probe.gd` |
+| `tools/` | `shot.sh` (render a view: `cover` the loading cover, `grace`, `bystander`, `murderer`, `gunner`, `stab`, `shot`, `blood`, `end`, `ragdoll`, `door`, `spots`, `overview`, `room`), `camera_check.sh`, `audio_probe`, `measure_props.gd`, `load_probe.gd` |
 
 ## Running and testing
 
@@ -53,6 +53,7 @@ Read the family [CLAUDE.md](../../CLAUDE.md) first; this file is only what is sp
 - **The draw**: murderers by `DotTeamRotation` RANDOM over a history (nobody twice running when anybody else can be), gunners at random from the rest. `forced_roles` overrides it for a suite or an operator; it is empty in play.
 - **A bot knows of a person only by its own eyes and ears** (`MmBots._sees`, the deaths it saw or heard); a murderer bot knows its fellow murderers and nothing else. Never hand a bot the server's truth about roles.
 - People do not collide with people.
+- The client's platform layer (cover, settings, console, Tab, M, pointer, input block) is dot-game's `DotGameClient`, `MmClient.platform`; a suite waits for `platform.is_shown()` and presses Tab through `settings.menu.handle_event`.
 - **Holding still is the `HOLD` modifier in the movement state**, never a timer the game checks, so the client predicts it exactly.
 - **A READY before the player is seated is kept** (`_ready_unseated` in the bridge) and answered by `add_player`; `headless_net` sends it first (armed). [history](docs/history.md)
 - Players and bots are dot-player-char's people (`MmFigure`); the shirt is a colour per person, never a side colour, since sides are secret.
@@ -64,11 +65,10 @@ Read the family [CLAUDE.md](../../CLAUDE.md) first; this file is only what is sp
 - `mm_roles` lists who is what, and answers only the server's own console.
 - `project.godot` carries no comments (the editor drops them). Gravity is `MmConfig.gravity`, written onto the world's own physics space.
 - `MmEvent.MAX_BODY` holds the largest MAP (`MmEvents.MAP_BYTES`); `headless_net` checks it (armed).
-- The dot-game API used is its committed one; the client is `MmClient`, not `DotGameClient` yet, so it reports its cover to the server itself (docs/design.md, "Still loading").
+- The dot-game API used is its committed one; the platform reports the client's cover to the server (docs/design.md, "Still loading").
 
 ## Not yet done
 
 1. **Put it live.** No remote, nothing pushed. dot-server-deploy has no content entries for `murder` or `murder_maps`, and dot-bootstrap's `projects.tsv` does not list this repository or murder-mystery-maps, so neither is linked or deployed by the tools yet.
 2. **Lag compensation is off** (`enable_lag_compensation = false`): a shot is measured against where people are on the server's tick, not where the shooter saw them. dot-net has it; it wants a browser test with real latency first.
-3. **Move to `DotGameClient`** when dot-game's API 8 is committed.
-4. **Play it with people**: the weapon reach, the gun cooldown, the grace and the blood timing are numbers only play settles.
+3. **Play it with people**: the weapon reach, the gun cooldown, the grace and the blood timing are numbers only play settles.

@@ -3,6 +3,7 @@
 #
 #   tools/shot.sh --view=overview --mm-map-ids=mm_mansion         # a map, from above
 #   tools/shot.sh --view=room --at=0,1.7,-6 --look=0,1,-14 --mm-map-ids=mm_motel
+#   tools/shot.sh --view=cover                                    # the loading cover, before it lifts
 #   tools/shot.sh --view=grace                                    # the grace: roles told, weapons away
 #   tools/shot.sh --view=bystander                                # a bystander's eyes, in play
 #   tools/shot.sh --view=murderer                                 # the murderer, weapon drawn
