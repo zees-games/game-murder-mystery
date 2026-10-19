@@ -244,7 +244,7 @@ func _test_map(id: StringName) -> void:
 			strayed.append("%s %d: %s to %s" % [toy.def["id"], toy.index, toy.rest.origin.snapped(Vector3.ONE * 0.1), toy.body.global_position.snapped(Vector3.ONE * 0.1)])
 	_check(strayed.is_empty(), "two seconds on, every toy is still where the map put it", "; ".join(strayed.slice(0, 6)))
 
-	_check(swung_into.is_empty(), "every door swings into free space", "%d doors; %s" % [doors.count(), "; ".join(swung_into.slice(0, 6))])
+	_check(swung_into.is_empty(), "every door swings into free space", "%d doors; %s" % [doors.count(), "; ".join(swung_into.slice(0, 40))])
 	_check(blocked.is_empty(), "every doorway is clear to walk through once its door is open", "; ".join(blocked.slice(0, 6)))
 	await _dispose(game)
 	_finished()
