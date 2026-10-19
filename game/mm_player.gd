@@ -304,7 +304,12 @@ func retune() -> void:
 	if controller == null:
 		return
 
+	# A fresh tunables object has the default mask (the world only), so the layers the game's
+	# physics layout gave this player (furniture, toys' beds) must be carried across: without
+	# this, everybody who was drawn a role walked through every prop.
+	var mask := controller.tunables.collision_mask
 	controller.tunables = tunables_for(config, _speed_scale())
+	controller.set_collision_mask(mask)
 
 	if sampler != null:
 		sampler.tunables = controller.tunables
