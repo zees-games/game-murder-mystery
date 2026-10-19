@@ -293,7 +293,16 @@ func _test_a_round_runs() -> void:
 	var _restored := _run_command("mm_min_players 3")
 
 	_check(_said(_run_command("mm_status"), "round"), "and mm_status still answers")
-	_check(_said(_run_command("mm_roles"), "murderer"), "and mm_roles, on the server's own console, says who the murderer is")
+	# Between rounds nobody has a side (the draw is per round), so the next round must be on: the
+	# stand-ins' round just decided leaves the world idle for its intermission, and asking then
+	# lists nobody as the murderer, which is right.
+	var next_by := game.current_tick() + int((game.config.warmup_seconds + game.config.intermission_seconds + 20.0) * game.tick_rate)
+
+	while game.phase == MmGame.Phase.IDLE and game.current_tick() < next_by:
+		await get_tree().physics_frame
+
+	_check(_said(_run_command("mm_roles"), "murderer"), "and mm_roles, on the server's own console, says who the murderer is",
+		"phase %s: %s" % [game.phase, "; ".join(_run_command("mm_roles"))])
 	_finished()
 
 
@@ -338,7 +347,7 @@ func _test_the_map_vote() -> void:
 	for choice: DotVoteChoice in (vote.get("source") as DotVoteListSource).entries:
 		ids.append(String(choice.id))
 
-	_check(ids.has("hs_apartments") and ids.has("hs_manor"), "it offers the delivered maps", str(ids))
+	_check(ids.has("mm_mansion") and ids.has("mm_motel"), "it offers the delivered maps", str(ids))
 
 	# The map menu's server half (M): the owner's flag changes the map now, anybody else
 	# gets a nomination and a rock-the-vote. Contexts as dot-server makes them for a chat line.
@@ -373,7 +382,7 @@ func _test_the_map_vote() -> void:
 	# maps than places a fixed id is on it some runs and not others.
 	var offered := director.ballot.option_ids() if director.ballot != null else []
 	var maps_offered := offered.filter(func(id: StringName) -> bool: return String(id).begins_with("mm_"))
-	var choice: StringName = &"hs_manor" if offered.has(&"hs_manor") or maps_offered.is_empty() else StringName(maps_offered[0])
+	var choice: StringName = &"mm_mansion" if offered.has(&"mm_mansion") or maps_offered.is_empty() else StringName(maps_offered[0])
 	var cast := director.cast_one(&"7", choice)
 	# Everybody has voted; the director closes on its next advance, which is the server's tick.
 	director.advance(0.05)
