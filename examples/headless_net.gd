@@ -25,8 +25,8 @@ const MmRequest := preload("../game/net/mm_request.gd")
 ##
 ## Sections and checks are both counted; mg-smash-copter's notes say why the second matters.
 
-const SECTIONS := 14
-const CHECKS := 82
+const SECTIONS := 15
+const CHECKS := 86
 
 const CLIENT_PEER := 7
 const SESSION := 42
@@ -87,6 +87,7 @@ func _run() -> void:
 		await _test_a_shot_crosses()
 		await _test_the_round_ends()
 		await _test_a_shot_is_rewound()
+		await _test_a_lagged_shot_over_the_link()
 		await _test_the_toys_cross()
 		await _test_a_client_without_the_map()
 		await _test_leaving()
@@ -513,6 +514,68 @@ func _test_a_shot_is_rewound() -> void:
 		"and it was a murderer, so the gunner lives")
 	_check(_server_game.max_unlag_ms == 1000.0 and _server_game._rewind_to == -1.0, "the rewind is put back after a shot")
 	gunner.view_lag = -1.0
+	_finished()
+
+
+## The same claim end to end: the client's own command carries the lag it measured from its
+## interpolation and the input lead, the server reads it off the wire, and a shot aimed at where
+## the client DREW a moving murderer hits it. With the rewind off, or capped to nothing, the same
+## shot at the same drawn position misses, because the target has moved on by the lag.
+func _test_a_lagged_shot_over_the_link() -> void:
+	_section("a shot aimed at what the client drew hits over the link, and not without the rewind")
+	await _into_play({_me(): &"gunner", _stand_in.player_id: &"murderer", _second.player_id: &"murderer"})
+	var me := _server_me()
+	var target := _stand_in
+	_second.place_at(LIVING, 0.0)
+	me.place_at(KITCHEN_B, 0.0)
+	var z := -3.5
+	var dz := 0.12
+	await _steps(30)
+
+	var results: Array = []
+	var lags: Array = []
+
+	# Three trials: the present only, a cap of half a tick, and the full limit.
+	for limit in [0.0, 1000.0 * 0.5 / float(SERVER_TICK_RATE), 1000.0]:
+		_server_game.max_unlag_ms = limit
+		me.has_gun = true
+		me.gun_banned = false
+		me.ready_at = 0.0
+		target.place_at(Vector3(KITCHEN_A.x, 0.05, z), 0.0)
+		# Walk it across the kitchen at a run so a few ticks of lag are a body's width.
+		for _i in range(24):
+			z += dz
+			if z > -1.5 or z < -3.5:
+				dz = -dz
+			target.place_at(Vector3(KITCHEN_A.x, 0.05, z), 0.0)
+			await _step()
+
+		var drawn_node: Node3D = _client_game.players[target.player_id]
+		var seen := drawn_node.global_position + Vector3(0.0, 1.0, 0.0)
+		var fire := _aim_at(_mine(), seen)
+		fire.buttons |= MmPlayer.ATTACK_BUTTON
+		# One tick down, then released, with the target still walking.
+		z += dz
+		target.place_at(Vector3(KITCHEN_A.x, 0.05, z), 0.0)
+		var heard := -1.0
+		await _step(fire)
+		for _i in range(INPUT_LEAD + 6):
+			z += dz
+			if z > -1.5 or z < -3.5:
+				dz = -dz
+			target.place_at(Vector3(KITCHEN_A.x, 0.05, z), 0.0)
+			await _step()
+			heard = maxf(heard, me.view_lag)
+		results.append(not target.is_alive())
+		lags.append(heard)
+		if not target.is_alive():
+			break
+
+	_check(float(lags[0]) >= 1.0, "the server read the lag the client measured off its command", str(lags))
+	_check(not results[0], "judged on the present, the shot at the drawn body misses", str(results))
+	_check(results.size() > 1 and not results[1], "a cap of half a tick is no better", str(results))
+	_check(results.size() > 2 and results[2], "with the limit open, the same shot kills it", "%s lag %s" % [results, lags])
+	_server_game.max_unlag_ms = 1000.0
 	_finished()
 
 
