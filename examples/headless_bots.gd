@@ -83,12 +83,17 @@ func _run() -> void:
 	if at >= 0 and at + 1 < args.size():
 		first = maxi(0, int(args[at + 1]))
 
+	var only := ""
+	at = args.find("--map")
+	if at >= 0 and at + 1 < args.size():
+		only = args[at + 1]
+
 	var linked := DirAccess.dir_exists_absolute(ProjectSettings.globalize_path("res://maps"))
 	var results: Array[Dictionary] = []
 
 	_section("%d rounds of stand-ins at %s%s" % [rounds, difficulty, "" if linked else " (no maps/: the practice house)"])
 	for r in range(first, first + rounds):
-		var map_id: String = MAPS[(r / 2) % MAPS.size()] if linked else "mm_practice"
+		var map_id: String = only if only != "" else (MAPS[(r / 2) % MAPS.size()] if linked else "mm_practice")
 		var result := await _round(map_id, r, difficulty)
 		results.append(result)
 		print("  round %2d %-12s %-9s in %5.1f s  dead %d of %d  first kill %5.1f s  draws %d stabs %d shots %d fetched %d lines %d  spread %4.1f m  stuck %4.1f s" % [

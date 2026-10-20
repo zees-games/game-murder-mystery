@@ -10,7 +10,7 @@
 | `examples/headless_net` | over a loopback, in two physics worlds: the codec, the join, the map; roles secret (the client is told its own and nobody else's, the murderer is a bystander to it, a holstered weapon is not seen and a drawn one is, a gun in a hand is); prediction against the server and a door; a stab crossing as a death by nobody with no spectate killer; a miss, the drop and a pickup; the round's end naming the murderer; toys; a client without the map |
 | `examples/dedicated` | a real server: the module, the console (`mm_status`, `mm_maps`, cvars writing through), a round played by stand-ins, the bot quota, the map vote, `mm_roles` on the server's console |
 
-`-- --rounds N`, `-- --first N`, `-- --difficulty hard` and `MM_BOTS_TRACE=1` steer `headless_bots`; its bands are first measurements, widened only with a reason written beside them.
+`-- --rounds N`, `-- --first N`, `-- --map ID` (every round on one map), `-- --difficulty hard` and `MM_BOTS_TRACE=1` steer `headless_bots`; its bands are first measurements, widened only with a reason written beside them.
 
 ## Rules
 
