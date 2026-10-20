@@ -974,6 +974,29 @@ func _test_the_client() -> void:
 		# with the floor; seen at facings with nothing within 2 m ahead), so it is dot-player-char's
 		# to fix (nightly ragdoll-faceplant-upright-1). A body that has a wall ahead is excused.
 		# This stays armed: a game whose falls all stay up, or a fix that makes none, shows here.
+		# Where the sweep stands is picked for clear floor, not taken as seat 0: seat 0 of the
+		# practice house has a seat cushion and a table edge a third of a metre ahead, and a body
+		# that falls across a 0.3-0.5 m solid ends up draped over it (centre 1.1 m, one arm on the
+		# floor, settled, six parts): lying down, but not by this check's bounds, and whether it
+		# fell on the cushion or beside it differed run to run (one full run in about three).
+		var sweep_spot: Vector3 = spot[0]
+		var best_clear := -1.0
+		var sweep_state := world.get_world_3d().direct_space_state
+		for seat in 12:
+			var cand: Vector3 = (world.map.spawn(MmGame.SPAWN_GROUP, seat))[0]
+			var clear := 2.0
+			for dir in 8:
+				var way := Vector3.FORWARD.rotated(Vector3.UP, float(dir) * PI / 4.0)
+				for h in [0.15, 0.45, 0.9, 1.5]:
+					var from: Vector3 = cand + Vector3.UP * h
+					var hit_c := sweep_state.intersect_ray(PhysicsRayQueryParameters3D.create(from, from + way * 2.0, 0xffff))
+					if not hit_c.is_empty():
+						clear = minf(clear, from.distance_to(hit_c["position"] as Vector3))
+			if clear > best_clear:
+				best_clear = clear
+				sweep_spot = cand
+			if clear >= 2.0:
+				break
 		var upright := 0
 		var excused := 0
 		var detail_up: Array[String] = []
@@ -981,7 +1004,7 @@ func _test_the_client() -> void:
 		for s in sweep_n:
 			ragdolls.clear()
 			victim.figure.visible = true
-			victim.place_at(spot[0], float(s % 4) * 45.0)
+			victim.place_at(sweep_spot, float(s % 4) * 45.0)
 			for i in 4:
 				await get_tree().physics_frame
 			var d := DotPlayerDeath.decide(world.ragdoll_rules.reactions(), false, 0.0, Vector3.ZERO,
@@ -1001,20 +1024,25 @@ func _test_the_client() -> void:
 				c + Vector3.UP * 0.3, c + Vector3.DOWN * 6.0,
 				world.physics.layer_mask(&"world") | world.physics.layer_mask(&"prop")))
 			var gy := (gh["position"] as Vector3).y if not gh.is_empty() else -INF
-			if c.y - gy < 0.8 and b.lowest_point() - gy > -0.25:
+			# "Through the floor" is judged against the floor, not against whatever is under the
+			# centre: a body lying across a 0.3 m solid by the seat has an arm on the floor and the
+			# ray from its middle lands on the solid, so lowest-gy read -0.30 and a body that was
+			# plainly lying down failed one run in several (lowest 0.00, settled, 6 parts, landed).
+			var floor_y := minf(gy, sweep_spot.y)
+			if c.y - gy < 0.8 and b.lowest_point() - floor_y > -0.25:
 				continue
 			var blocked := false
-			for h in [0.3, 0.9, 1.5]:
-				var at: Vector3 = spot[0] + Vector3.UP * h
+			for h in [0.15, 0.45, 0.9, 1.5]:
+				var at: Vector3 = sweep_spot + Vector3.UP * h
 				blocked = blocked or not world.get_world_3d().direct_space_state.intersect_ray(
 					PhysicsRayQueryParameters3D.create(at, at + fwd * 2.0, 0xffff)).is_empty()
 			if blocked:
 				excused += 1
 			else:
 				upright += 1
-				detail_up.append("%d: centre.y=%.2f lowest=%.2f ground=%.2f" % [s, c.y, b.lowest_point(), gy])
+				detail_up.append("%d: centre.y=%.2f lowest=%.2f ground=%.2f settled=%s hit=%s %s" % [s, c.y, b.lowest_point(), gy, str(b.settled), str(gh.get("collider")), b.describe()])
 		_check(upright == 0, "a face plant with nobody pushing lies down at %d facings (a wall ahead excused)" % sweep_n,
-			"%d stayed up, %d excused: %s" % [upright, excused, str(detail_up)])
+			"%d stayed up, %d excused, clear %.2f m at %s: %s" % [upright, excused, best_clear, str(sweep_spot), str(detail_up)])
 	else:
 		for k in 3:
 			_check(false, "a stand-in drawn to slay")
