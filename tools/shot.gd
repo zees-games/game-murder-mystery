@@ -76,6 +76,15 @@ func _run() -> void:
 	var game: MmGame = _client.get("game")
 	await _until_a_round(game)
 	var local: MmPlayer = _client.get("player")
+	# The load gate's cover hides the world until the camera, the players and the warm-up are in:
+	# a frame saved under it is the cover, so wait for it to lift (a free camera is not the game's).
+	var gate: DotLoadGate = _client.get("gate")
+	for _i in range(1800):
+		if gate == null or gate.is_open():
+			break
+		await get_tree().process_frame
+	if gate != null and not gate.is_open():
+		print("the load gate is still closed, held by %s" % [gate.reasons()])
 
 	# The person at this keyboard in the role the view is about, and the stand-ins drawn round
 	# them, one of them the murderer when this one is not. Through a fresh draw, so the HUD
