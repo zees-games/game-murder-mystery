@@ -15,8 +15,8 @@ const MmPlayer := preload("../game/mm_player.gd")
 ## [DotGameModule]'s order runs, a cvar is typed at a console and a round is played by
 ## nothing but the stand-ins the module seats itself.
 
-const SECTIONS := 12
-const CHECKS := 76
+const SECTIONS := 14
+const CHECKS := 96
 
 const SERVER_DIR := "user://mm_dedicated"
 const PORT := 28931
@@ -57,6 +57,8 @@ func _run() -> void:
 		await _test_a_round_runs()
 		await _test_a_reload_keeps_delivered_maps()
 		await _test_the_map_vote()
+		await _test_map_rotation_file()
+		_test_round_sentence_grammar()
 		_test_finish_round_waits_for_a_live_round()
 		await _test_a_module_reload_keeps_one_link()
 		await _test_loading_cover()
@@ -91,6 +93,114 @@ func _run() -> void:
 	await _shut_down()
 	DotPaths.remove_tree(SERVER_DIR)
 	get_tree().quit(code)
+
+
+## maps.yml on the live module: a map outside the active rotation stays installed and is never
+## drawn or balloted; a rotation switch takes effect; a renamed command exists; no file changes
+## nothing.
+func _test_map_rotation_file() -> void:
+	_section("maps.yml")
+	var module := _module()
+	var vote: Node = module.get("vote") if module != null else null
+	_check(vote != null and vote.get("director") != null, "the game has a vote")
+	if vote == null or vote.get("director") == null:
+		_finished()
+		return
+
+	game.config.map_ids = PackedStringArray()
+	var kept_file: DotMapRotationFile = game.rotation_file
+	_check(server.console.find_cvar("sv_map_rotation_file") != null, "sv_map_rotation_file is a cvar")
+
+	var built := DotMapRotationFile.from_trees([{"defaults": {
+		"rotation": "main",
+		"rotations": {
+			"main": {"mode": "cycle", "cooldown": 0, "maps": ["mm_mansion"]},
+			"alt": {"maps": ["mm_motel"]},
+		},
+		"commands": {"names": {"rtv": "rockthevote", "mm_maps": "maplist"}},
+	}}], "game-murder-mystery")
+	_check(built.ok, "a maps.yml with two rotations and renamed commands parses",
+		"" if built.ok else built.error.message)
+	if not built.ok:
+		_finished()
+		return
+
+	game.rotation_file = built.value
+	game.apply_rotation()
+	vote.call("refresh_maps")
+
+	_check(game.in_rotation(&"mm_mansion") and not game.in_rotation(&"mm_motel"),
+		"the active rotation puts mm_motel out and mm_mansion in")
+	_check(game.catalogue.maps.has(&"mm_motel"), "and mm_motel stays installed")
+
+	var drew_motel := false
+	for i in 60:
+		var doc := game.catalogue.next_map(game.config.map_ids, true, game.random.stream(&"map"),
+			&"", game.rotation_pool())
+		drew_motel = drew_motel or str(doc.get("id", "")) == "mm_motel"
+	_check(not drew_motel and game.rotation_pool() == [&"mm_mansion"],
+		"60 draws of the next map never choose a map outside the rotation", str(game.rotation_pool()))
+
+	var ids: Array = []
+	for choice: DotVoteChoice in (vote.get("source") as DotVoteListSource).entries:
+		ids.append(String(choice.id))
+	_check(not ids.has("mm_motel") and ids.has("mm_mansion"),
+		"a map outside the rotation is not on the ballot, one inside is", str(ids))
+
+	var listed := _run_command("mm_maps")
+	_check(_said(listed, "(not in rotation)"),
+		"the map list marks maps that are not in rotation", str(listed))
+	var rows := game.map_rows().filter(func(r: Dictionary) -> bool: return r["id"] == "mm_motel")
+	_check(rows.size() == 1 and str(rows[0]["detail"]).contains("not in rotation"),
+		"and so does the map menu, which still lists it")
+	_check(game.catalogue.playable(game.config.map_ids).has(&"mm_motel"),
+		"an out-of-rotation map can still be played by name")
+
+	var switched := game.rotation_file.switch(game.map_rotation, "alt")
+	game.apply_rotation()
+	_check(switched.ok and game.in_rotation(&"mm_motel") and not game.in_rotation(&"mm_mansion"),
+		"switching to the alt rotation takes effect")
+	_check(not game.rotation_file.switch(game.map_rotation, "nope").ok, "an unknown rotation is refused")
+
+	var rtv := DotVoteCommands.new()
+	rtv.director = vote.get("director")
+	rtv.spec_fn = game.rotation_commands
+	var bound := rtv.bind(server.console)
+	_check(bound.ok and rtv.command_name("rtv") == "rockthevote"
+		and server.console.find_command("rockthevote") != null,
+		"a renamed rtv command is registered from maps.yml's commands")
+	_check(DotCommandNames.all_of("", module.call("_renames", game), {}, "mm_maps")[0] == "maplist",
+		"mm_maps answers to the name the file gives it")
+
+	# No file again: everything back in, as before maps.yml.
+	game.rotation_file = null
+	game.apply_rotation()
+	vote.call("refresh_maps")
+	_check(game.in_rotation(&"mm_motel") and game.in_rotation(&"mm_mansion") and game.rotation_pool().is_empty(),
+		"with no file every map is in rotation again and no pool narrows the draw")
+	_check(game.rotation_commands().is_empty(), "and no command is renamed")
+
+	# A file that names nothing installed must not strand the server.
+	var empty := DotMapRotationFile.from_trees([{"defaults": {"rotations": {"main": {"maps": ["nothing_here"]}}}}],
+		"game-murder-mystery")
+	game.rotation_file = empty.value
+	game.apply_rotation()
+	_check(game.in_rotation(&"mm_motel") and game.in_rotation(&"mm_mansion"),
+		"a rotation that matches nothing plays every installed map")
+
+	game.rotation_file = kept_file
+	game.apply_rotation()
+	vote.call("refresh_maps")
+	_finished()
+
+
+## "You was the murderer" (nightly #1489): a solo player is named "You".
+func _test_round_sentence_grammar() -> void:
+	_section("the round's sentence")
+	_check(MmGame.murderer_verb(PackedStringArray(["Ada"])) == "was", "one named murderer was")
+	_check(MmGame.murderer_verb(PackedStringArray(["You"])) == "were", "\"You\" were, not was")
+	_check(MmGame.murderer_verb(PackedStringArray(["You", "Ada"])) == "were", "two were")
+	_finished()
 
 
 ## Takes the server down before quitting: a booted [DotServer]'s listener holds the main loop,

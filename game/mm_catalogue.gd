@@ -150,9 +150,23 @@ func playable(allowed: PackedStringArray) -> Array[StringName]:
 
 ## The next map: drawn from [param stream] when shuffling, in order otherwise, and never the
 ## same one twice running when there is a choice.
+##
+## [param pool] is maps.yml's rotation (ids, in the file's order): when it holds anything
+## playable, only those are drawn from. Empty, or nothing in it playable, draws from every
+## playable map, because a rotation that empties the server must never leave it stuck.
 func next_map(allowed: PackedStringArray, shuffle: bool, stream: DotRandomStream,
-		previous: StringName) -> Dictionary:
+		previous: StringName, pool: Array[StringName] = []) -> Dictionary:
 	var ids := playable(allowed)
+
+	if not pool.is_empty():
+		var kept: Array[StringName] = []
+
+		for id in pool:
+			if ids.has(id):
+				kept.append(id)
+
+		if not kept.is_empty():
+			ids = kept
 
 	if ids.is_empty():
 		DotLog.warn(CHANNEL, "no map matches the allowed list; playing practice", {
@@ -174,13 +188,16 @@ func next_map(allowed: PackedStringArray, shuffle: bool, stream: DotRandomStream
 	return maps[pick]
 
 
-func describe_lines() -> PackedStringArray:
+## [param in_rotation_fn]: `(id) -> bool`; a map it refuses (maps.yml leaves it out) is marked.
+func describe_lines(in_rotation_fn: Callable = Callable()) -> PackedStringArray:
 	var lines := PackedStringArray(["maps (%d)" % maps.size()])
 
 	for id in _order:
 		var doc: Dictionary = maps[id]
-		lines.append("  %-22s %-28s %4d props  %s" % [
+		var out_of := in_rotation_fn.is_valid() and not bool(in_rotation_fn.call(id))
+		lines.append("  %-22s %-28s %4d props  %s%s" % [
 			id, str(doc["name"]), (doc["props"] as Array).size(), str(doc["author"]),
+			"  (not in rotation)" if out_of else "",
 		])
 
 	if not refused.is_empty():

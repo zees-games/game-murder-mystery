@@ -129,6 +129,13 @@ extends DotConfig
 @export_range(1, 50, 1) var rounds_per_map: int = 3
 @export var map_directory: String = "maps"
 
+## The file that says which installed maps ROTATE: `cfg/maps.yml`, layered over the game's
+## shipped `res://maps.yml` (dot-map's `DotMapRotationFile`: named rotations, `random` or
+## `cycle`, wildcards, command names). Empty, or no such file, rotates every map. A map the
+## active rotation leaves out stays installed (`mm_map <id>` and the map menu load it); it is
+## only never drawn, balloted or nominated. `sv_map_rotation_file`.
+@export var map_rotation_file: String = "cfg/maps.yml"
+
 ## Where the other games' map packs are mounted, one directory per pack under it. Hide & Seek,
 ## Prop Hunt and Playground documents are read there and converted (see mm_map_doc.gd).
 @export var extra_map_directory: String = "maps_extra"

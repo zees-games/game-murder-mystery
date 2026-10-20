@@ -157,9 +157,30 @@ func _game_load() -> DotResult:
 	add_command("mm_status", _cmd_status, "Show the round, the map and who is alive")
 	add_command("mm_roles", _cmd_roles, "Show who is what this round (the operator's console only)")
 	add_command("mm_net", _cmd_net, "Show what the netcode is doing")
-	add_command("mm_maps", _cmd_maps, "List the maps, and any refused file")
-	add_command("mm_reload", _cmd_reload, "Read the map directory again (from the next map)")
-	add_command("mm_map", _cmd_map, "Play a map next: mm_map <id> (at the end of this round)", "")
+	var _rotation := world.load_rotation()
+	add_cvar(
+		"sv_map_rotation_file", world.config.map_rotation_file,
+		"maps.yml: the maps that rotate, in named rotations. Unlisted maps stay installed."
+	).changed.connect(
+		func(_old: String, new_value: String) -> void:
+			world.config.map_rotation_file = new_value.strip_edges()
+			var _read := world.load_rotation()
+			if vote != null:
+				vote.refresh_maps()
+	)
+	# This game's own map commands are renameable from maps.yml's `commands:` block like
+	# dot-vote's and dot-map's: roles `mm_maps`, `mm_reload`, `mm_map`, no prefix.
+	for entry: Array in [
+		["mm_maps", _cmd_maps, "List the maps, and any refused file", null],
+		["mm_reload", _cmd_reload, "Read the map directory again (from the next map)", null],
+		["mm_map", _cmd_map, "Play a map next: mm_map <id> (at the end of this round)", ""],
+	]:
+		var names := DotCommandNames.all_of("", _renames(world), {}, entry[0])
+		for typed_name in names:
+			if entry[3] == null:
+				add_command(typed_name, entry[1], entry[2])
+			else:
+				add_command(typed_name, entry[1], entry[2], entry[3])
 	add_command("mm_say", _cmd_say, "Say something to everybody, as the server")
 
 	_wire_chat()
@@ -209,6 +230,7 @@ func _game_load() -> DotResult:
 	# is ever told about. Invisible floors: a player stands on nothing and the server says they
 	# are fine.
 	var _delivered: int = await _add_delivered_maps(world)
+	var _rotation_again := world.load_rotation()
 
 	# The vote was built above, before these arrived; read without them, its list held only
 	# the practice map and never opened a ballot. mm_reload refreshes it the same way.
@@ -619,6 +641,9 @@ func _build_vote(world: MmGame) -> void:
 		var out: Array = []
 
 		for id in world.catalogue.playable(world.config.map_ids):
+			# maps.yml's rotation decides the ballot; a map it leaves out is still installed.
+			if not world.in_rotation(id):
+				continue
 			out.append([id, str((world.catalogue.maps.get(id, {}) as Dictionary).get("name", id))])
 
 		return out
@@ -686,6 +711,7 @@ func _build_vote(world: MmGame) -> void:
 		vote = null
 		return
 
+	vote.commands_spec_fn = world.rotation_commands
 	var commanded := vote.install_commands(self)
 	DotLog.result(CHANNEL, "the map vote's commands", commanded)
 
@@ -858,6 +884,11 @@ func _cmd_net(ctx: DotCmdContext) -> void:
 		ctx.reply_lines(services.call("describe_lines"))
 
 
+## maps.yml's `names:` for this game's own commands, role to name or list of names.
+func _renames(world: MmGame) -> Dictionary:
+	return (world.rotation_commands().get("names", {}) as Dictionary)
+
+
 func _cmd_maps(ctx: DotCmdContext) -> void:
 	var world := game as MmGame
 
@@ -865,7 +896,7 @@ func _cmd_maps(ctx: DotCmdContext) -> void:
 		ctx.reply("No world.")
 		return
 
-	ctx.reply_lines(world.catalogue.describe_lines())
+	ctx.reply_lines(world.catalogue.describe_lines(world.in_rotation))
 	ctx.reply("playing: %s" % str(world.map_doc.get("id", "-")))
 
 
@@ -894,6 +925,7 @@ func _cmd_reload(ctx: DotCmdContext) -> void:
 
 	var loaded := world.catalogue.load_from(world.config.map_directory)
 	loaded += await _add_delivered_maps(world)
+	var _rotation := world.load_rotation()
 
 	if vote != null:
 		vote.refresh_maps()

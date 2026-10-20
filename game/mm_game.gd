@@ -278,6 +278,7 @@ func _ready() -> void:
 		# Solo in the client shell: the map packs it mounted for this game.
 		for root in solo_map_dirs("maps"):
 			var _added := catalogue.add_directory(root)
+		var _rotation := load_rotation()
 		# Laid out now, not on the first round: a warmup on an empty world is
 		# indistinguishable from a map that failed to load.
 		_lay_out_map()
@@ -992,11 +993,128 @@ func melee_cooldown() -> float:
 	return config.melee_cooldown if config.melee_cooldown > 0.0 else float(MmWeapons.entry(weapon_id())["cooldown"])
 
 
+## "was" or "were" for the names in the sentence that ends a round. A solo player is called
+## "You", which takes "were" as one person: "You were the murderer".
+static func murderer_verb(names: PackedStringArray) -> String:
+	return "was" if names.size() == 1 and names[0] != "You" else "were"
+
+
 static func _names(of: Array[MmPlayer]) -> PackedStringArray:
 	var out := PackedStringArray()
 	for player in of:
 		out.append(player.display_name)
 	return out
+
+
+## The server's maps.yml, or null when there is none (every map rotates, as it always did).
+var rotation_file: DotMapRotationFile = null
+
+## The catalogue as dot-map sees it (one [DotMapDef] per document, rebuilt by
+## [method apply_rotation]) and the rotation over it. This game's own [MmCatalogue] holds
+## documents, not defs; [DotMapRotationFile] marks defs, so the marks live here.
+var map_rotation_defs: DotMapCatalogue = null
+var map_rotation: DotMapRotation = null
+
+
+## Reads maps.yml (the game's shipped `res://maps.yml` under the server's
+## [member MmConfig.map_rotation_file], looked for in the `--config` directory too) and
+## applies it. A file that is present and unreadable is an ERROR and changes nothing: rotating
+## every map is a better failure than rotating none.
+func load_rotation() -> DotResult:
+	var stem := config.map_rotation_file if config != null else ""
+	var dir := DotMapRotationFile.config_dir_arg()
+	var found := DotMapRotationFile.find(stem, dir)
+
+	if found == "" and stem != "" and (dir != "" or stem != MmConfig.new().map_rotation_file):
+		# The default name being absent is an install with no maps.yml; a name or a directory
+		# somebody chose that finds nothing is a typo they would otherwise never hear about.
+		DotLog.warn(CHANNEL, "the map rotation file was not found; every map rotates", {
+			"file": stem, "config_dir": dir,
+		})
+
+	var paths := PackedStringArray()
+	for candidate in ["res://maps.yml", found]:
+		if candidate != "" and not paths.has(candidate) and FileAccess.file_exists(candidate):
+			paths.append(candidate)
+
+	var read := DotMapRotationFile.load_files(paths, "game-murder-mystery")
+
+	if not read.ok:
+		DotLog.error(CHANNEL, "the map rotation file could not be read; every map rotates", {
+			"why": read.error.message,
+		})
+		rotation_file = null
+		apply_rotation()
+		return read
+
+	rotation_file = read.value
+	if rotation_file.has_rotations():
+		DotLog.info(CHANNEL, "the map rotation file", {
+			"paths": ", ".join(rotation_file.sources), "active": rotation_file.active_name(),
+		})
+
+	apply_rotation()
+	return read
+
+
+## Marks every document in or out of rotation from the file. With no file, or one with no
+## rotations, every map is in: what this game did before maps.yml. Rebuilds the defs from the
+## catalogue each time, so a reload or a delivered map is seen.
+func apply_rotation() -> void:
+	if catalogue == null:
+		return
+
+	map_rotation_defs = DotMapCatalogue.new()
+	for id in catalogue.maps:
+		var doc: Dictionary = catalogue.maps[id]
+		var def := DotMapDef.new()
+		def.id = id
+		def.display_name = str(doc.get("name", id))
+		def.scene_path = "doc:%s" % id
+		var _added := map_rotation_defs.add(def)
+
+	map_rotation = DotMapRotation.of(map_rotation_defs)
+	map_rotation.cooldown = 1
+
+	if rotation_file != null and rotation_file.has_rotations():
+		# An empty rotation plays every installed map: the same set as having no file.
+		rotation_file.fallback_in = func(_map: DotMapDef) -> bool: return true
+		var _applied := rotation_file.apply(map_rotation)
+
+
+## Whether maps.yml's active rotation plays [param id]. With no file every map does; with one,
+## a map the catalogue lacks does not.
+func in_rotation(id: StringName) -> bool:
+	if rotation_file == null or not rotation_file.has_rotations():
+		return true
+
+	var def: DotMapDef = map_rotation_defs.get_map(id) if map_rotation_defs != null else null
+
+	return def != null and def.in_rotation
+
+
+## The ids the next-map draw may pick, in the file's order; empty with no file (every map).
+func rotation_pool() -> Array[StringName]:
+	var out: Array[StringName] = []
+
+	if rotation_file == null or not rotation_file.has_rotations() or map_rotation == null:
+		return out
+
+	var ordered: Array[StringName] = map_rotation.order.duplicate()
+	for id in catalogue.playable(config.map_ids):
+		if not ordered.has(id) and in_rotation(id):
+			ordered.append(id)
+
+	for id in ordered:
+		if in_rotation(id):
+			out.append(id)
+
+	return out
+
+
+## maps.yml's `commands:` block (prefix and names), or empty with no file.
+func rotation_commands() -> Dictionary:
+	return rotation_file.commands() if rotation_file != null else {}
 
 
 ## The next map, built.
@@ -1010,8 +1128,11 @@ func map_rows() -> Array:
 	var now := StringName(str(map_doc.get("id", "")))
 	for id in catalogue.playable(config.map_ids):
 		var doc: Dictionary = catalogue.maps.get(id, {})
+		var blurb := str(doc.get("blurb", ""))
+		if not in_rotation(id):
+			blurb = ("%s (not in rotation)" % blurb).strip_edges()
 		var row := {"id": String(id), "name": str(doc.get("name", id)), "current": id == now,
-			"detail": str(doc.get("blurb", ""))}
+			"detail": blurb}
 		if doc.has("thumbnail"):
 			row["thumbnail"] = str(doc["thumbnail"])
 		out.append(row)
@@ -1045,9 +1166,13 @@ func _lay_out_map() -> void:
 	next_map_id = &""
 
 	if doc.is_empty():
+		# A map installed since the file was read may match it now.
+		apply_rotation()
+		var cycling := rotation_file != null and rotation_file.has_rotations() \
+			and map_rotation != null and map_rotation.mode == DotMapRotation.Mode.SEQUENTIAL
 		doc = catalogue.next_map(
-			config.map_ids, config.shuffle_maps, random.stream(&"map"),
-			StringName(str(map_doc.get("id", "")))
+			config.map_ids, config.shuffle_maps and not cycling, random.stream(&"map"),
+			StringName(str(map_doc.get("id", ""))), rotation_pool()
 		)
 
 	var _built := build_map(doc)
@@ -1185,7 +1310,7 @@ func _decide(winner: int, why: String) -> void:
 
 	if not revealed.is_empty():
 		told += "; %s %s the murderer%s" % [
-			", ".join(revealed), "was" if revealed.size() == 1 else "were", "" if revealed.size() == 1 else "s"]
+			", ".join(revealed), murderer_verb(revealed), "" if revealed.size() == 1 else "s"]
 
 	_winner_name = told
 
