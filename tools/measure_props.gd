@@ -72,7 +72,7 @@ func _initialize() -> void:
 			var pieces := DotPropPieces.measure(node, Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * scale), offset))
 			node.free()
 
-			props.append({
+			var entry := {
 				"id": id,
 				"title": str(titles.get(model, _title(model))),
 				"kit": str(kit["id"]),
@@ -83,7 +83,11 @@ func _initialize() -> void:
 				# position and its base is on the floor.
 				"offset": offset_xyz,
 				"disguise": not fixed.has(model),
-			})
+			}
+			var breaks := _breaks_for(model, kit)
+			if breaks > 0.0:
+				entry["breaks"] = breaks
+			props.append(entry)
 
 			if not pieces.is_empty():
 				shaped[id] = DotPropPieces.encode(pieces)
@@ -201,6 +205,15 @@ static func _scale_for(model: String, kit: Dictionary) -> float:
 	return float(kit.get("scale", 1.0))
 
 
+## How hard a prop is to break (kits.json `breaks`, by model name or pattern), 0 for one that does not.
+static func _breaks_for(model: String, kit: Dictionary) -> float:
+	var breaks: Dictionary = kit.get("breaks", {})
+	for pattern: String in breaks:
+		if model.match(pattern):
+			return float(breaks[pattern])
+	return 0.0
+
+
 static func _r(value: float) -> float:
 	return snappedf(value, 0.001)
 
@@ -211,7 +224,8 @@ static func _snake(name: String) -> String:
 		var c := name[i]
 		if c == c.to_upper() and c != c.to_lower() and i > 0 and name[i - 1] != "_":
 			out += "_"
-		out += c.to_lower()
+		# A file named cutting-board is the id cutting_board: ids are snake case, never hyphenated.
+		out += "_" if c == "-" else c.to_lower()
 	return out
 
 

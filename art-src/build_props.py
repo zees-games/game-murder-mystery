@@ -1,4 +1,4 @@
-"""Rebuilds ten of the furniture models under assets/props/furniture/ for game-murder-mystery.
+"""Rebuilds twenty-two of the furniture models under assets/props/furniture/ for game-murder-mystery.
 
 Run:  blender -b -P art-src/build_props.py -- [name ...] [--out DIR]
 Bases: art-src/base/<name>.glb, Kenney's Furniture Kit (CC0, see assets/props/furniture/LICENSE-kenney-furniture-kit.txt).
@@ -55,11 +55,16 @@ def palette():
     PAL["terracotta"] = mat("terracotta", (0.42, 0.14, 0.07), 0.0, 0.8)
     PAL["soil"] = mat("soil", (0.02, 0.012, 0.008), 0.0, 1.0)
     PAL["plant"] = mat("plant", (0.07, 0.3, 0.09), 0.0, 0.6)
+    PAL["porcelain"] = mat("porcelain", (0.62, 0.6, 0.54), 0.0, 0.18)
+    PAL["linen"] = mat("linen", (0.5, 0.46, 0.38), 0.0, 0.9)
+    PAL["shade"] = mat("shade", (0.55, 0.38, 0.17), 0.0, 0.8)
+    PAL["screen"] = mat("screen", (0.008, 0.01, 0.014), 0.2, 0.08)
     PAL["blotter"] = mat("blotter", (0.02, 0.17, 0.07), 0.0, 0.7)
 
 # Kit material name -> ours.
 SWAP = {"wood": "walnut", "woodDark": "walnutDark", "metal": "brass", "metalMedium": "gunmetal",
-        "metalDark": "gunmetalDark", "carpet": "velvet", "plant": "plant", "_defaultMat": "walnut"}
+        "metalDark": "gunmetalDark", "carpet": "velvet", "plant": "plant", "_defaultMat": "walnut",
+        "carpetWhite": "porcelain", "metalLight": "steel", "lamp": "shade"}
 
 def meshes():
     return [o for o in bpy.data.objects if o.type == "MESH"]
@@ -68,12 +73,18 @@ def world_box(objs):
     pts = [o.matrix_world @ Vector(c) for o in objs for c in o.bound_box]
     return Vector(min(p[i] for p in pts) for i in range(3)), Vector(max(p[i] for p in pts) for i in range(3))
 
-OVERRIDES = {"cardboardBoxClosed": {"wood": "kraft", "woodDark": "kraftDark"}, "trashcan": {"metal": "steel", "metalDark": "gunmetalDark"}}
+OVERRIDES = {"bedSingle": {"carpetWhite": "linen", "carpet": "velvet"}, "stoolBar": {"carpet": "leather"},
+             "rugDoormat": {"wood": "kraftDark"}, "toilet": {"_defaultMat": "walnutDark"},
+             "bathroomSink": {"_defaultMat": "porcelain"}, "televisionModern": {"metal": "gunmetal", "metalDark": "screen"},
+             "lampRoundTable": {"metal": "brass"}, "showerRound": {"_defaultMat": "porcelain", "metalDark": "steel"},
+"cardboardBoxClosed": {"wood": "kraft", "woodDark": "kraftDark"}, "trashcan": {"metal": "steel", "metalDark": "gunmetalDark"}}
 
 def reskin(o, overrides=None):
     overrides = overrides or {}
     for i, s in enumerate(o.material_slots):
         k = s.material.name.split(".")[0]
+        if k == "glass":
+            continue  # the shower's glass keeps its own transparent material
         o.material_slots[i].material = PAL[overrides.get(k, SWAP.get(k, "walnut"))]
 
 def bevel(o, width=0.004):
@@ -277,6 +288,127 @@ def do_trashcan(by):
         add_torus(o, (c.x, c.y, lo.z + (hi.z - lo.z) * f), r * 0.96, 0.005, "gunmetal")
     add_cyl(o, (c.x, c.y, lo.z + 0.006), r * 0.9, 0.012, "gunmetal")
 
+def do_rugDoormat(by):
+    o = by["rugDoormat(Clone)"]
+    lo, hi = world_box([o])
+    z = hi.z
+    m = 0.022
+    for y in (lo.y + m, hi.y - m):
+        add_box(o, (lo.x + m, y - 0.006, z - 0.002), (hi.x - m, y + 0.006, z + 0.0004), "red")
+    for x in (lo.x + m, hi.x - m):
+        add_box(o, (x - 0.006, lo.y + m, z - 0.002), (x + 0.006, hi.y - m, z + 0.0004), "red")
+    for i in range(7):
+        x = lo.x + 0.08 + i * (hi.x - lo.x - 0.16) / 6
+        add_box(o, (x - 0.004, lo.y + 0.05, z - 0.002), (x + 0.004, hi.y - 0.05, z + 0.0004), "walnutDark")
+
+def do_bedSingle(by):
+    o, cover, pillow = by["bedSingle(Clone)"], by["cover"], by["pillow"]
+    lo, hi = world_box([o])
+    clo, chi = world_box([cover])
+    plo, phi = world_box([pillow])
+    # A brass trim band across the blanket and a folded-back linen edge at the pillow end.
+    add_box(cover, (clo.x - 0.002, clo.y + 0.30, chi.z - 0.004), (chi.x + 0.002, clo.y + 0.32, chi.z + 0.002), "brass")
+    add_box(cover, (clo.x - 0.002, chi.y - 0.09, chi.z - 0.004), (chi.x + 0.002, chi.y - 0.0, chi.z + 0.003), "linen")
+    for x in (lo.x + 0.012, hi.x - 0.012):
+        add_sphere(o, (x, hi.y - 0.012, hi.z - 0.012), 0.012, "brass")
+    add_box(pillow, (plo.x + 0.03, plo.y + 0.02, phi.z - 0.003), (phi.x - 0.03, phi.y - 0.02, phi.z + 0.0), "paper")
+
+def do_bookcaseClosed(by):
+    o = by["bookcaseClosed(Clone)"]
+    lo, hi = world_box([o])
+    lv = sorted(z for z, a in top_levels(o) if z < hi.z - 0.05)
+    for i, z in enumerate(lv):
+        nxt = next((n for n in lv if n > z + 0.05), None)
+        under = (nxt - 0.02) if nxt else hi.z - 0.02
+        gap = under - z
+        if gap > 0.06:
+            books(o, Vector((lo.x + 0.03, lo.y + 0.04, 0)), Vector((hi.x - 0.03, hi.y - 0.03, 0)), z, gap, 21 + i)
+    add_box(o, (lo.x, lo.y, lo.z), (hi.x, hi.y, lo.z + 0.03), "walnutDark")
+    add_box(o, (lo.x - 0.0, lo.y - 0.004, hi.z - 0.018), (hi.x, hi.y, hi.z), "brass")
+
+def do_stoolBar(by):
+    o = by["stoolBar(Clone)"]
+    lo, hi = world_box([o])
+    c = (lo + hi) / 2
+    for z in (lo.z + 0.12,):
+        pass
+    add_torus(o, (c.x, c.y, hi.z - 0.03), 0.095, 0.006, "brass")
+    add_cyl(o, (c.x, c.y, hi.z - 0.003), 0.03, 0.004, "brass", verts=12)
+    for x in (0.076, 0.189):
+        for y in (0.061, 0.169):
+            add_cyl(o, (x, y, lo.z + 0.004), 0.016, 0.008, "gunmetalDark", verts=8)
+
+def do_lampRoundTable(by):
+    o = by["lampRoundTable(Clone)"]
+    lo, hi = world_box([o])
+    c = Vector(((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, 0))
+    c.x, c.y = 0.06, 0.06
+    add_cyl(o, (c.x, c.y, lo.z + 0.012), 0.032, 0.01, "brass", verts=12)
+    add_sphere(o, (c.x, c.y, lo.z + 0.09), 0.016, "brass", 1.0)
+    add_torus(o, (c.x, c.y, hi.z - 0.003), 0.052, 0.004, "brass")
+    add_torus(o, (c.x, c.y, hi.z * 0.55), 0.068, 0.004, "brass")
+
+def do_toilet(by):
+    o, cover = by["toilet(Clone)"], by["cover"]
+    lo, hi = world_box([o])
+    clo, chi = world_box([cover])
+    c = (lo.x + hi.x) / 2
+    add_cyl(o, (c, hi.y - 0.05, hi.z - 0.002), 0.016, 0.012, "steel", verts=10)
+    for x in (c - 0.07, c + 0.07):
+        add_cyl(cover, (x, clo.y + 0.03, chi.z + 0.003), 0.008, 0.008, "steel", verts=8)
+
+def do_bathroomSink(by):
+    o = by["bathroomSink(Clone)"]
+    lo, hi = world_box([o])
+    c = (lo.x + hi.x) / 2
+    for x in (c - 0.07, c + 0.07):
+        add_cyl(o, (x, 0.05, 0.112), 0.012, 0.014, "steel", verts=10)
+
+def do_cabinetTelevisionDoors(by):
+    o, dl, dr = by["cabinetTelevisionDoors(Clone)"], by["doorLeft"], by["doorRight"]
+    lo, hi = world_box([o])
+    for d, side in ((dl, 1), (dr, -1)):
+        dlo, dhi = world_box([d])
+        x = dhi.x - 0.03 if side == 1 else dlo.x + 0.03
+        add_cyl(d, (x, dlo.y, (dlo.z + dhi.z) / 2), 0.008, 0.01, "brass", axis="Y", verts=10)
+    add_box(o, (lo.x, lo.y, hi.z - 0.012), (hi.x, hi.y, hi.z), "walnutDark")
+    add_box(o, (lo.x + 0.05, hi.y - 0.002, lo.z + 0.1), (hi.x - 0.05, hi.y, lo.z + 0.103), "brass")
+
+def do_televisionModern(by):
+    o = by["televisionModern(Clone)"]
+    lo, hi = world_box([o])
+    c = (lo.x + hi.x) / 2
+    add_box(o, (lo.x + 0.012, lo.y - 0.0005, lo.z + 0.085), (hi.x - 0.012, lo.y + 0.004, hi.z - 0.012), "screen")
+    add_box(o, (c + 0.25, lo.y - 0.0005, lo.z + 0.074), (c + 0.262, lo.y + 0.003, lo.z + 0.082), "red")
+
+def do_table(by):
+    o = by["table(Clone)"]
+    lo, hi = world_box([o])
+    c = (lo + hi) / 2
+    add_box(o, (lo.x, lo.y, hi.z - 0.012), (hi.x, hi.y, hi.z), "walnutDark")
+    add_box(o, (lo.x + 0.02, lo.y + 0.02, hi.z - 0.003), (hi.x - 0.02, hi.y - 0.02, hi.z + 0.0), "walnut")
+    for x in (lo.x + 0.02, hi.x - 0.02):
+        for y in (lo.y + 0.02, hi.y - 0.02):
+            add_cyl(o, (x, y, lo.z + 0.004), 0.012, 0.008, "brass", verts=8)
+
+def do_showerRound(by):
+    o, fa = by["showerRound(Clone)"], by["faucet"]
+    lo, hi = world_box([o])
+    flo, fhi = world_box([fa])
+    # A rose on the faucet and a brass drain on the tray.
+    add_cyl(o, (lo.x + 0.28, lo.y + 0.28, lo.z + 0.065), 0.03, 0.008, "steel", verts=12)
+    add_cyl(fa, ((flo.x + fhi.x) / 2, (flo.y + fhi.y) / 2, fhi.z - 0.015), 0.035, 0.012, "brass", verts=12)
+
+def do_chair(by):
+    o = by["chair(Clone)"]
+    lo, hi = world_box([o])
+    lv = [z for z, a in top_levels(o) if 0.1 < z < hi.z - 0.05]
+    seat = min(lv) if lv else 0.2
+    c = (lo + hi) / 2
+    add_box(o, (lo.x + 0.012, lo.y + 0.012, seat - 0.002), (hi.x - 0.012, hi.y - 0.045, seat + 0.012), "velvet")
+    add_sphere(o, (lo.x + 0.012, hi.y - 0.012, hi.z - 0.004), 0.011, "brass", 0.8)
+    add_sphere(o, (hi.x - 0.012, hi.y - 0.012, hi.z - 0.004), 0.011, "brass", 0.8)
+
 def build(name):
     palette()
     for o in list(bpy.data.objects):
@@ -312,5 +444,7 @@ def build(name):
 
 ALL = ["pottedPlant", "chairCushion", "kitchenBar", "desk", "chairDesk", "bookcaseOpen", "loungeChair",
        "cardboardBoxClosed", "cabinetBedDrawerTable", "trashcan"]
-for n in (names or ALL):
+ALL2 = ["rugDoormat", "bedSingle", "bookcaseClosed", "stoolBar", "lampRoundTable", "toilet", "bathroomSink",
+        "cabinetTelevisionDoors", "televisionModern", "table", "showerRound", "chair"]
+for n in (names or ALL + ALL2):
     build(n)
