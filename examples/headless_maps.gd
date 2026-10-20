@@ -20,7 +20,7 @@ const MmMapDoc := preload("../game/mm_map_doc.gd")
 ## Sections and checks are both counted; mg-smash-copter's notes say why the second matters.
 ## Adding a map of ours adds a section and CHECKS_PER_MAP checks.
 
-const MAPS := ["mm_practice", "mm_mansion", "mm_motel", "mm_silence_hollow"]
+const MAPS := ["mm_practice", "mm_mansion", "mm_motel", "mm_silence_hollow", "mm_factory_winter"]
 const CHECKS_PER_MAP := 14
 const CHECKS_PER_FOREIGN := 5
 
