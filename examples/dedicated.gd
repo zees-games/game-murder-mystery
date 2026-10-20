@@ -16,7 +16,7 @@ const MmPlayer := preload("../game/mm_player.gd")
 ## nothing but the stand-ins the module seats itself.
 
 const SECTIONS := 14
-const CHECKS := 96
+const CHECKS := 98
 
 const SERVER_DIR := "user://mm_dedicated"
 const PORT := 28931
@@ -200,6 +200,8 @@ func _test_round_sentence_grammar() -> void:
 	_check(MmGame.murderer_verb(PackedStringArray(["Ada"])) == "was", "one named murderer was")
 	_check(MmGame.murderer_verb(PackedStringArray(["You"])) == "were", "\"You\" were, not was")
 	_check(MmGame.murderer_verb(PackedStringArray(["You", "Ada"])) == "were", "two were")
+	_check(MmGame.round_sentence("the shot draws again", PackedStringArray(["You"])) == "the shot draws again; you were the murderer", "the solo player is \"you were\" mid-sentence")
+	_check(MmGame.round_sentence("time", PackedStringArray(["Ada"])) == "time; Ada was the murderer", "a named murderer keeps the name")
 	_finished()
 
 

@@ -999,6 +999,14 @@ static func murderer_verb(names: PackedStringArray) -> String:
 	return "was" if names.size() == 1 and names[0] != "You" else "were"
 
 
+## "<why>; <names> was|were the murderer(s)". Mid-sentence the solo player is "you", not "You".
+static func round_sentence(why: String, names: PackedStringArray) -> String:
+	var said := PackedStringArray()
+	for who in names:
+		said.append("you" if who == "You" else who)
+	return "%s; %s %s the murderer%s" % [why, ", ".join(said), murderer_verb(names), "" if names.size() == 1 else "s"]
+
+
 static func _names(of: Array[MmPlayer]) -> PackedStringArray:
 	var out := PackedStringArray()
 	for player in of:
@@ -1309,8 +1317,7 @@ func _decide(winner: int, why: String) -> void:
 	var told := why
 
 	if not revealed.is_empty():
-		told += "; %s %s the murderer%s" % [
-			", ".join(revealed), murderer_verb(revealed), "" if revealed.size() == 1 else "s"]
+		told = round_sentence(why, revealed)
 
 	_winner_name = told
 
