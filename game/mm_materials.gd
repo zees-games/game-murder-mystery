@@ -46,6 +46,9 @@ const TILES_PATH := "res://assets/kenney/prototype/tiles.png"
 ## one 0.5 m, as on game-arena's maps.
 const GRID_METRES := 4.0
 
+## The grid's face brightness after [method _wall_grid], of 1.0 (Kenney's is 0.84).
+const GRID_BODY := 0.66
+
 ## surface id -> `[pastel, floor]`: the colour of a building surface on the grid, and whether
 ## it is a floor (Kenney's tiles) or a wall (the grid). A surface not here keeps its
 ## generated pattern. Each pastel is light enough that a sunlit face does not clip and
@@ -179,7 +182,7 @@ static func material(id: String, tint: Color = Color.WHITE) -> StandardMaterial3
 ## A building surface on Kenney's grid (or tiles), or null when the textures are not there.
 static func _pastel(id: String, tint: Color) -> StandardMaterial3D:
 	var entry: Array = PASTELS[id]
-	var texture := _kenney(TILES_PATH if bool(entry[1]) else GRID_PATH)
+	var texture := _kenney(TILES_PATH) if bool(entry[1]) else _wall_grid()
 	if texture == null:
 		return null
 
@@ -197,6 +200,39 @@ static func _pastel(id: String, tint: Color) -> StandardMaterial3D:
 	m.roughness = 0.85
 	m.metallic = 0.0
 	return m
+
+
+## The wall grid with its body pulled down to [constant GRID_BODY] and its lines kept white.
+## Kenney's grid is a flat light grey (214 of 255) with white lines, so a wall under a 0.97
+## pastel and the map's light sat at the top of the range and the lines (the only detail) were
+## a few percent brighter than the face: every wall read as one pale wash. Darkening the body
+## in the texture, not the albedo, keeps the lines at full brightness, so the wall is a mid
+## tone with a visible grid, and the ceiling and roof, which share it, no longer glare.
+static func _wall_grid() -> Texture2D:
+	var key := "wall_grid"
+	if _textures.has(key):
+		return _textures[key]
+	var source := _kenney(GRID_PATH)
+	var result: Texture2D = source
+	if source != null:
+		var image := source.get_image()
+		if image != null:
+			if image.is_compressed() and image.decompress() != OK:
+				image = null
+		if image != null:
+			image.clear_mipmaps()
+			image.convert(Image.FORMAT_RGB8)
+			# Pixels at or below the body grey are the face; the lines are brighter. Scale the face
+			# down and the lines by the same factor, clamped, so a line keeps its edge.
+			var data := image.get_data()
+			var gain := GRID_BODY / (214.0 / 255.0)
+			for i in data.size():
+				data[i] = clampi(roundi(float(data[i]) * (gain if data[i] < 225 else 1.0)), 0, 255)
+			var out := Image.create_from_data(image.get_width(), image.get_height(), false, Image.FORMAT_RGB8, data)
+			out.generate_mipmaps()
+			result = ImageTexture.create_from_image(out)
+	_textures[key] = result
+	return result
 
 
 static func _kenney(path: String) -> Texture2D:
