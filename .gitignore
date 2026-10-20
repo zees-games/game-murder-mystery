@@ -46,7 +46,7 @@
 /addons/dot_player_char
 
 # The maps are murder-mystery-maps, a repository and a pack of their own.
-# bootstrap-link: murder-mystery-maps/maps
+# bootstrap-link: murder-mystery-maps/maps ci
 /maps
 
 # The other games' maps this one converts and plays (mm_map_doc.gd), one directory each.
