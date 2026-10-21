@@ -36,6 +36,49 @@ extends RefCounted
 
 const MmPaths := preload("mm_paths.gd")
 
+## [b]Photographs for the generic ids.[/b] The pastel grid above is the family's look for the
+## hand-built maps' furniture-and-toys rooms, and it is what made the converted maps "look awful
+## compared to the original": a real hotel's oak, brick and plaster drawn as peach and coral
+## graph paper. The ids the shared texture list (dot-map's `source_textures.tsv`) writes into a
+## converted map are drawn from CC0 photographs instead: Poly Haven's and ambientCG's, resized
+## to 512 px, diffuse and normal only ([code]assets/polyhaven/License.txt[/code] has each
+## source). Mapped in world space like every surface here, at the metres one tile covers below.
+## A checkout without the files, or a pack mounted without them, falls back to the older look of
+## the same surface ([constant FALLBACK]) rather than failing, as the Kenney textures do.
+const PHOTO_DIR := "res://assets/polyhaven/"
+
+## id -> `{metres, rough, metal}`: how much world one copy covers, and the surface's sheen.
+## Ceilings and tiles are sized to their pattern (0.6 m panels, 0.6 m tiles), not to a wall.
+const PHOTOS := {
+	"plaster_painted": {"metres": 3.0, "rough": 0.9},
+	"plaster_worn": {"metres": 3.5, "rough": 0.95},
+	"wallpaper": {"metres": 2.4, "rough": 0.9},
+	"concrete": {"metres": 3.0, "rough": 0.95},
+	"brick_red": {"metres": 2.5, "rough": 0.9},
+	"stone_wall": {"metres": 3.0, "rough": 0.9},
+	"wood_planks": {"metres": 2.0, "rough": 0.8},
+	"wood_floor": {"metres": 2.5, "rough": 0.6},
+	"parquet": {"metres": 2.0, "rough": 0.55},
+	"carpet": {"metres": 2.0, "rough": 1.0},
+	"tile_floor": {"metres": 2.4, "rough": 0.4},
+	"tile_wall": {"metres": 2.0, "rough": 0.35},
+	"ceiling": {"metres": 3.6, "rough": 0.9},
+	"roof_tiles": {"metres": 2.0, "rough": 0.9},
+	"snow": {"metres": 3.0, "rough": 0.95},
+	"mud": {"metres": 3.0, "rough": 1.0},
+	"metal": {"metres": 1.5, "rough": 0.5, "metal": 0.4},
+	"door_wood": {"metres": 2.0, "rough": 0.7},
+	"grass": {"metres": 3.0, "rough": 1.0},
+}
+
+## The older surface each photo id stands in for when its files are missing, and for the ids a
+## map written before the shared list never used.
+const FALLBACK := {
+	"plaster_painted": "paint", "plaster_worn": "plaster", "wallpaper": "paint", "brick_red": "brick",
+	"stone_wall": "stone", "wood_planks": "wood", "tile_floor": "tile", "tile_wall": "tile",
+	"roof_tiles": "roof", "mud": "dirt", "door_wood": "wood",
+}
+
 const SIZE := 128
 
 ## Where the grid and the tiles are; rebased, for a delivered pack.
@@ -128,7 +171,7 @@ static func ids() -> Array:
 
 
 static func has(id: String) -> bool:
-	return SURFACES.has(id)
+	return SURFACES.has(id) or PHOTOS.has(id)
 
 
 ## Whether [param id] is drawn see-through. A see-through surface is still solid unless the
@@ -139,13 +182,23 @@ static func is_transparent(id: String) -> bool:
 
 ## The material for [param id], tinted. Cached per (surface, tint).
 static func material(id: String, tint: Color = Color.WHITE) -> StandardMaterial3D:
-	if not SURFACES.has(id):
+	if not SURFACES.has(id) and not PHOTOS.has(id):
 		id = "flat"
 
 	var key := "%s|%s" % [id, tint.to_html()]
 
 	if _materials.has(key):
 		return _materials[key]
+
+	if PHOTOS.has(id):
+		var photo := _photo(id, tint)
+		if photo != null:
+			_materials[key] = photo
+			return photo
+		# Files missing: the older look of the same surface (a fresh id with no older look is flat).
+		id = str(FALLBACK.get(id, id))
+		if not SURFACES.has(id):
+			id = "flat"
 
 	if PASTELS.has(id):
 		var grid := _pastel(id, tint)
@@ -176,6 +229,31 @@ static func material(id: String, tint: Color = Color.WHITE) -> StandardMaterial3
 		m.specular_mode = BaseMaterial3D.SPECULAR_SCHLICK_GGX
 
 	_materials[key] = m
+	return m
+
+
+## A photographed surface, world-space triplanar with its normal map, or null when its files are
+## not there. The tint multiplies the photograph as it is: these are real colours, so a mapper's
+## tint is a hue to keep, not a pastel to pale.
+static func _photo(id: String, tint: Color) -> StandardMaterial3D:
+	var spec: Dictionary = PHOTOS[id]
+	var albedo := _kenney("%s%s.jpg" % [PHOTO_DIR, id])
+	if albedo == null:
+		return null
+	var m := StandardMaterial3D.new()
+	m.resource_name = id
+	m.albedo_texture = albedo
+	m.albedo_color = Color(tint.r, tint.g, tint.b)
+	var normal := _kenney("%s%s_n.jpg" % [PHOTO_DIR, id])
+	if normal != null:
+		m.normal_enabled = true
+		m.normal_texture = normal
+	m.roughness = float(spec.get("rough", 0.9))
+	m.metallic = float(spec.get("metal", 0.0))
+	m.uv1_triplanar = true
+	m.uv1_world_triplanar = true
+	m.uv1_scale = Vector3.ONE / float(spec["metres"])
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
 	return m
 
 

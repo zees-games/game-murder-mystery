@@ -241,7 +241,7 @@ func on_map_doc(id: StringName, doc: Dictionary) -> void:
 		return
 	ambience.clear_zones()
 	for box: Variant in doc.get("boxes", []):
-		if not (box is Dictionary) or not (str(box.get("mat", "")) in ["ceiling", "roof"]):
+		if not (box is Dictionary) or not (str(box.get("mat", "")) in ["ceiling", "roof", "roof_tiles"]):
 			continue
 		var at: Array = box.get("at", [0, 0, 0])
 		var size: Array = box.get("size", [0, 0, 0])

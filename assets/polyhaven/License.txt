@@ -1,0 +1,28 @@
+Textures from Poly Haven (https://polyhaven.com) and ambientCG (https://ambientcg.com), both released
+under CC0 1.0 Universal (public domain): https://polyhaven.com/license and https://docs.ambientcg.com/license/
+
+Each was downloaded at 1K, resized to 512 x 512 and saved as JPEG: <id>.jpg is the diffuse (albedo)
+map and <id>_n.jpg the OpenGL-convention normal map. Where a level or saturation change is noted the
+photograph was darker or duller than a lit room wants; nothing else was altered. The ids are the generic
+material ids of dot-map's tools/bsp/dotbsp/source_textures.tsv, drawn by game/mm_materials.gd.
+
+id              source                                              author
+plaster_painted https://polyhaven.com/a/painted_plaster_wall       Amal Kumar
+plaster_worn    https://polyhaven.com/a/worn_plaster_wall          Dimitrios Savva  (brightness x1.1)
+wallpaper       https://polyhaven.com/a/decrepit_wallpaper         Rob Tuytel  (brightness x1.2)
+concrete        https://polyhaven.com/a/concrete_floor_02          Rob Tuytel  (brightness x1.3, saturation x0.8)
+brick_red       https://polyhaven.com/a/red_brick                  Rob Tuytel
+stone_wall      https://polyhaven.com/a/castle_wall_varriation     Rob Tuytel
+wood_planks     https://polyhaven.com/a/brown_planks_03            Rob Tuytel  (brightness x1.15)
+wood_floor      https://polyhaven.com/a/wood_floor                 Dimitrios Savva
+parquet         https://polyhaven.com/a/herringbone_parquet        photography Sergej Majboroda, processing Jenelle van Heerden
+tile_floor      https://polyhaven.com/a/floor_tiles_06             Rob Tuytel
+tile_wall       https://polyhaven.com/a/long_white_tiles           photography Sergej Majboroda, processing Jenelle van Heerden
+roof_tiles      https://polyhaven.com/a/roof_tiles                 Stephan Seeliger  (brightness x0.9)
+snow            https://polyhaven.com/a/snow_02                    Rob Tuytel  (brightness x1.3)
+mud             https://polyhaven.com/a/brown_mud_02               Rob Tuytel
+metal           https://polyhaven.com/a/metal_plate                Rob Tuytel  (brightness x1.4, saturation x0.5)
+door_wood       https://polyhaven.com/a/rough_pine_door            Dimitrios Savva  (brightness x1.1)
+grass           https://polyhaven.com/a/leafy_grass                Charlotte Baglioni
+carpet          https://ambientcg.com/a/Carpet012                  ambientCG   (brightness x2.0, saturation x0.35: a mid grey the map's tint colours)
+ceiling         https://ambientcg.com/a/OfficeCeiling001           ambientCG   (brightness x0.92)
