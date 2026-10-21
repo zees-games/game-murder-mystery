@@ -19,6 +19,7 @@
 #   tools/shot.sh --view=bystander --board                        # with the Tab scoreboard open
 #   tools/shot.sh --view=room --doors=open --at=... --look=...    # every door open (or shut)
 #   tools/shot.sh --view=overview --out=res://screenshots/x.png   # any --mm-* is the game's config
+#   tools/shot.sh --view=overview --renderer=forward_plus         # another renderer (default: the project's, gl_compatibility)
 #
 # xvfb-run because this needs a rendering context: `--headless` gives a null renderer and saves
 # a frame of nothing, which is worse than no screenshot because it looks like one.
@@ -31,12 +32,14 @@ seconds="3"
 out=""
 config=("--mm-warmup-seconds=0" "--mm-grace-seconds=3" "--mm-intermission-seconds=0")
 extra=()
+engine=()
 
 for arg in "$@"; do
     case "$arg" in
         --view=*)    view="${arg#*=}" ;;
         --seconds=*) seconds="${arg#*=}" ;;
         --out=*)     out="${arg#*=}" ;;
+        --renderer=*) engine=(--rendering-method "${arg#*=}") ;;
         --mm-*)      config+=("$arg") ;;
         --at=*|--look=*|--third|--board|--name=*|--doors=*|--pick=*|--place=*) extra+=("$arg") ;;
         *)           echo "unknown argument: $arg" >&2; exit 2 ;;
@@ -49,5 +52,5 @@ for e in "${extra[@]}"; do
 done
 [ -n "$out" ] || out="res://screenshots/${name}.png"
 
-exec xvfb-run -a -s "-screen 0 1280x720x24" "${GODOT:-godot}" --path . --resolution 1280x720 \
+exec xvfb-run -a -s "-screen 0 1280x720x24" "${GODOT:-godot}" --path . "${engine[@]}" --resolution 1280x720 \
     res://tools/shot.tscn -- "--seconds=$seconds" "--view=$view" "--out=$out" "${extra[@]}" "${config[@]}"

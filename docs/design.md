@@ -61,6 +61,10 @@ What decides it: a client that drew every field it was sent would still not know
 
 The game plays its own maps (`mm_practice` built in; `mm_mansion` and `mm_motel` from murder-mystery-maps) and every Hide & Seek, Prop Hunt and Playground map mounted under `maps_extra/<game>`. `MmMapDoc.import` reads each foreign kind: Hide & Seek and Prop Hunt documents share this format's boxes, props, doors, toys and lights, so only their spawns are pooled into `players`; a Playground document's boxes are renamed (`material`, `colour`, `turn`) and its single spawn is ringed. A converted document carries `imported_from`, and `headless_maps` checks each one builds, fits the wire and starts a round. Nothing is copied: a fix to a foreign map is made in its own repository.
 
+## Each map's air
+
+A map document may carry `environment` fog fields (`fog_colour`, `fog_start`, `fog_end` in metres, `fog_max`), a `weather` block (dot-weather's `DotWeatherDoc`: snow or rain volumes, wind; refused when it does not parse) and `ambience` / `ambience_indoor` (names of dot-audio's stock beds). `MmMap` hands the fog to dot-lighting's `light_document` (never a second environment), applies the weather through a `DotWeather` child and advances it each frame with the camera; `MmAudio.on_map_doc` plays the beds. A map without them keeps the old 120 m haze. The importer fills them from the author's file; [murder-mystery-maps](../../murder-mystery-maps/README.md) says how.
+
 ## Not done yet
 
 - **dot-server-deploy and dot-bootstrap do not know this game yet** (no content entries; not in `projects.tsv`).

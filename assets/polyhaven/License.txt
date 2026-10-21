@@ -26,3 +26,4 @@ door_wood       https://polyhaven.com/a/rough_pine_door            Dimitrios Sav
 grass           https://polyhaven.com/a/leafy_grass                Charlotte Baglioni
 carpet          https://ambientcg.com/a/Carpet012                  ambientCG   (brightness x2.0, saturation x0.35: a mid grey the map's tint colours)
 ceiling         https://ambientcg.com/a/OfficeCeiling001           ambientCG   (brightness x0.92)
+water           https://ambientcg.com/a/Foam003                    ambientCG   (sea foam on dark water; tinted blue-green in code, see game/mm_materials.gd)

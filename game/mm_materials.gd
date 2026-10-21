@@ -69,6 +69,7 @@ const PHOTOS := {
 	"metal": {"metres": 1.5, "rough": 0.5, "metal": 0.4},
 	"door_wood": {"metres": 2.0, "rough": 0.7},
 	"grass": {"metres": 3.0, "rough": 1.0},
+	"water": {"metres": 2.5, "rough": 0.12, "colour": Color(0.30, 0.52, 0.60)},
 }
 
 ## The older surface each photo id stands in for when its files are missing, and for the ids a
@@ -243,7 +244,12 @@ static func _photo(id: String, tint: Color) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.resource_name = id
 	m.albedo_texture = albedo
-	m.albedo_color = Color(tint.r, tint.g, tint.b)
+	m.albedo_color = Color(tint.r, tint.g, tint.b) * (spec.get("colour", Color.WHITE) as Color)
+	# Water is the one photograph that is see-through: its alpha is the older entry's.
+	var alpha := float((SURFACES.get(id, {}) as Dictionary).get("alpha", 1.0))
+	if alpha < 1.0:
+		m.albedo_color.a = alpha
+		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	var normal := _kenney("%s%s_n.jpg" % [PHOTO_DIR, id])
 	if normal != null:
 		m.normal_enabled = true

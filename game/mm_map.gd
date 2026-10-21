@@ -79,6 +79,11 @@ var _drawn: Node3D = null
 var _shade_boxes: Array = []
 var _environment: WorldEnvironment = null
 var _sun: DirectionalLight3D = null
+## The map's snow or rain (a dot-weather node), when its document has a `weather` block.
+var _weather: DotWeather = null
+
+## Source units to metres, which dot-lighting's fog distances are written in.
+const METRES_PER_UNIT := 0.01905
 var _bounds: AABB = AABB()
 var _missing: PackedStringArray = PackedStringArray()
 
@@ -153,6 +158,7 @@ func clear() -> void:
 	_drawn = null
 	_environment = null
 	_sun = null
+	_weather = null
 
 
 ## The toys, on their own layers: a loose one (a ball, a barrel) on `toy`, which people walk
@@ -436,6 +442,21 @@ func _build_environment() -> void:
 				material.sky_top_color = MmMapDoc.colour(env_doc["sky_top"])
 				material.ground_bottom_color = material.sky_top_color
 
+	# Weather is dot-weather's, on the lighting's own Environment (it never makes a second one).
+	if doc.has("weather"):
+		_weather = DotWeather.new()
+		_weather.name = "Weather"
+		add_child(_weather)
+		var applied := _weather.apply(doc["weather"])
+		if not applied.ok:
+			DotLog.warn(CHANNEL, "the map's weather was refused", {"map": String(id()), "why": applied.error.message})
+
+
+## The weather's frame: a map that has some advances it from the viewport's camera.
+func _process(delta: float) -> void:
+	if _weather != null:
+		_weather.advance_with_camera(delta)
+
 
 ## The dot-lighting document a map's `environment` describes.
 ##
@@ -443,27 +464,42 @@ func _build_environment() -> void:
 ## map that asked for a dimmer sun still gets one. The ambient is the light in the shade, a
 ## near-neutral pale grey whatever the map, at the map's strength ([method light_profile]):
 ## game-arena's pale cool fill turned every room, which is lit mostly by the fill, a cold
-## lavender. The fog is the map's horizon from 120 m out
-## (source units, metres / 0.01905), so it hazes the distance and never a room; the map's
-## old `fog` density and `ambient` colour are no longer read.
+## lavender; the map's own `ambient` colour is mixed in a quarter of the way, so a map lit by a
+## blue sky is a little cooler in its shade and one lit by an overcast one is not. The fog is the
+## map's own when it has `fog_end` (colour, start and end in metres, a density cap), else its
+## horizon from 120 m out (source units, metres / 0.01905), so it hazes the distance and never
+## a room; the map's old `fog` density is no longer read.
 static func light_document(env_doc: Dictionary) -> Dictionary:
 	var sun := MmMapDoc.colour(env_doc["sun_colour"])
 	var horizon := MmMapDoc.colour(env_doc["sky_horizon"])
 	var energy := float(env_doc["sun_energy"])
+	var shade := Color(0.86, 0.86, 0.90).lerp(MmMapDoc.colour(env_doc["ambient"], Color(0.86, 0.86, 0.90)), 0.25)
+	var fog := {
+		"enabled": true,
+		"colour": [horizon.r, horizon.g, horizon.b],
+		"start": 6300.0,
+		"end": 40000.0,
+		"max_density": 0.25,
+	}
+
+	if env_doc.has("fog_end"):
+		var fog_colour := MmMapDoc.colour(env_doc["fog_colour"], horizon)
+		fog = {
+			"enabled": true,
+			"colour": [fog_colour.r, fog_colour.g, fog_colour.b],
+			"start": float(env_doc["fog_start"]) / METRES_PER_UNIT,
+			"end": float(env_doc["fog_end"]) / METRES_PER_UNIT,
+			"max_density": float(env_doc["fog_max"]),
+		}
+
 	return {
 		"sun": {
 			"colour": [sun.r, sun.g, sun.b],
 			"brightness": 380.0 * energy * energy,
 			"spread_degrees": 1.0,
-			"ambient_colour": [0.86, 0.86, 0.90],
+			"ambient_colour": [shade.r, shade.g, shade.b],
 		},
-		"fog": {
-			"enabled": true,
-			"colour": [horizon.r, horizon.g, horizon.b],
-			"start": 6300.0,
-			"end": 40000.0,
-			"max_density": 0.25,
-		},
+		"fog": fog,
 	}
 
 
