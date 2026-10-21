@@ -851,9 +851,9 @@ func _pointer_ours() -> bool:
 
 func _physics_process(delta: float) -> void:
 	# The use key, held: the game makes the press from the edge, on the server or here.
-	var use := _held(MmBindings.USE)
+	var use := _key_held(MmBindings.USE)
 	var attack := _held(MmBindings.ATTACK) and not is_spectating()
-	var holster := _held(MmBindings.HOLSTER)
+	var holster := _key_held(MmBindings.HOLSTER)
 
 	if _offline:
 		if player != null:
@@ -887,6 +887,17 @@ func _physics_process(delta: float) -> void:
 ## Whether [param action] is held now, by a player whose pointer is the game's.
 func _held(action: StringName) -> bool:
 	return _pointer_ours() and not _covered() and InputMap.has_action(action) and Input.is_action_pressed(action)
+
+
+## Whether the keyboard action [param action] is held now. Unlike [method _held] this does not need
+## the pointer captured: a browser captures it only on a click (and tab-away or Escape frees it),
+## and a key is no click. Q gated on the capture did nothing for a solo player in a tab whose
+## pointer lock was not held. The menu, the chat and the cover still block it through the platform.
+func _key_held(action: StringName) -> bool:
+	if _covered() or not InputMap.has_action(action) or not Input.is_action_pressed(action):
+		return false
+
+	return platform == null or not platform.is_input_blocked()
 
 
 func _process(delta: float) -> void:

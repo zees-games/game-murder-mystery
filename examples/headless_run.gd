@@ -29,7 +29,7 @@ const MmWeapons := preload("../game/mm_weapons.gd")
 
 const SECTIONS := 24
 
-const CHECKS := 150
+const CHECKS := 154
 
 const TICK_RATE := 64
 const TICK := 1.0 / float(TICK_RATE)
@@ -883,6 +883,27 @@ func _test_the_client() -> void:
 		await get_tree().process_frame
 	_check(world.team_of(&"local") == MmGame.MURDERERS and hud.call("role_of") == &"murderer",
 		"a murderer's own HUD says so")
+	# The solo shell's path: the real key, through the client's own polling, no pointer capture
+	# (a browser captures only on a click, and a headless display never does).
+	world._set_phase(MmGame.Phase.PLAY)
+	var self_p: MmPlayer = client.get("player")
+	_check(not self_p.weapon_drawn, "a murderer's weapon starts away", str(self_p.weapon_drawn))
+	Input.action_press(MmBindings.HOLSTER)
+	for i in 6:
+		await get_tree().physics_frame
+	Input.action_release(MmBindings.HOLSTER)
+	for i in 3:
+		await get_tree().process_frame
+	_check(self_p.weapon_drawn and self_p.armed() == MmPlayer.ARMED_WEAPON,
+		"Q, held through the offline client, draws the knife", "mouse_mode=%s input_blocked=%s" % [Input.mouse_mode, platform.is_input_blocked()])
+	_check(client.get("_view_model_of") == String(self_p.weapon_id), "and it is in the hand in first person", str(client.get("_view_model_of")))
+	Input.action_press(MmBindings.HOLSTER)
+	for i in 6:
+		await get_tree().physics_frame
+	Input.action_release(MmBindings.HOLSTER)
+	for i in 3:
+		await get_tree().process_frame
+	_check(not self_p.weapon_drawn, "and Q again puts it away")
 	world.forced_roles = {&"local": &"gunner"}
 	world._on_round_started(world.round_number + 1)
 	for i in 4:

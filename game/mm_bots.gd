@@ -425,7 +425,13 @@ func drive() -> void:
 	for id: StringName in players:
 		var player: MmPlayer = players[id]
 
-		if not player.is_bot or not player.is_alive() or player.watching:
+		if not player.is_bot:
+			# A person's keys are the client's (or the bridge's) to set. Clearing them here, as
+			# this loop did, ran after the client's physics tick and before the game's hands,
+			# so a solo player's Q and click never reached the game.
+			continue
+
+		if not player.is_alive() or player.watching:
 			player.wants_attack = false
 			player.wants_holster = false
 			continue
