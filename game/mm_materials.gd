@@ -62,7 +62,10 @@ const PHOTOS := {
 	"carpet": {"metres": 2.0, "rough": 1.0},
 	"tile_floor": {"metres": 2.4, "rough": 0.4},
 	"tile_wall": {"metres": 2.0, "rough": 0.35},
-	"ceiling": {"metres": 3.6, "rough": 0.9},
+	# The ceiling photograph is a near-white panel (mean 224 of 255, every other photo is 80..170).
+	# A converted map's flat roof is a ceiling-skinned slab, lit from above by sun and sky, so at
+	# full strength it clipped to white; the colour pulls it to the plaster's range.
+	"ceiling": {"metres": 3.6, "rough": 0.9, "colour": Color(0.62, 0.62, 0.62)},
 	"roof_tiles": {"metres": 2.0, "rough": 0.9},
 	"snow": {"metres": 3.0, "rough": 0.95},
 	"mud": {"metres": 3.0, "rough": 1.0},
