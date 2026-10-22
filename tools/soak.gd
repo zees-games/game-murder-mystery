@@ -24,6 +24,7 @@ var _game: MmGame
 var _kills := 0
 var _deaths := 0
 var _rounds := 0
+var _trace := OS.get_cmdline_user_args().has("--trace")
 
 
 func _ready() -> void:
@@ -121,7 +122,9 @@ func _on_died(id: StringName, by: StringName, why: StringName) -> void:
 	if why == MmGame.DIED_FELL:
 		return
 	_deaths += 1
-	if by != id and _game.team_of(by) == MmGame.MURDERERS:
+	# A gunner shooting a murderer is combat as much as a stab is: on a small house map two rounds
+	# can pass with every murderer shot before a clean moment, and "zero kills" means no fighting.
+	if by != id and by != &"":
 		_kills += 1
 
 
@@ -137,11 +140,22 @@ func _movers() -> Array:
 		if not player.is_bot:
 			continue
 		var at: Vector3 = player.controller.state.position
-		var goal: Vector3 = _game.bots.call("_state_of", player).get("goal", Vector3.INF)
+		var st0: Dictionary = _game.bots.call("_state_of", player)
+		var goal: Vector3 = st0.get("goal", Vector3.INF)
+		var walking: bool = _game.bots.now() - float(st0.get("walk_at", -INF)) < 0.25
 		# Reported every tick so the watch's clock stops while a bot is dead, in the grace or
-		# standing about at its goal (loitering, waiting for a clean moment): none is stuck.
-		var moving: bool = playing and player.is_alive() and goal != Vector3.INF and goal.distance_to(at) > 1.5
+		# standing about (at its goal, or a murderer holding still near its target): none is stuck.
+		var moving: bool = playing and player.is_alive() and walking and goal != Vector3.INF and goal.distance_to(at) > 1.5
 		out.append({"id": id, "position": at, "kind": &"bot", "has_goal": moving})
+		if _trace and playing and Engine.get_physics_frames() % TICK_RATE == 0:
+			var st: Dictionary = _game.bots.call("_state_of", player)
+			var path: PackedVector3Array = st.get("path", PackedVector3Array())
+			var extra := {}
+			if true:
+				for k in st:
+					if not ["path", "stream", "who", "goal", "stuck", "picked_at", "path_at"].has(k):
+						extra[k] = st[k]
+			print("soak trace %s role=%s t=%.0f at=%s goal=%s moving=%s corner=%s/%d next=%s state=%s" % [id, _game.team_of(id), _game.bots.now(), at.snapped(Vector3.ONE * 0.05), goal.snapped(Vector3.ONE * 0.05), moving, st.get("corner"), path.size(), path[int(st.get("corner", 0))] if int(st.get("corner", 0)) < path.size() else "-", extra])
 	return out
 
 

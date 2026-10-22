@@ -1158,6 +1158,9 @@ func _before(state: Dictionary, key: String) -> bool:
 
 ## Walks [param player] along the mesh to [param goal]. Returns true when there.
 func _walk_to(player: MmPlayer, command: DotFpsCommand, state: Dictionary, goal: Vector3, sprint: bool, look: bool = true, chaser: bool = false) -> bool:
+	# For the soak: a bot that did not ask to walk this tick (a murderer holding still within
+	# reach of its target) is waiting, whatever its old goal says.
+	state["walk_at"] = now()
 	# Shutting a door that stands open across the way (see the detour below).
 	if _shut_door(player, command, state):
 		return false
@@ -1196,6 +1199,7 @@ func _walk_to(player: MmPlayer, command: DotFpsCommand, state: Dictionary, goal:
 		if path.size() < 2 or (path.size() == 2 and Vector2(path[1].x - at.x, path[1].z - at.z).length() < 0.5 \
 				and Vector2(goal.x - at.x, goal.z - at.z).length() > 2.0):
 			path = PackedVector3Array([at, goal])
+		path = _off_mesh_start(state, at, goal, path)
 		state["path"] = path
 		state["corner"] = 1
 		state["goal"] = goal
@@ -1296,6 +1300,29 @@ func _walk_to(player: MmPlayer, command: DotFpsCommand, state: Dictionary, goal:
 
 	_unstick(player, command, state)
 	return false
+
+
+## The mesh stops a body's radius short of a wall, so a bot pressed into a pocket (a corner
+## between a wall and furniture, which a sidestep can leave it in) has its path start snapped to
+## the nearest mesh, often the far side of that wall, and it pushes at the wall for the rest of the
+## round (`mm_motel` soak, a cabin's corner, 90 s). Walk back to where the last good path began, then on.
+func _off_mesh_start(state: Dictionary, at: Vector3, goal: Vector3, path: PackedVector3Array) -> PackedVector3Array:
+	if path.size() < 2:
+		return path
+	var start := path[0]
+	var gap := Vector2(start.x - at.x, start.z - at.z).length()
+	if gap < 0.5 or absf(start.y - at.y) > MmPlayer.BODY_STEP or _body_clear(at, start):
+		if gap < 0.5:
+			state["safe_at"] = at
+		return path
+	var safe: Vector3 = state.get("safe_at", Vector3.INF)
+	if safe == Vector3.INF or safe.distance_to(at) > 8.0 or not _los(at + Vector3(0.0, 0.5, 0.0), safe + Vector3(0.0, 0.5, 0.0)):
+		return path
+	var onward := nav.path(safe, goal)
+	var out := PackedVector3Array([at, safe])
+	for i in range(1, onward.size()):
+		out.append(onward[i])
+	return out
 
 
 ## `[door, points]`: two points round the free edge of the open door panel standing between
