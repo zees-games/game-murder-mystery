@@ -23,6 +23,8 @@ const HOLSTER := &"mm_holster"
 const VIEW := &"mm_view"
 const SCOREBOARD := &"mm_scoreboard"
 const USE := &"mm_use"
+## The spectator's free camera, on and off (`mp_freeroam`). Its flying keys are the movement keys.
+const ROAM := &"mm_roam"
 ## dot-ui's chat window's actions, which dot-game's chat client leaves at their defaults.
 const CHAT := &"chat_open"
 
@@ -39,5 +41,6 @@ static func make() -> DotMenuBindings:
 	keys.add(HOLSTER, &"bind_holster", "Draw or put away the weapon (murderer)", "Q", "Weapons")
 	keys.add(CHAT, &"bind_chat", "Chat", "Y", "Communication")
 	keys.add(VIEW, &"bind_view", "First or third person", "F5", "General")
+	keys.add(ROAM, &"bind_roam", "Free camera while out (move keys fly, Sprint fast, Walk slow)", "G", "General")
 	keys.add(SCOREBOARD, &"bind_scoreboard", "Scoreboard (hold)", "Tab", "General")
 	return keys

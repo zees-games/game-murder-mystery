@@ -27,9 +27,9 @@ const MmWeapons := preload("../game/mm_weapons.gd")
 ## ([method MmCatalogue.practice]): the wall between the rooms at x 0 with its door at
 ## z -1..0.8, the kitchen east of it, the living room west, the garden past x 10.
 
-const SECTIONS := 24
+const SECTIONS := 25
 
-const CHECKS := 154
+const CHECKS := 165
 
 const TICK_RATE := 64
 const TICK := 1.0 / float(TICK_RATE)
@@ -78,6 +78,7 @@ func _run() -> void:
 	await _test_the_miss()
 	await _test_an_innocent()
 	await _test_blood()
+	await _test_free_roam()
 	await _test_the_round()
 	await _test_falls()
 	await _test_joiners()
@@ -467,6 +468,50 @@ func _test_the_miss() -> void:
 	await _step(game, 2)
 	game._kill(b, m, MmGame.DIED_STABBED)
 	_check(game.gun_drops.size() == 1 and not b.has_gun, "a gunner killed drops it too")
+	_finished()
+
+
+func _test_free_roam() -> void:
+	_section("whoever is out may free-roam by default, unless an operator says otherwise")
+	_check(MmConfig.new().spectate_camera == 0, "the config lets anybody be watched, so a free camera is not ruled out")
+	var game := await _round(FOUR)
+	var m := _p(game, &"u1m")
+	var b := _p(game, &"u3b")
+	var id := b.player_id
+	_park(game, [&"u2g", &"u4b"])
+	_check(game.spectate_rules.roaming_permitted() and game.spectate.manager.rules == game.spectate_rules,
+		"the game's rules allow roaming and are the manager's own")
+	game._kill(b, m, MmGame.DIED_STABBED)
+	game.spectate.manager.set_mode(String(id), DotSpectatorView.Mode.CHASE)
+	_check(not b.is_alive() and game.spectate.can_roam(id), "somebody stabbed sits out, and may roam")
+	_check(game.spectate.toggle_roam(id).ok and game.spectate.is_roaming(id), "the key enters the free camera")
+	var cam := DotSpectatorFreeCam.new()
+	cam.rules = game.spectate_rules
+	cam.seed_from(Transform3D(Basis.IDENTITY, Vector3(0, 2, 0)))
+	var pose := cam.step(Vector3(0, 0, 1), false, false, 0.5)
+	_check(pose.origin.distance_to(Vector3(0, 2, 0)) > 0.5, "and flying moves it", str(pose.origin))
+	_check(game.spectate.manager.move_free(String(id), pose.origin, pose.basis).ok
+		and game.spectate.camera_for(id).origin.is_equal_approx(pose.origin), "the manager keeps where it is")
+	_check(game.spectate.toggle_roam(id).ok and not game.spectate.is_roaming(id), "the key again goes back to a player")
+
+	var _off := game.spectate_rules.set_cvar("mp_freeroam", "0")
+	var refused := game.spectate.toggle_roam(id)
+	_check(not refused.ok and refused.error.code == DotError.CODE_FORBIDDEN and not game.spectate.is_roaming(id),
+		"mp_freeroam 0 refuses it")
+	var _on := game.spectate_rules.set_cvar("mp_freeroam", "1")
+	var _own := game.spectate_rules.set_cvar("mp_forcecamera", "1")
+	_check(not game.spectate.toggle_roam(id).ok and not game.spectate.is_roaming(id), "mp_forcecamera 1 refuses it")
+	var _free := game.spectate_rules.set_cvar("mp_forcecamera", "0")
+
+	var _in := game.spectate.toggle_roam(id)
+	var _gone := game.spectate_rules.set_cvar("mp_freeroam", "0")
+	game.spectate.advance(game._tick + 1)
+	_check(not game.spectate.is_roaming(id), "switching mp_freeroam off mid-roam puts the roamer back on a player")
+
+	var restricted := await _world(func(c: MmConfig) -> void:
+		c.spectate_camera = 2)
+	_check(restricted.spectate_rules.force_camera == 2 and not restricted.spectate_rules.roaming_permitted(),
+		"a config that restricts the camera turns roaming off")
 	_finished()
 
 

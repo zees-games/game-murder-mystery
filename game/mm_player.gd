@@ -56,6 +56,9 @@ var config: MmConfig = null
 
 var controller: MmController = null
 var sampler: DotFpsSampler = null
+## Offline only: the keys do not walk this body. Set while its owner flies the spectator's free
+## camera, which takes the same keys.
+var input_off: bool = false
 var health: DotHealth = null
 
 ## Their role this round: [constant MmGame.BYSTANDERS] or [constant MmGame.MURDERERS]. The
@@ -225,8 +228,10 @@ func simulate(tick: int, delta: float) -> void:
 	if sampler != null:
 		# Settling under the cover runs the body with its input off (falls, lands, no keys).
 		var gate := DotLoadGate.of(self) if is_inside_tree() else null
+		# Sampled even when off, so presses latched meanwhile are consumed, not replayed later.
+		var command := sampler.sample(delta)
 		controller.apply_command(
-			sampler.sample(delta) if gate == null or gate.is_open() else DotFpsCommand.new())
+			command if (gate == null or gate.is_open()) and not input_off else DotFpsCommand.new())
 
 	controller.simulate_tick(tick, delta)
 	global_position = controller.state.position

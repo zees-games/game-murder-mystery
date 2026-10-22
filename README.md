@@ -100,7 +100,10 @@ mm_murderer_speed 1.05         // the murderer's speed against everybody else's
 mm_bot_chat 1                  // bots say things
 mm_doors 1                     // 1 = E opens and shuts doors
 mm_rounds_per_map 3            // rounds on a map before the next one
-mm_spectate_camera 0           // who somebody who is out may watch: 0 anybody, 2 nobody
+mm_spectate_camera 0           // deprecated, sets mp_forcecamera
+mp_forcecamera 0               // who somebody who is out may watch: 0 anybody, 2 nobody (1, own side, is anybody here)
+mp_freeroam 1                  // 1 = whoever is out may fly a free camera (G)
+mp_freeroam_speed 8            // metres a second; Sprint is faster, Walk slower
 mm_autobhop 0                  // 1 = hold jump to keep hopping
 bot_quota 6                    // players a round is kept at with bots; each person who joins replaces one
 mm_vote_after 20               // seconds into a map's last round before the vote opens

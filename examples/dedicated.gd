@@ -16,7 +16,7 @@ const MmPlayer := preload("../game/mm_player.gd")
 ## nothing but the stand-ins the module seats itself.
 
 const SECTIONS := 14
-const CHECKS := 98
+const CHECKS := 101
 
 const SERVER_DIR := "user://mm_dedicated"
 const PORT := 28931
@@ -309,6 +309,22 @@ func _test_the_module_loads() -> void:
 
 	var net: DotNetManager = module.get("net") if module != null else null
 	_check(net != null and net.config.tick_rate == TICK_RATE, "the netcode runs at the configured rate")
+	var freeroam: Object = server.console.find_cvar("mp_freeroam")
+	var forcecam: Object = server.console.find_cvar("mp_forcecamera")
+	_check(freeroam != null and forcecam != null and server.console.find_cvar("mp_freeroam_speed") != null,
+		"mp_freeroam, mp_forcecamera and mp_freeroam_speed are cvars")
+	if freeroam != null:
+		var _set: Variant = freeroam.set_value("0")
+	_check(not game.spectate_rules.allow_roaming, "and mp_freeroam is the game's own rules, not a copy")
+	if freeroam != null:
+		var _back: Variant = freeroam.set_value("1")
+	var alias: Object = server.console.find_cvar("mm_spectate_camera")
+	if alias != null:
+		var _aliased: Variant = alias.set_value("2")
+	_check(forcecam != null and forcecam.get_int() == 2 and game.spectate_rules.force_camera == 2,
+		"and mm_spectate_camera writes through mp_forcecamera")
+	if alias != null:
+		var _reset: Variant = alias.set_value("0")
 	_check(net != null and absf(net.config.world_extent - MmGame.NET_WORLD_EXTENT) < 0.01,
 		"against the world extent both ends decode with")
 	_finished()

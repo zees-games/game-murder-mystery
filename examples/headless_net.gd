@@ -25,8 +25,8 @@ const MmRequest := preload("../game/net/mm_request.gd")
 ##
 ## Sections and checks are both counted; mg-smash-copter's notes say why the second matters.
 
-const SECTIONS := 15
-const CHECKS := 86
+const SECTIONS := 16
+const CHECKS := 95
 
 const CLIENT_PEER := 7
 const SESSION := 42
@@ -84,6 +84,7 @@ func _run() -> void:
 		await _test_the_local_player_is_predicted()
 		await _test_a_door_crosses()
 		await _test_a_stab_crosses()
+		await _test_free_roam_crosses()
 		await _test_a_shot_crosses()
 		await _test_the_round_ends()
 		await _test_a_shot_is_rewound()
@@ -398,6 +399,50 @@ func _test_a_stab_crosses() -> void:
 	_check(view == null or str(view.killer) == "", "the spectate camera is given no killer to turn to",
 		"none" if view == null else "'%s'" % view.killer)
 	_check(_client_game.team_of(_stand_in.player_id) == MmGame.BYSTANDERS, "and the murderer is still a bystander to it")
+	_finished()
+
+
+## The client's player is dead after the stab above, so it is the watcher here.
+func _test_free_roam_crosses() -> void:
+	_section("free roam is asked for, the server decides, and the mode crosses the wire")
+	var spectate := _server_game.spectate
+	await _steps(SERVER_TICK_RATE * 4)
+	_check(MmRequest.fits() and MmEvents.write_ask_roam().size() == 1,
+		"the ROAM request is a kind the codec can write")
+	_check(spectate.is_spectating(_me()) and not spectate.is_roaming(_me()),
+		"a watcher starts on a player, not in a free camera", str(spectate.mode_of(_me())))
+	_check(_client_game.spectate.is_spectating(_me()), "and the client's mirror is watching too")
+
+	_client_bridge.ask_roam()
+	await _steps(6)
+	_check(spectate.is_roaming(_me()), "the server puts a watcher who asks into the free camera")
+	_check(_client_game.spectate.is_roaming(_me()), "and the client's mirror is told ROAMING")
+
+	_client_bridge.ask_roam()
+	await _steps(6)
+	_check(not spectate.is_roaming(_me()) and not _client_game.spectate.is_roaming(_me()),
+		"the same key hands the camera back to a player on both ends")
+
+	_server_game.spectate_rules.allow_roaming = false
+	_client_bridge.ask_roam()
+	await _steps(6)
+	_check(not spectate.is_roaming(_me()) and not _client_game.spectate.is_roaming(_me()),
+		"mp_freeroam 0 refuses the request")
+	_server_game.spectate_rules.allow_roaming = true
+
+	_server_game.spectate_rules.force_camera = 1
+	_client_bridge.ask_roam()
+	await _steps(6)
+	_check(not spectate.is_roaming(_me()), "mp_forcecamera 1 refuses it too")
+	_server_game.spectate_rules.force_camera = 0
+
+	_client_bridge.ask_roam()
+	await _steps(6)
+	_server_game.spectate_rules.allow_roaming = false
+	await _steps(6)
+	_check(not spectate.is_roaming(_me()) and not _client_game.spectate.is_roaming(_me()),
+		"switching mp_freeroam off mid-roam puts the roamer back on a player on both ends")
+	_server_game.spectate_rules.allow_roaming = true
 	_finished()
 
 
