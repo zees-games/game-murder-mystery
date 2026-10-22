@@ -5,4 +5,5 @@
 | [design.md](design.md) | a round, roles and why they are secret on the wire, the weapon, the gun and its drops, blood, falls and joiners, bots, maps from other games, what is not done yet |
 | [doors.md](doors.md) | doors: state, the use key, the sweep, prediction against a door |
 | [testing.md](testing.md) | the five suites, the rules for a check, rendering |
+| [soak.md](soak.md) | the bot soak (`./game.sh soak`), what it counts as stuck, and the first findings per map |
 | [history.md](history.md) | bugs and decisions worth keeping |

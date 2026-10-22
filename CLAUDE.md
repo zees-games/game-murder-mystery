@@ -35,6 +35,7 @@ Read the family [CLAUDE.md](../../CLAUDE.md) first; this file is only what is sp
 
 ## Running and testing
 
+- `./game.sh soak [map] [minutes]` runs the bot soak ([soak](docs/soak.md)).
 - `./game.sh` plays offline; `./game.sh online` runs a local server and browser client; `./game.sh test` parses and runs all five suites (`./game.sh test headless_net` for one). On the VMs every run goes through `heavy -- …`. [testing](docs/testing.md)
 - `headless_maps` audits our own maps whole and every mounted foreign map for what conversion needs (it builds, fits the wire, spawns clear, a round starts); it needs `maps/` linked and says so when it is not.
 - `headless_bots` plays whole rounds of stand-ins on four maps and holds them to bands; `-- --rounds N`, `MM_BOTS_TRACE=1`.
