@@ -2,7 +2,7 @@ extends RefCounted
 
 ## Murder Mystery's per-map settings: the round rules a map file may change, through dot-game's [DotGameMapConfig].
 ##
-## `cfg/game/game-murder-mystery/dot_map/map/<name>.yml` (a glob such as `mm_*.yml` covers a class of maps), overridable from `cfg/server/...`. Only these keys are accepted; the game has no movement cvars, so nothing here touches prediction and the client has nothing to mirror.
+## `cfg/game/game-murder-mystery/dot_map/map/<name>.yml` (a glob such as `mm_%.yml` covers a class of maps), overridable from `cfg/server/...`. Only these keys are accepted; the game has no movement cvars, so nothing here touches prediction and the client has nothing to mirror.
 
 const GAME_ID := "game-murder-mystery"
 
