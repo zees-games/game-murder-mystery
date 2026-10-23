@@ -142,6 +142,28 @@ extends DotConfig
 
 @export var seed_value: int = 20261018
 
+# --- Spawning --------------------------------------------------------------
+
+@export_group("Spawning")
+
+## dot-spawn strategies for the round's start: `spread` sends everybody to different parts of
+## the map, `map` is the old seat-by-seat walk round the document's points.
+@export var spawn_strategy: String = "spread"
+
+## Metres `spread` tries to keep between two starts, and the least it settles for.
+@export_range(0.0, 200.0, 0.5) var spawn_spread_distance: float = 20.0
+@export_range(0.0, 200.0, 0.5) var spawn_spread_min: float = 4.0
+
+## The dot-spawn rules these make, for [method MmMap.spawn_batch].
+func spawn_rules() -> DotSpawnRules:
+	var rules := DotSpawnRules.new()
+	rules.strategy = spawn_strategy
+	rules.spread_distance = spawn_spread_distance
+	rules.spread_min = spawn_spread_min
+	rules.seed_value = seed_value
+	return rules
+
+
 # --- Bots ------------------------------------------------------------------
 
 @export_group("Bots")

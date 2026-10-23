@@ -565,6 +565,45 @@ func spawn(side: String, seat: int) -> Array:
 	return [at, float(base.get("yaw", 0.0))]
 
 
+## Starts for [param count] people at once, as `[position, yaw]` each, spread by [param rules]
+## (dot-spawn) so a round does not open with the cast in one corner. More people than spawns
+## fall back to [method spawn]'s rings for the rest. [param offset] is the round's shuffle: the seat to start from, and the tick
+## that varies the pick.
+func spawn_batch(side: String, count: int, rules: DotSpawnRules, offset: int) -> Array:
+	var list: Array = (doc.get("spawns", {}) as Dictionary).get(side, [])
+	var out: Array = []
+
+	if rules != null and not list.is_empty() and rules.strategies() != PackedStringArray(["map"]):
+		var director := DotSpawnDirector.new()
+		director.rules = rules
+		director.register_service = false
+
+		for i in range(list.size()):
+			var site := DotSpawnSite.new()
+			site.id = StringName("s%03d" % i)
+			site.position = MmMapDoc.v3(list[i]["at"])
+			site.yaw = float(list[i].get("yaw", 0.0))
+			director.add_site(site)
+
+		var requests: Array[DotSpawnRequest] = []
+
+		for i in range(mini(count, list.size())):
+			requests.append(DotSpawnRequest.make("p%d" % i, &"", &"", offset))
+
+		var res := director.choose_batch(requests)
+
+		if res.ok:
+			for choice: DotSpawnChoice in res.value:
+				out.append([choice.site.position, choice.site.yaw])
+
+		director.free()
+
+	for i in range(out.size(), count):
+		out.append(spawn(side, i + offset))
+
+	return out
+
+
 func kill_height() -> float:
 	return float(doc.get("kill_y", -30.0))
 

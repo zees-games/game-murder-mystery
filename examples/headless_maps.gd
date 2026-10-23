@@ -21,8 +21,12 @@ const MmMapDoc := preload("../game/mm_map_doc.gd")
 ## Adding a map of ours adds a section and CHECKS_PER_MAP checks.
 
 const MAPS := ["mm_practice", "mm_mansion", "mm_motel", "mm_silence_hollow", "mm_factory_winter", "mm_open_yard", "mm_office_murder"]
-const CHECKS_PER_MAP := 14
+const CHECKS_PER_MAP := 15
 const CHECKS_PER_FOREIGN := 5
+
+## A round's start must keep this many people at least this far apart (tools/spawn_spread.gd measures it).
+const SPREAD_PLAYERS := 10
+const SPREAD_MIN := 4.0
 
 ## The other games' packs that must be present wherever `maps_extra/` is linked, and the
 ## fewest maps each must bring.
@@ -173,6 +177,20 @@ func _test_map(id: StringName) -> void:
 	var bad_spawns := _bad_spawns(game, spawns_n)
 
 	_check(bad_spawns.is_empty(), "every spawn stands on a floor with room for a person", "; ".join(bad_spawns))
+
+	var least := INF
+	var rules: DotSpawnRules = game.config.spawn_rules()
+
+	for offset in range(0, 64, 9):
+		var spots: Array = game.map.spawn_batch(MmGame.SPAWN_GROUP, SPREAD_PLAYERS, rules, offset)
+
+		for i in range(spots.size()):
+			for j in range(i + 1, spots.size()):
+				least = minf(least, (spots[i][0] as Vector3).distance_to(spots[j][0]))
+
+	# The practice house is one small room's worth of points, two metres apart by design.
+	var floor_m := 2.0 if id == &"mm_practice" else SPREAD_MIN
+	_check(least >= floor_m, "%d players start at least %.0f m apart" % [SPREAD_PLAYERS, floor_m], "closest pair %.1f m" % least)
 
 	var buried: Array = []
 	var floating: Array = []

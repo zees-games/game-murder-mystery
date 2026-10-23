@@ -1224,6 +1224,7 @@ func _place_everybody() -> void:
 	# Shuffled with the round, so the murderer is not always the one by the stairs.
 	var stream := random.stream(&"spawns")
 	var offset := stream.next_range_i(0, 63)
+	var spots := map.spawn_batch(SPAWN_GROUP, ids.size(), config.spawn_rules(), offset)
 
 	for index in range(ids.size()):
 		var id: StringName = ids[index]
@@ -1231,7 +1232,7 @@ func _place_everybody() -> void:
 		player.reset_round()
 		_heal(player)
 
-		var spot := map.spawn(SPAWN_GROUP, index + offset)
+		var spot: Array = spots[index]
 		player.place_at(spot[0], spot[1])
 
 		if spectate != null:
