@@ -2,6 +2,7 @@ extends Node
 
 const MmAudio := preload("mm_audio.gd")
 const MmBindings := preload("mm_bindings.gd")
+const MmBlood := preload("mm_blood.gd")
 const MmFigure := preload("mm_figure.gd")
 const MmSettings := preload("mm_settings.gd")
 const MmServices := preload("mm_services.gd")
@@ -115,6 +116,7 @@ func _ready() -> void:
 	_hold_for_maps()
 	add_child(game)
 	_build_ragdolls()
+	_build_blood()
 
 	_sampler = DotFpsSampler.new(MmPlayer.tunables_for(config))
 	MmPlayer.register_actions(_sampler)
@@ -390,6 +392,8 @@ func _on_shot(session_id: int, from: Vector3, to: Vector3, hit: bool) -> void:
 	if audio != null:
 		var _bang := audio.on_shot(from, session_id == _watch_id)
 	_tracer(from, to, hit)
+	if hit and blood != null and game.draw_world:
+		var _splat := blood.on_shot_hit(from, to)
 
 
 ## A thin bright box from [param from] to [param to] that fades in a fifth of a second.
@@ -419,6 +423,8 @@ func _on_map(map_id: StringName) -> void:
 	if ragdolls != null:
 		# A body on the old map would hang in the new one's air.
 		ragdolls.clear()
+	if blood != null:
+		blood.clear()
 
 	# The new map's toys are heard: a bounce, a knock, a switch, a honk.
 	if game.map != null and game.map.toys != null and not game.map.toys.sound.is_connected(_toy_sound):
@@ -462,6 +468,8 @@ func _on_death(session_id: int, _by: int, why: StringName) -> void:
 
 	if audio != null and who != null and why != MmGame.DIED_FELL and why != MmGame.DIED_SHOT:
 		var _heard := audio.on_stab(who.global_position, session_id == _watch_id)
+	if who != null and blood != null and game.draw_world and why != MmGame.DIED_FELL and why != MmGame.DIED_SHOT:
+		var _splat := blood.on_stab(game.body_position(who))
 
 	if session_id == _watch_id and hud != null:
 		hud.shout("YOU DIED" if why != MmGame.DIED_FELL else "YOU FELL", 2.5)
@@ -484,6 +492,18 @@ func _on_death(session_id: int, _by: int, why: StringName) -> void:
 
 ## Where the dead lie: dot-player-char's ragdolls under the game's (the server's) rules.
 var ragdolls: DotPlayerRagdolls = null
+
+
+## Blood on the wall behind a shot or the floor under a stab (see mm_blood.gd).
+var blood: MmBlood = null
+
+
+func _build_blood() -> void:
+	blood = MmBlood.new()
+	if game.physics != null:
+		blood.mask = game.physics.layer_mask(&"world") | game.physics.layer_mask(&"prop")
+	game.add_child(blood)
+	blood.apply_settings(null)
 
 
 func _build_ragdolls() -> void:
@@ -831,6 +851,9 @@ func _build_settings() -> void:
 	if audio != null:
 		settings.bind_audio(audio.manager)
 
+	if blood != null:
+		blood.follow(settings.settings)
+
 	if settings.menu != null:
 		# The HUD in the menu's theme and at the player's HUD size, live.
 		if hud != null:
@@ -913,6 +936,8 @@ func _key_held(action: StringName) -> bool:
 
 
 func _process(delta: float) -> void:
+	if blood != null:
+		blood.advance(delta)
 	var _shown := present_frame(net, game, player, not third_person, delta, -1.0, _watched_through_eyes())
 	_present_hide()
 	_present_guns()

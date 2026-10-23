@@ -39,7 +39,7 @@ const DEFAULT_FOV := 92
 ## Stock keys nothing here applies: every sound is on the SFX bus, the client binds no
 ## effects, and the chat box has no switch.
 const NOT_APPLIED: Array[StringName] = [
-	&"ui_volume", &"shake_scale", &"allow_flashes", &"fx_quality", &"chat_window",
+	&"ui_volume", &"shake_scale", &"allow_flashes", &"chat_window",
 ]
 
 
@@ -65,7 +65,16 @@ static func schema_for() -> DotSettingsSchema:
 	s.add(DotSettingsDef.integer(&"field_of_view", DEFAULT_FOV, 70, 120, &"video").with_scope(
 		DotSettingsDef.Scope.SERVER_CLAMPED
 	))
+	s.add(DotSettingsDef.boolean(&"gore", true, &"video").with_description(
+		"Blood splatters on the wall or floor where somebody is shot or stabbed."))
 	return DotMenuStock.declare(s, DotMenuStock.DEFAULT_GROUPS, null, NOT_APPLIED)
+
+
+func setup(store: DotSettingsStore = null, with_menu: bool = true) -> DotResult:
+	var made := super.setup(store, with_menu)
+	if menu != null:
+		DotMenuStock.add_gore_row(menu.page(&"video"))
+	return made
 
 
 ## The help screen's goal and rules; the keys come from [MmBindings].

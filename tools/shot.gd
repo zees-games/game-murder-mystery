@@ -156,6 +156,14 @@ func _run() -> void:
 			var struck := game.attack_now(local.player_id)
 			print("stab: %s, %s %s" % [struck, victim.display_name, "dead" if not victim.is_alive() else "alive"])
 			await _seconds_of(_seconds)
+			if _at != Vector3.INF:
+				var spot := game.body_position(victim)
+				var splat: Node3D = _client.get("blood").decals.get_child(0).get_child(0) if _client.get("blood").decals.get_child(0).get_child_count() > 0 else null
+				print("stab: splat ", splat.global_position if splat != null else "none", " victim ", spot)
+				if splat != null:
+					spot = splat.global_position
+				_free_camera().look_at_from_position(spot + _at, spot + Vector3(0.0, 0.2, 0.0))
+				await _frames(4)
 		"shot":
 			# The gun fired past a stand-in at the wall: the tracer, a moment after.
 			await _seconds_of(0.6)

@@ -4,6 +4,7 @@ const MmBindings := preload("../game/mm_bindings.gd")
 const MmBotChat := preload("../game/mm_bot_chat.gd")
 const MmCatalogue := preload("../game/mm_catalogue.gd")
 const MmConfig := preload("../game/mm_config.gd")
+const MmBlood := preload("../game/mm_blood.gd")
 const MmGame := preload("../game/mm_game.gd")
 const MmEvents := preload("../game/net/mm_events.gd")
 const MmMapDoc := preload("../game/mm_map_doc.gd")
@@ -27,9 +28,9 @@ const MmWeapons := preload("../game/mm_weapons.gd")
 ## ([method MmCatalogue.practice]): the wall between the rooms at x 0 with its door at
 ## z -1..0.8, the kitchen east of it, the living room west, the garden past x 10.
 
-const SECTIONS := 25
+const SECTIONS := 26
 
-const CHECKS := 165
+const CHECKS := 173
 
 const TICK_RATE := 64
 const TICK := 1.0 / float(TICK_RATE)
@@ -90,6 +91,7 @@ func _run() -> void:
 	await _test_the_client()
 	await _test_help_and_menu()
 	await _test_the_map_menu()
+	await _test_gore()
 	_test_weapons_table()
 
 	for world in _worlds.duplicate():
@@ -1190,6 +1192,60 @@ func _test_help_and_menu() -> void:
 		"the Escape menu has Help & commands and Leave")
 	settings.close()
 	settings.queue_free()
+	await get_tree().process_frame
+	_finished()
+
+
+## Blood splatters: the Video row, gore off draws nothing, on draws one at a stab and a shot, and the
+## setting survives a save and a fresh load.
+func _test_gore() -> void:
+	_section("Blood splatters: the row, off draws nothing, on draws, and it persists")
+	var scratch := "user://headless_gore_persist"
+	var first := MmSettings.new()
+	first.directory = scratch
+	add_child(first)
+	var _b1 := first.setup(DotSettingsStoreFile.new(scratch))
+	var image: DotMenuSection = first.menu.page(&"video").section("Image")
+	var row: DotMenuRow = image.find_row(&"gore") if image != null else null
+	_check(row != null and first.schema.has(&"gore") and first.settings.get_bool(&"gore", false),
+		"the Video page has a Blood splatters row on the gore setting, on by default")
+	var _g1 := first.settings.set_value(&"gore", false)
+	var flushed := first.settings.flush()
+	_check(flushed.ok and not DirAccess.get_files_at(scratch).is_empty(), "turning it off and saving writes the settings file")
+	var second := MmSettings.new()
+	second.directory = scratch
+	add_child(second)
+	var _b2 := second.setup(DotSettingsStoreFile.new(scratch), false)
+	_check(second.settings.get_bool(&"gore", true) == false, "a fresh settings manager loading that file reads gore as off")
+
+	var floor_body := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(20, 1, 20)
+	shape.shape = box
+	floor_body.add_child(shape)
+	add_child(floor_body)
+	floor_body.global_position = Vector3(0, -0.5, 0)
+	var blood := MmBlood.new()
+	add_child(blood)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	blood.apply_settings(second.settings)
+	_check(not blood.decals.config.gore and blood.on_stab(Vector3(0, 0, 0)) == null, "gore off: a stab draws no splatter")
+	_check(blood.on_shot_hit(Vector3(0, 3, 0), Vector3(0, 1.5, 0)) == null, "gore off: a shot draws none either")
+	var _g2 := second.settings.set_value(&"gore", true)
+	blood.apply_settings(second.settings)
+	_check(blood.on_stab(Vector3(0, 0, 0)) != null, "gore on: a stab splatters the floor under the victim")
+	_check(blood.on_shot_hit(Vector3(0, 3, 0), Vector3(0, 1.5, 0)) != null, "gore on: a shot that hit splatters the surface behind")
+	_check(blood.on_stab(Vector3(0, -6, 0)) == null, "and no surface in reach, no splatter")
+	blood.queue_free()
+	floor_body.queue_free()
+	first.queue_free()
+	second.queue_free()
+	var real := ProjectSettings.globalize_path(scratch)
+	for f in DirAccess.get_files_at(real):
+		var _rm := DirAccess.remove_absolute(real.path_join(f))
+	var _rd := DirAccess.remove_absolute(real)
 	await get_tree().process_frame
 	_finished()
 
