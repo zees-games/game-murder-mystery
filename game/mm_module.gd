@@ -7,6 +7,7 @@ const MmGame := preload("mm_game.gd")
 const MmPlayer := preload("mm_player.gd")
 const MmAvatars := preload("mm_avatars.gd")
 const MmVote := preload("mm_vote.gd")
+const MmMapConfig := preload("mm_map_config.gd")
 
 ## This game, as a module a dedicated server loads.
 ##
@@ -71,6 +72,15 @@ const MAP_BALLOT_TOPIC := &"map_ballot"
 
 func _module_name() -> String:
 	return "murder"
+
+
+## The rules a map's `cfg/game/game-murder-mystery/dot_map/map/<name>.yml` may set (see docs/map-config.md in dot-game).
+func _map_config_keys() -> Dictionary:
+	return MmMapConfig.KEYS
+
+
+func _map_config_game() -> String:
+	return MmMapConfig.GAME_ID
 
 
 func _game_service() -> StringName:

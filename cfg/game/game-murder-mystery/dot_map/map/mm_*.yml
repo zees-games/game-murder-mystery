@@ -1,0 +1,7 @@
+# Per-map rules for every mm_* map. Everything is commented, so nothing changes until a line is
+# uncommented; an operator overrides in cfg/server/game/game-murder-mystery/dot_map/map/.
+# Keys: mm_grace_seconds mm_round_seconds mm_players_per_murderer mm_min_murderers mm_max_murderers
+# mm_players_per_gunner mm_min_gunners mm_max_gunners mm_melee_range mm_melee_cooldown mm_gun_cooldown
+# mm_gun_range mm_blood_seconds mm_murderer_speed mm_doors
+# mm_round_seconds: 300
+# mm_doors: 1

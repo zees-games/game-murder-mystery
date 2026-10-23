@@ -33,7 +33,7 @@
 GAME_NAME="Murder Mystery"
 PACK="murder"
 EXTRA_PACKS="murder_maps:murder-mystery-maps hideseek_maps:hide-n-seek-maps"
-SUITES="headless_run headless_maps headless_bots headless_net dedicated"
+SUITES="headless_mapcfg headless_run headless_maps headless_bots headless_net dedicated"
 # --------------------------------------------------------------------------------
 
 set -uo pipefail
