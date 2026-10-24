@@ -4,6 +4,7 @@ const MmConfig := preload("../game/mm_config.gd")
 const MmEvents := preload("../game/net/mm_events.gd")
 const MmGame := preload("../game/mm_game.gd")
 const MmAmbience := preload("../game/mm_ambience.gd")
+const MmNetBridge := preload("../game/net/mm_net_bridge.gd")
 const MmNetLink := preload("../game/net/mm_net_link.gd")
 const MmPlayer := preload("../game/mm_player.gd")
 
@@ -17,7 +18,7 @@ const MmPlayer := preload("../game/mm_player.gd")
 ## nothing but the stand-ins the module seats itself.
 
 const SECTIONS := 15
-const CHECKS := 110
+const CHECKS := 113
 
 const SERVER_DIR := "user://mm_dedicated"
 const PORT := 28931
@@ -56,6 +57,7 @@ func _run() -> void:
 		await _test_the_module_loads()
 		_test_the_commands()
 		await _test_a_round_runs()
+		_test_the_murderer_plays_no_action()
 		await _test_a_reload_keeps_delivered_maps()
 		await _test_the_map_vote()
 		await _test_map_rotation_file()
@@ -463,6 +465,63 @@ func _test_a_round_runs() -> void:
 
 	_check(_said(_run_command("mm_roles"), "murderer"), "and mm_roles, on the server's own console, says who the murderer is",
 		"phase %s: %s" % [game.phase, "; ".join(_run_command("mm_roles"))])
+	_finished()
+
+
+## The murderer's avatar action is refused through the relay the module bound (dot-game's
+## relay path), but only while a round is in PLAY; bystanders and every other phase may act.
+func _test_the_murderer_plays_no_action() -> void:
+	_section("the murderer plays no avatar action in a round")
+	var module := _module()
+	var net: DotNetManager = module.get("net") if module != null else null
+	var bridge: Object = module.get("bridge") if module != null else null
+	var relay := net.get_meta(DotGameAvatarActionRelay.NET_META, null) as DotGameAvatarActionRelay if net != null else null
+	_check(relay != null and relay.veto_fn.is_valid(), "the module bound its veto to the relay")
+
+	if relay == null or bridge == null:
+		for _i in 5:
+			_check(false, "no relay or bridge")
+		_finished()
+		return
+
+	var murderer_peer := 9101
+	var bystander_peer := 9102
+	var _m: DotResult = bridge.call("add_player", murderer_peer, 9201, "Killer")
+	var _b: DotResult = bridge.call("add_player", bystander_peer, 9202, "Bystander")
+	var killer := game.players.get(MmNetBridge.player_key(bridge.call("player_for_peer", murderer_peer))) as MmPlayer
+	var innocent := game.players.get(MmNetBridge.player_key(bridge.call("player_for_peer", bystander_peer))) as MmPlayer
+	_check(killer != null and innocent != null, "both seats exist")
+
+	if killer == null or innocent == null:
+		for _i in 4:
+			_check(false, "no seat")
+		_finished()
+		return
+
+	var saved_phase := game.phase
+	var saved_team := killer.team
+	killer.team = MmGame.MURDERERS
+	innocent.team = MmGame.BYSTANDERS
+
+	game.phase = MmGame.Phase.PLAY
+	relay.forget(murderer_peer)
+	relay.forget(bystander_peer)
+	_check(not relay.allow(murderer_peer, "dance"), "in PLAY the murderer's dance is refused")
+	_check(relay.allow(bystander_peer, "dance"), "in PLAY a bystander's is allowed")
+
+	game.phase = MmGame.Phase.IDLE
+	relay.forget(murderer_peer)
+	_check(relay.allow(murderer_peer, "dance"), "between rounds the murderer may")
+
+	game.phase = MmGame.Phase.PLAY
+	killer.team = MmGame.BYSTANDERS
+	relay.forget(murderer_peer)
+	_check(relay.allow(murderer_peer, "dance"), "and in PLAY, a seat that is not the murderer may")
+
+	game.phase = saved_phase
+	killer.team = saved_team
+	bridge.call("remove_player", 9201)
+	bridge.call("remove_player", 9202)
 	_finished()
 
 
