@@ -148,6 +148,7 @@ func _run() -> void:
 			var _drawn := game.set_weapon_drawn(local.player_id, true)
 			await _seconds_of(_seconds)
 		"action":
+			await _until_uncovered()
 			# A stand-in playing an avatar action, from the front, early in the clip.
 			var actor := _somebody_else(game, local)
 			await _seconds_of(0.4)
@@ -155,11 +156,16 @@ func _run() -> void:
 			var ahead := Vector3(-sin(deg_to_rad(local.controller.state.yaw)), 0.0, -cos(deg_to_rad(local.controller.state.yaw)))
 			actor.place_at(spot + ahead * 2.5, local.controller.state.yaw + 180.0)
 			await _seconds_of(0.3)
+			await _settle(actor)
 			var parts := _action.split(":")
 			var entry: Dictionary = DotAvatarActions.defaults().find(StringName(parts[0]), parts[1])
 			var ok: bool = actor.figure.body_node().play_action(StringName(parts[1]), bool(entry.get("loop", false)), 0.0)
 			print("action %s: played=%s" % [_action, ok])
-			await _seconds_of(_seconds)
+			var at_feet: Vector3 = actor.controller.state.position
+			_free_camera().look_at_from_position(at_feet + ahead * -2.5 + Vector3(0.0, 1.5, 0.0), at_feet + Vector3(0.0, 1.0, 0.0))
+			await _pin_for(actor, 0.4)
+			await _save_extra("_a")
+			await _pin_for(actor, maxf(_seconds - 0.4, 0.1))
 		"stab":
 			# A stand-in a step in front, the weapon out, the stab, and [member _seconds] of the fall.
 			var victim := _somebody_else(game, local)
@@ -304,3 +310,33 @@ func _seconds_of(seconds: float) -> void:
 	var until := Time.get_ticks_msec() + int(seconds * 1000.0)
 	while Time.get_ticks_msec() < until:
 		await get_tree().process_frame
+
+
+## The clip must start after the loading cover lifts, or it is spent unseen.
+func _until_uncovered() -> void:
+	var gate: DotLoadGate = _client.get("gate")
+	for _i in range(1200):
+		if gate == null or gate.is_open():
+			break
+		await get_tree().process_frame
+
+
+func _save_extra(suffix: String) -> void:
+	await RenderingServer.frame_post_draw
+	var path := ProjectSettings.globalize_path(_out.trim_suffix(".png") + suffix + ".png")
+	print("wrote ", path, ": ", error_string(get_viewport().get_texture().get_image().save_png(path)))
+
+
+## Stops a stand-in's bot, sets it down once and lets it settle, so the clip is not cancelled by a
+## walking or falling pose (a full-body action ends the moment its figure moves).
+func _settle(actor: Object) -> void:
+	actor.set("is_bot", false)
+	actor.place_at(actor.controller.state.position, actor.controller.state.yaw)
+	await _seconds_of(0.6)
+
+
+## Waits [param seconds], printing the figure's state at the end of it.
+func _pin_for(actor: Object, seconds: float) -> void:
+	await _seconds_of(seconds)
+	var body: Object = actor.figure.body_node()
+	print("actor action=", body.get("action"), " state=", body.get("state"))
