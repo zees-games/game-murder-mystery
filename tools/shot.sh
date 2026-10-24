@@ -9,6 +9,7 @@
 #   tools/shot.sh --view=murderer                                 # the murderer, weapon drawn
 #   tools/shot.sh --view=murderer --mm-murderer-weapon=axe --third         # another weapon, from behind
 #   tools/shot.sh --view=gunner                                   # a bystander with the gun
+#   tools/shot.sh --view=action --action=emote:dance --seconds=0.5   # a stand-in playing an avatar action (pose:sit)
 #   tools/shot.sh --view=stab --seconds=0.6                       # a stab, 0.6 s into the fall
 #   tools/shot.sh --view=shot                                     # the gun fired: the tracer
 #   tools/shot.sh --view=blood --seconds=4                        # the murderer with 4 of 7 blood
@@ -41,7 +42,7 @@ for arg in "$@"; do
         --out=*)     out="${arg#*=}" ;;
         --renderer=*) engine=(--rendering-method "${arg#*=}") ;;
         --mm-*)      config+=("$arg") ;;
-        --at=*|--look=*|--third|--board|--name=*|--doors=*|--pick=*|--place=*) extra+=("$arg") ;;
+        --at=*|--look=*|--third|--board|--name=*|--doors=*|--pick=*|--place=*|--action=*) extra+=("$arg") ;;
         *)           echo "unknown argument: $arg" >&2; exit 2 ;;
     esac
 done

@@ -8,6 +8,8 @@ const MmGame := preload("../game/mm_game.gd")
 const MmMapDoc := preload("../game/mm_map_doc.gd")
 const MmPlayer := preload("../game/mm_player.gd")
 
+## `--action=emote:dance` (`pose:sit`): the avatar action `--view=action` plays on a stand-in.
+var _action := ""
 var _view := "bystander"
 var _seconds := 3.0
 var _board := false
@@ -24,6 +26,8 @@ func _ready() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--view="):
 			_view = arg.trim_prefix("--view=")
+		elif arg.begins_with("--action="):
+			_action = arg.trim_prefix("--action=")
 		elif arg == "--board":
 			_board = true
 		elif arg.begins_with("--seconds="):
@@ -142,6 +146,19 @@ func _run() -> void:
 			if _at != Vector3.INF:
 				local.place_at(_at, 0.0)
 			var _drawn := game.set_weapon_drawn(local.player_id, true)
+			await _seconds_of(_seconds)
+		"action":
+			# A stand-in playing an avatar action, from the front, early in the clip.
+			var actor := _somebody_else(game, local)
+			await _seconds_of(0.4)
+			var spot := local.controller.state.position
+			var ahead := Vector3(-sin(deg_to_rad(local.controller.state.yaw)), 0.0, -cos(deg_to_rad(local.controller.state.yaw)))
+			actor.place_at(spot + ahead * 2.5, local.controller.state.yaw + 180.0)
+			await _seconds_of(0.3)
+			var parts := _action.split(":")
+			var entry: Dictionary = DotAvatarActions.defaults().find(StringName(parts[0]), parts[1])
+			var ok: bool = actor.figure.body_node().play_action(StringName(parts[1]), bool(entry.get("loop", false)), 0.0)
+			print("action %s: played=%s" % [_action, ok])
 			await _seconds_of(_seconds)
 		"stab":
 			# A stand-in a step in front, the weapon out, the stab, and [member _seconds] of the fall.

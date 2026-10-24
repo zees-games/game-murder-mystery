@@ -644,6 +644,16 @@ func _game_hibernation(hibernating: bool) -> void:
 ##
 ## A stand-in is removed the moment a person takes their place. They are here to make the
 ## game exist, not to take the fun half from the people who came to play it.
+## A murderer plays no avatar action while a round runs: a dance would give them away to the
+## bystanders watching for who acts strangely. Everybody else, and everybody between rounds, may.
+func _avatar_action_veto(peer_id: int, _id: String) -> bool:
+	var world := game as MmGame
+	if world == null or bridge == null or world.phase != MmGame.Phase.PLAY:
+		return false
+	var who: MmPlayer = world.players.get(MmNetBridge.player_key((bridge as MmNetBridge).player_for_peer(peer_id)))
+	return who != null and who.team == MmGame.MURDERERS
+
+
 func _game_tick(_tick: int, delta: float) -> void:
 	if vote != null:
 		vote.advance(delta)
