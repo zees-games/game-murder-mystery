@@ -93,8 +93,6 @@ const DIED_STABBED := &"stabbed"
 const DIED_SHOT := &"shot"
 
 ## How high a standing body's capsule is hit by a shot, from the feet.
-const HIT_HEIGHT := 1.85
-const HIT_RADIUS := 0.4
 
 ## Lag compensation. How far back a stab or a shot looks at the other bodies, in ms, for a
 ## shooter's latency (`mm_max_unlag_ms`; 0 judges everything on the present). A command carries
@@ -192,6 +190,18 @@ var players: Dictionary = {}
 ## dot-player-char's `mp_*` view and body rules.
 var view_rules: DotPlayerViewRules = DotPlayerViewRules.new()
 var body_rules: DotPlayerBodyRules = DotPlayerBodyRules.new()
+
+## Binds [member config] to cvars, the cfg/ yml layers and the workbench; made by whoever builds the config.
+var config_binder: DotGameConfigBinder = null
+
+## dot-team's block rules (`!block`, `!noblock`, `mp_teamblock`), set by the server module or `DotGameClient.add_noblock`. They feed [member body_rules]'s `pair_fn`.
+var block_rules: Object = null:
+	set(value):
+		if block_rules != null and block_rules.is_connected(&"changed", body_rules.refresh):
+			block_rules.disconnect(&"changed", body_rules.refresh)
+		block_rules = value
+		if block_rules != null and block_rules.has_signal(&"changed"):
+			block_rules.connect(&"changed", body_rules.refresh)
 
 ## Each player's role, by id: the truth, on the server. On a client, the local player's alone.
 var sides: Dictionary = {}
@@ -327,6 +337,23 @@ func _apply_body_mask(player: MmPlayer) -> void:
 func _on_body_rules_changed() -> void:
 	for id in players:
 		_apply_body_mask(players[id] as MmPlayer)
+	apply_pass_through()
+
+
+## The side a player is on for dot-team's block rules: everybody is one, because a murderer who
+## blocked differently from the rest would give the role away through the body.
+func team_of_side(_id: Variant) -> Variant:
+	return "1"
+
+
+## Hands every controller the bodies it passes through under `block_rules`; the same call on every machine, or a client predicts a wall.
+func apply_pass_through() -> void:
+	var entries := {}
+	for id: Variant in players:
+		var who := players[id] as MmPlayer
+		if who != null and who.controller != null:
+			entries[id] = {"body": who, "controller": who.controller}
+	body_rules.apply_exceptions(entries)
 
 
 ## Three layers: the building, the people, and the furniture.
@@ -528,7 +555,7 @@ func _build_spectate() -> void:
 
 	# The config's number is only the starting point: from here `mp_forcecamera` is the rule.
 	spectate_rules.force_camera = clampi(config.spectate_camera, 0, 2)
-	var ready_now := spectate.setup(authoritative, tick_rate, spectate_rules)
+	var ready_now := spectate.setup(authoritative, tick_rate, spectate_rules, config.death_cam_seconds, config.freeze_cam_seconds)
 
 	if not ready_now.ok:
 		DotLog.warn(CHANNEL, "spectating is off", {"why": ready_now.error.message})
@@ -635,6 +662,7 @@ func add_player(
 
 	player.retune()
 	DotLog.debug(CHANNEL, "player joined", {"id": String(player_id)})
+	apply_pass_through()
 	player_added.emit(player_id)
 	return player
 
@@ -697,6 +725,9 @@ func remove_player(player_id: StringName) -> void:
 	if progress != null:
 		progress.leave(player_id)
 
+	if block_rules != null:
+		block_rules.call(&"forget", player_id)
+	apply_pass_through()
 	player_removed.emit(player_id)
 
 	if authoritative and phase != Phase.IDLE:
@@ -1542,7 +1573,7 @@ func _shoot(gunner: MmPlayer) -> void:
 
 
 ## The first living body the ray from [param from] along [param aim] passes within
-## [constant HIT_RADIUS] of, before [param limit] metres. Standing capsules, measured here.
+## [member MmConfig.hit_radius] of, before [param limit] metres. Standing capsules, measured here.
 func shot_target(gunner: MmPlayer, from: Vector3, aim: Vector3, limit: float) -> MmPlayer:
 	var best: MmPlayer = null
 	var best_along := limit
@@ -1555,8 +1586,8 @@ func shot_target(gunner: MmPlayer, from: Vector3, aim: Vector3, limit: float) ->
 			continue
 
 		var feet := body_position(other)
-		var height := lerpf(HIT_HEIGHT, MmPlayer.BODY_CROUCH, other.controller.state.crouch_fraction)
-		var along := _ray_capsule(from, aim, feet, height, HIT_RADIUS)
+		var height := lerpf(config.hit_height, MmPlayer.BODY_CROUCH, other.controller.state.crouch_fraction)
+		var along := _ray_capsule(from, aim, feet, height, config.hit_radius)
 
 		if along >= 0.0 and along < best_along:
 			best = other
@@ -1774,11 +1805,10 @@ func use_door(index: int, by: StringName) -> bool:
 func toy_aimed(player: MmPlayer) -> int:
 	if map == null or map.toys == null or player == null:
 		return -1
-	return map.toys.aimed(player.eye_position(), player.aim_direction(), TOY_REACH)
+	return map.toys.aimed(player.eye_position(), player.aim_direction(), config.toy_reach)
 
 
 ## How far the use key reaches a toy: a ball at your feet, a switch at arm's length.
-const TOY_REACH := 2.3
 
 
 ## Toy [param index] used by [param by]: a kick, a push, a switch, a honk. Server side.

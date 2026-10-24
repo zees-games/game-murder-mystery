@@ -3,16 +3,18 @@ extends RefCounted
 ## What the stand-ins say in chat: canned lines by moment, a name filled in where one fits.
 ##
 ## [b]Rationed, or a lobby of bots is a wall of text.[/b] One line per bot every
-## [constant PER_BOT] seconds at most, one from anybody every [constant ANYBODY] seconds, and
-## only some of the moments that could have one get it ([constant CHANCE]). A witness's warning
+## [member per_bot] seconds at most, one from anybody every [constant ANYBODY] seconds, and
+## only some of the moments that could have one get it ([member chance]). A witness's warning
 ## is the exception to the chance (it always goes) but not to the spacing.
 ##
 ## [b]A murderer bot lies like anybody[/b]: it says what a bystander would, and never anything
 ## that gives it away. Its own lines are the bystanders' lines.
 
-const PER_BOT := 9.0
 const ANYBODY := 2.5
-const CHANCE := 0.45
+
+## Seconds before one bot speaks again, and the chance it speaks when it may; the game sets both from its config.
+var per_bot := 9.0
+var chance := 0.45
 
 const LINES := {
 	&"start": ["good luck everyone", "stick together", "who has the gun?", "nobody go off alone", "here we go again"],
@@ -38,10 +40,10 @@ var _any_at: float = -INF
 func line(who: StringName, moment: StringName, t: float, stream: DotRandomStream, name: String = "", always: bool = false) -> String:
 	var pool: Array = LINES.get(moment, [])
 
-	if pool.is_empty() or t - _any_at < ANYBODY or t - float(_said_at.get(who, -INF)) < PER_BOT:
+	if pool.is_empty() or t - _any_at < ANYBODY or t - float(_said_at.get(who, -INF)) < per_bot:
 		return ""
 
-	if not always and stream.next_unit() > CHANCE:
+	if not always and stream.next_unit() > chance:
 		return ""
 
 	var text: String = pool[stream.next_range_i(0, pool.size() - 1)]

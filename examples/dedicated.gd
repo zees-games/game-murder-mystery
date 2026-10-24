@@ -16,7 +16,7 @@ const MmPlayer := preload("../game/mm_player.gd")
 ## nothing but the stand-ins the module seats itself.
 
 const SECTIONS := 14
-const CHECKS := 101
+const CHECKS := 107
 
 const SERVER_DIR := "user://mm_dedicated"
 const PORT := 28931
@@ -292,6 +292,7 @@ func _test_the_module_loads() -> void:
 	game = MmGame.new()
 	game.name = "World"
 	game.config = config
+	game.config_binder = DotGameConfigBinder.create(config, "game-murder-mystery", "mm")
 	game.tick_rate = Engine.physics_ticks_per_second
 	add_child(game)
 	await get_tree().process_frame
@@ -327,7 +328,33 @@ func _test_the_module_loads() -> void:
 		var _reset: Variant = alias.set_value("0")
 	_check(net != null and absf(net.config.world_extent - MmGame.NET_WORLD_EXTENT) < 0.01,
 		"against the world extent both ends decode with")
+	_noblock_and_config(module)
 	_finished()
+
+
+## Config cvars, the workbench's sync into a hand-written cvar, and dot-team's block rules through dot-game's DotGameNoblock.
+func _noblock_and_config(module: DotModule) -> void:
+	var teamblock := server.console.find_cvar("mp_teamblock")
+	var enemyblock := server.console.find_cvar("mp_enemyblock")
+	_check(teamblock != null and teamblock.get_string() == "0" and enemyblock != null and enemyblock.get_string() == "1",
+		"mp_teamblock is 0 and mp_enemyblock is 1 by default")
+	_check(server.console.has_name("mm_hit_radius") and server.console.has_name("mm_bot_witness_range") and server.console.has_name("mm_death_cam_seconds"),
+		"config fields with no hand-written cvar are mm_ cvars")
+	_check(module.get("workbench") != null, "the module hosts the workbench")
+	game.config.gun_cooldown = 4.5
+	module.call("_on_config_field", "gun_cooldown", 4.5, "workbench")
+	_check(server.console.find_cvar("mm_gun_cooldown").get_string().to_float() == 4.5, "a workbench edit reaches the hand-written cvar",
+		server.console.find_cvar("mm_gun_cooldown").get_string())
+	var _a := game.add_player(&"u91", "Walker")
+	var _b := game.add_player(&"u92", "Other")
+	game.body_rules.solid = true
+	_check(not game.body_rules.blocks(&"u91", &"u92"), "everybody is one side, so with mp_teamblock 0 players pass")
+	teamblock.set_value("1")
+	_check(game.body_rules.blocks(&"u91", &"u92"), "mp_teamblock 1 makes them block")
+	teamblock.set_value("0")
+	game.body_rules.solid = false
+	game.remove_player(&"u91")
+	game.remove_player(&"u92")
 
 
 func _test_the_commands() -> void:

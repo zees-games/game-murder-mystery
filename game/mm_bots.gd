@@ -596,9 +596,17 @@ func _top_suspect(state: Dictionary) -> Array:
 	return [best, score]
 
 
+## A tunable from the game's config, or [param fallback] when the game has none (a suite's stub).
+func _cfg(key: StringName, fallback: float) -> float:
+	var config: Variant = game.get("config")
+	return float(config.get(key)) if config != null and config.get(key) != null else fallback
+
+
 func _say(player: MmPlayer, moment: StringName, name: String = "", always: bool = false) -> void:
 	if game.get("config") == null or not bool(game.get("config").get("bot_chat")):
 		return
+	chat.per_bot = _cfg(&"bot_chat_pause", chat.per_bot)
+	chat.chance = _cfg(&"bot_chat_chance", chat.chance)
 	var text := chat.line(player.player_id, moment, now(), _state_of(player)["stream"], name, always)
 	if text != "":
 		counts["lines"] = int(counts["lines"]) + 1
@@ -652,7 +660,7 @@ func _keep_company(player: MmPlayer, command: DotFpsCommand, state: Dictionary, 
 ## Runs from the last threat seen, for [constant FLEE_FOR] seconds. True while it is running.
 func _flee(player: MmPlayer, command: DotFpsCommand, state: Dictionary) -> bool:
 	var threat: Vector3 = state["threat"]
-	if threat == Vector3.INF or now() - float(state["threat_at"]) > FLEE_FOR:
+	if threat == Vector3.INF or now() - float(state["threat_at"]) > _cfg(&"bot_flee_seconds", FLEE_FOR):
 		if state["mode"] == &"fleeing":
 			state["mode"] = &""
 			state["goal"] = Vector3.INF
@@ -680,7 +688,7 @@ func _fetch_gun(player: MmPlayer, command: DotFpsCommand, state: Dictionary) -> 
 		# room tells where. Only a long-lying one has to be seen to be remembered, and a gun
 		# usually falls where the murderer is, out of every bystander's line of sight.
 		var fresh := float(game.call("_now")) - float(drops[drop_id]["since"]) < FETCH_HEARD_FOR
-		if spot.distance_to(at) > FETCH_GUN or not (fresh or _los(player.eye_position(), spot + Vector3(0.0, 0.2, 0.0))):
+		if spot.distance_to(at) > _cfg(&"bot_fetch_gun_range", FETCH_GUN) or not (fresh or _los(player.eye_position(), spot + Vector3(0.0, 0.2, 0.0))):
 			continue
 		if best == Vector3.INF or spot.distance_to(at) < best.distance_to(at):
 			best = spot
@@ -901,7 +909,7 @@ func _witnesses(player: MmPlayer, target: MmPlayer, players: Dictionary) -> int:
 	for other: MmPlayer in _others(player, players, true):
 		if other == target:
 			continue
-		if other.controller.state.position.distance_to(player.controller.state.position) > WITNESS_RANGE:
+		if other.controller.state.position.distance_to(player.controller.state.position) > _cfg(&"bot_witness_range", WITNESS_RANGE):
 			continue
 		if _los(other.eye_position(), player.eye_position()):
 			count += 1
@@ -1769,7 +1777,7 @@ func _give_up_goal(player: MmPlayer, state: Dictionary) -> void:
 	var ahead_path: PackedVector3Array = state["path"]
 	var ahead_at := int(state.get("corner", 1))
 	state["shunned"] = ahead_path[ahead_at] if ahead_at < ahead_path.size() else at
-	state["shunned_until"] = now() + SHUN_FOR
+	state["shunned_until"] = now() + _cfg(&"bot_shun_seconds", SHUN_FOR)
 	state["path"] = PackedVector3Array()
 	state["goal"] = _wander_place(at, state, 14.0)
 	state["picked_at"] = now()

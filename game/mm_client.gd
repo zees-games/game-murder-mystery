@@ -97,7 +97,8 @@ func _ready() -> void:
 	gate = platform.gate
 
 	var config := MmConfig.new()
-	var loaded := config.load_layered(config_file)
+	var binder := DotGameConfigBinder.create(config, "game-murder-mystery", "mm", config_file)
+	var loaded := binder.load_layers()
 
 	if not loaded.ok:
 		DotLog.warn(CHANNEL, "falling back to defaults", {"why": loaded.error.message})
@@ -108,6 +109,7 @@ func _ready() -> void:
 	game = MmGame.new()
 	game.name = "World"
 	game.config = config
+	game.config_binder = binder
 	game.authoritative = _offline
 	game.register_service = _offline
 	game.tick_rate = int(ProjectSettings.get_setting("physics/common/physics_ticks_per_second", 64))
@@ -841,6 +843,7 @@ func _build_settings() -> void:
 
 	settings = platform.settings as MmSettings
 	console = platform.console as DotConsoleController
+	_add_noblock_and_workbench()
 
 	if settings == null:
 		return
@@ -861,6 +864,25 @@ func _build_settings() -> void:
 		_bind_bot_console()
 		board = platform.board as DotMenuScoreboard
 		_dress_board()
+
+
+## dot-team's block rules followed from the server, and the F9 tuning panel where this process hosts the game.
+func _add_noblock_and_workbench() -> void:
+	if link != null:
+		DotLog.result(CHANNEL, "noblock", platform.add_noblock(game, Callable(game, "team_of_side")))
+		return
+	var wb := DotGameWorkbench.new()
+	wb.name = "Workbench"
+	wb.listen_host_fn = func() -> bool: return true
+	wb.config = {"enabled": false}
+	if game.config_binder != null:
+		wb.add_set(game.config_binder.profile_set(), "Game settings")
+	add_child(wb)
+	var started := wb.start()
+	DotLog.result(CHANNEL, "the workbench", started)
+	if started.ok and game.config_binder != null:
+		game.config_binder.attach(wb.api.runtime)
+	platform.add_workbench(wb)
 
 
 func _suspend_input(suspended: bool) -> void:

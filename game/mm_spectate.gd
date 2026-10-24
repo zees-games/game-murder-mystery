@@ -84,13 +84,13 @@ var _preferring: bool = false
 
 
 ## Builds the manager on [param rules], the world's own [member MmGame.spectate_rules].
-func setup(p_authoritative: bool, tick_rate: int, rules: DotSpectatorRules) -> DotResult:
+func setup(p_authoritative: bool, tick_rate: int, rules: DotSpectatorRules, death_seconds := DEATH_CAM_SECONDS, freeze_seconds := FREEZE_CAM_SECONDS) -> DotResult:
 	authoritative = p_authoritative
 
 	manager = DotSpectatorManager.new()
 	manager.name = "SpectatorManager"
 	manager.authoritative = authoritative
-	manager.rules = configure_rules(rules, tick_rate)
+	manager.rules = configure_rules(rules, tick_rate, death_seconds, freeze_seconds)
 	manager.participants_fn = _participants
 	manager.team_fn = func(key: String) -> int: return int(sides.get(StringName(key), 0))
 	manager.alive_fn = _alive
@@ -123,12 +123,12 @@ func setup(p_authoritative: bool, tick_rate: int, rules: DotSpectatorRules) -> D
 ## forced roaming off. Roaming shows the dead nothing a followed camera does not: roles are
 ## not on the wire, and what is public (a weapon drawn, a gun in a hand, blood) is drawn
 ## the same from any camera.
-static func configure_rules(rules: DotSpectatorRules, tick_rate: int) -> DotSpectatorRules:
+static func configure_rules(rules: DotSpectatorRules, tick_rate: int, death_seconds := DEATH_CAM_SECONDS, freeze_seconds := FREEZE_CAM_SECONDS) -> DotSpectatorRules:
 	# Dead players stay dead until the next round, so a list that included them would be
 	# a list of bodies at the kill height.
 	rules.cycle_includes_dead = false
-	rules.death_cam_ticks = int(DEATH_CAM_SECONDS * float(maxi(tick_rate, 1)))
-	rules.freeze_cam_ticks = int(FREEZE_CAM_SECONDS * float(maxi(tick_rate, 1)))
+	rules.death_cam_ticks = int(death_seconds * float(maxi(tick_rate, 1)))
+	rules.freeze_cam_ticks = int(freeze_seconds * float(maxi(tick_rate, 1)))
 	rules.chase_distance = 4.6
 	rules.chase_height = 1.2
 	rules.delay_ticks = 0

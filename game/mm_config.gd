@@ -72,6 +72,12 @@ extends DotConfig
 ## A miss drops the gun at the shooter's feet. Off, a miss only costs the cooldown.
 @export var drop_on_miss: bool = true
 
+## Radius, in metres, of the capsule a shot has to cross to hit somebody.
+@export_range(0.1, 1.5, 0.05) var hit_radius: float = 0.4
+
+## Height, in metres, of that capsule standing; a crouch shrinks it toward the crouch height.
+@export_range(0.8, 3.0, 0.05) var hit_height: float = 1.85
+
 ## Shooting an innocent drops the gun too, and the shooter cannot pick one up again this round.
 @export var drop_on_innocent: bool = true
 
@@ -103,6 +109,9 @@ extends DotConfig
 @export_range(0, 100, 1) var survive_points: int = 5
 
 @export var doors_enabled: bool = true
+
+## Metres from the eye at which a toy can be aimed at and used.
+@export_range(0.5, 10.0, 0.1) var toy_reach: float = 2.3
 
 # --- The players -----------------------------------------------------------
 
@@ -173,11 +182,33 @@ func spawn_rules() -> DotSpawnRules:
 ## Whether the stand-ins talk in chat ("did anyone see that?"). Canned lines; see mm_bot_chat.gd.
 @export var bot_chat: bool = true
 
+## Chance a stand-in says a line when it has the chance (0 never, 1 always).
+@export_range(0.0, 1.0, 0.05) var bot_chat_chance: float = 0.45
+
+## Seconds before the same stand-in may speak again.
+@export_range(0.0, 120.0, 0.5) var bot_chat_pause: float = 9.0
+
+## Metres within which another person who can see a murderer bot counts as a witness, so it waits.
+@export_range(1.0, 200.0, 1.0) var bot_witness_range: float = 28.0
+
+## Metres within which an unarmed bystander bot goes for a gun it can see.
+@export_range(1.0, 200.0, 1.0) var bot_fetch_gun_range: float = 25.0
+
+## Seconds a bystander bot runs from a murderer it saw.
+@export_range(0.5, 60.0, 0.5) var bot_flee_seconds: float = 6.0
+
+## Seconds a bot avoids a spot it got stuck at.
+@export_range(0.0, 300.0, 1.0) var bot_shun_seconds: float = 30.0
+
 # --- Watching --------------------------------------------------------------
 
 @export_group("Watching")
 
 @export_enum("anybody", "own side", "nobody") var spectate_camera: int = 0
+
+## Seconds the death camera holds on the killer's spot after a death, then the freeze camera.
+@export_range(0.0, 10.0, 0.1) var death_cam_seconds: float = 1.5
+@export_range(0.0, 10.0, 0.1) var freeze_cam_seconds: float = 1.5
 
 # --- Progress --------------------------------------------------------------
 

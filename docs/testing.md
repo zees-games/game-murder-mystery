@@ -1,9 +1,10 @@
 # Testing
 
-`./game.sh test` parses every script and runs all five suites; `python3 ../murder-mystery-maps/tools/build_maps.py --check` confirms our maps are what the builder writes. On the VMs every run goes through `heavy -- …`, one suite at a time.
+`./game.sh test` parses every script and runs all seven suites; `python3 ../murder-mystery-maps/tools/build_maps.py --check` confirms our maps are what the builder writes. On the VMs every run goes through `heavy -- …`, one suite at a time.
 
 | Suite | What it covers |
 | --- | --- |
+| `examples/headless_config` | `MmConfig` through the config binder: fields exposed, cvar write, diff, `write_schema`, strict refusal of an unknown key, a shipped `config/game.yml` loading back, a workbench edit and its export |
 | `examples/headless_run` | the simulation, in 24 sections: the config and its checks, the catalogue and documents, the draw (forced roles, nobody murderer twice running, shirts), the grace (no draw, no fire), drawing and holstering by the key, the stab (the draw beat, out of reach, the cooldown, behind, through a wall and a shut door, armed), a hit, a miss (the drop, the ban, who may pick it up, a dead gunner's drop), an innocent shot, blood at its stages, the round won both ways and on time, falls, joiners, progress, bot chat, bots, doors, toys, the client's view (its role, the strip, the theme, the ragdoll, the death codec, the door prompt), help and the map menu, the weapons table |
 | `examples/headless_maps` | our own maps whole (validated, built, every door swung, every doorway walked, spawns clear, enough spawns and cover, toys still); then every mounted Hide & Seek, Prop Hunt and Playground map: converted, built as this kind, fits the wire, props known, spawns clear, a round starts with one murderer |
 | `examples/headless_bots` | eight stand-ins play whole rounds (8 by default, two a map over `mm_mansion`, `mm_motel`, `hs_manor`, `ph_house`) and the suite holds them to bands: the murderer kills in most rounds and does not win them all, somebody fires, a dropped gun is fetched, draws are not far over stabs, the bystanders keep together and talk, nobody stays stuck |

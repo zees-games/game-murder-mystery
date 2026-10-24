@@ -51,6 +51,10 @@ static var punishments_file: String = ""
 ## The `mm_bots` cvar, held so the tick does not look it up sixty times a second.
 var _bots: DotConVar = null
 
+## dot-workbench over the config; the F9 panel off a dedicated server, the HTTP page only with `workbench.enabled`.
+var workbench: DotGameWorkbench = null
+
+
 ## `mp_forcecamera`, kept so the deprecated `mm_spectate_camera` writes through it.
 var _force_camera_cvar: Object = null
 
@@ -213,6 +217,9 @@ func _game_load() -> DotResult:
 	var _bodies := world.body_rules.bind_cvars(
 		add_cvar, DotConVar.FLAG_ARCHIVE | DotConVar.FLAG_NOTIFY | DotConVar.FLAG_REPLICATED
 	)
+	var configured := _bind_config(world)
+	if not configured.ok:
+		return configured
 	# Dead bodies: dot-player-char's sv_ragdoll* set. The server only picks each death's reaction
 	# from them; REPLICATED, because the clients draw the bodies (see the client's netcode).
 	var _ragdolls := world.ragdoll_rules.bind_cvars(
@@ -474,6 +481,81 @@ func _add_tunables(world: MmGame) -> void:
 				var _set := _quota.quota_cvar.set_value(str(config.minimum_players)))
 
 
+## Config fields whose hand-written cvar is not `mm_<field>`.
+const HAND_RENAMES := {
+	"murderer_speed_scale": "mm_murderer_speed", "doors_enabled": "mm_doors",
+	"auto_bunny_hop": "mm_autobhop", "minimum_players": "mm_min_players",
+}
+
+
+## The hand-written cvar of a config field, or "" when the binder makes its own.
+func _hand_cvar(key: String) -> String:
+	var name: String = HAND_RENAMES.get(key, "mm_%s" % key)
+	return name if console.has_name(name) else ""
+
+
+## Every config field as an `mm_<field>` cvar (the hand-written ones keep their handlers and follow workbench edits), the cfg/ diff commands, the workbench and dot-team's block rules.
+func _bind_config(world: MmGame) -> DotResult:
+	var binder := world.config_binder
+	if binder == null:
+		return DotResult.success(null)
+	workbench = DotGameWorkbench.new()
+	workbench.name = "Workbench"
+	workbench.dedicated = DisplayServer.get_name() == "headless"
+	workbench.listen_host_fn = func() -> bool: return DisplayServer.get_name() != "headless"
+	workbench.permit_fn = func(actor: Variant, flag: String) -> bool:
+		return server != null and server.admins != null and actor is String \
+			and bool(server.admins.uid_has_permission(actor, flag))
+	workbench.add_set(binder.profile_set(), "Game settings")
+	add_child(workbench)
+	var started := workbench.start()
+	var runtime: DotProfileRuntime = workbench.api.runtime if started.ok and workbench.api != null else null
+	if not started.ok:
+		log_warn("the workbench did not start", {"why": started.error.message})
+
+	binder.bind_cvars(add_cvar, DotConVar.FLAG_ARCHIVE,
+		func(name: String) -> bool: return console.has_name(name))
+	binder.bind_commands(add_command)
+	binder.field_changed.connect(_on_config_field)
+	if runtime != null:
+		binder.attach(runtime)
+
+	return DotResult.success(null)
+
+
+## Everybody is one side (see [method MmGame.team_of_side]).
+func _noblock_side(id: Variant) -> Variant:
+	return game.call(&"team_of_side", id) if game != null else ""
+
+
+## The workbench's runtime, so its "noblock" kind is listed beside the config.
+func _noblock_runtime() -> Object:
+	return workbench.api.runtime if workbench != null and workbench.api != null else null
+
+
+## The block commands are keyed by the player ids the world uses (`u<userid>`), not the bare userid.
+func _build_noblock() -> DotResult:
+	var built := super()
+	if built.ok and noblock != null and noblock.commands != null:
+		noblock.commands.set(&"key_fn", func(ctx: Object) -> Variant:
+			var session: Variant = ctx.get("session")
+			return MmNetBridge.player_key(int(session.get("userid"))) if session is Object else null)
+	return built
+
+
+## A workbench or file edit of a field: pushed through its hand-written cvar so the handler runs.
+func _on_config_field(key: String, _value: Variant, source: String) -> void:
+	if source == "cvar":
+		return
+	var hand := _hand_cvar(key)
+	if hand == "":
+		return
+	var text: Variant = game.config.get(key)
+	if text is bool:
+		text = "1" if text else "0"
+	console.set_cvar(hand, str(text))
+
+
 ## A number as an operator would type it: `34`, not `34.000000`.
 ##
 ## [b]Not `%g`, which GDScript's format strings do not have.[/b] It is accepted by the parser
@@ -513,6 +595,15 @@ func _tunable(
 ## tree before the module loaded, and a server can unload and reload a game module without
 ## the map going away, which is what `module reload` is for.
 func _game_unload() -> void:
+	if workbench != null:
+		workbench.queue_free()
+		workbench = null
+
+	if game != null and "block_rules" in game:
+		game.set(&"block_rules", null)
+
+	noblock = null
+
 	if game != null and "harm_gate" in game:
 		game.set(&"harm_gate", Callable())
 
