@@ -294,7 +294,7 @@ func _test_the_module_loads() -> void:
 	game = MmGame.new()
 	game.name = "World"
 	game.config = config
-	game.config_binder = DotGameConfigBinder.create(config, "game-murder-mystery", "mm")
+	game.config_binder = MmConfig.make_binder(config)
 	game.tick_rate = Engine.physics_ticks_per_second
 	add_child(game)
 	await get_tree().process_frame

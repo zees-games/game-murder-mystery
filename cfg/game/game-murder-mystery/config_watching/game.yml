@@ -1,0 +1,14 @@
+# game-murder-mystery: every key of this file at its code default, commented out. Uncomment a line to change it;
+# an operator overrides in cfg/server/game/game-murder-mystery/config_watching/game.yml. Layers: defaults < this < env < argv.
+
+# --- Watching
+# spectate_camera: 0
+# Seconds the death camera holds on the killer's spot after a death, then the freeze camera. [0.0..10.0]
+# death_cam_seconds: 1.5
+#  [0.0..10.0]
+# freeze_cam_seconds: 1.5
+
+# --- Progress
+# keep_progress: true
+# progress_directory: ""
+# report_progress: false

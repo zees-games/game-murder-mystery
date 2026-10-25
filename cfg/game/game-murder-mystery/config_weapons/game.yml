@@ -1,0 +1,39 @@
+# game-murder-mystery: every key of this file at its code default, commented out. Uncomment a line to change it;
+# an operator overrides in cfg/server/game/game-murder-mystery/config_weapons/game.yml. Layers: defaults < this < env < argv.
+
+# --- The murderer's weapon
+# Which melee weapon the murderer carries: an id from game/mm_weapons.gd (knife, cleaver, axe, bat, sword). I...
+# murderer_weapon: "knife"
+# Metres from the murderer's eye a stab reaches. 0 takes the weapon's own. [0.0..4.0]
+# melee_range: 0.0
+# Seconds between two stabs. 0 takes the weapon's own. [0.0..10.0]
+# melee_cooldown: 0.0
+# Half-angle of the cone in front of the murderer a stab lands in, in degrees. [5.0..90.0]
+# melee_cone: 40.0
+# Seconds after drawing before a stab lands: a drawn weapon is a tell, and this is the beat in which somebody... [0.0..3.0]
+# draw_seconds: 0.35
+
+# --- The gun
+# Seconds between two shots for whoever holds the gun. [0.0..30.0]
+# gun_cooldown: 3.0
+# How far the gun reaches, in metres. [5.0..300.0]
+# gun_range: 120.0
+# A miss drops the gun at the shooter's feet. Off, a miss only costs the cooldown.
+# drop_on_miss: true
+# Radius, in metres, of the capsule a shot has to cross to hit somebody. [0.1..1.5]
+# hit_radius: 0.4
+# Height, in metres, of that capsule standing; a crouch shrinks it toward the crouch height. [0.8..3.0]
+# hit_height: 1.85
+# Shooting an innocent drops the gun too, and the shooter cannot pick one up again this round.
+# drop_on_innocent: true
+# Shooting an innocent kills the shooter as well.
+# innocent_kills_shooter: false
+# How close, in metres, somebody has to walk to a dropped gun to pick it up. [0.3..3.0]
+# pickup_range: 1.1
+
+# --- Blood
+# Seconds before the end of the round the murderer starts to show blood. 0 never. [0.0..600.0]
+# blood_seconds: 60.0
+# How many steps the blood comes in. Each kill also adds one, when blood_per_kill. [1..8]
+# blood_stages: 4
+# blood_per_kill: true

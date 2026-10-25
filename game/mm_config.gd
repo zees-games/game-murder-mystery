@@ -219,6 +219,23 @@ func spawn_rules() -> DotSpawnRules:
 @export var report_progress: bool = false
 
 
+## `@export_group` -> the cfg file it lives in: `cfg/game/game-murder-mystery/config_<file>/game.yml`.
+const CFG_FILES := {
+	"The round": "round", "The sides": "round", "Points": "round",
+	"The murderer's weapon": "weapons", "The gun": "weapons", "Blood": "weapons",
+	"The players": "players", "The maps": "maps", "Spawning": "maps",
+	"Bots": "bots", "Watching": "watching", "Progress": "watching",
+}
+
+
+## The binder every entry point uses: [param config] layered, one cfg file per [constant CFG_FILES] entry.
+static func make_binder(config: DotConfig, json_path := "") -> DotGameConfigBinder:
+	var b := DotGameConfigBinder.create(config, "game-murder-mystery", "mm", json_path)
+	b.grouped = true
+	b.group_files = CFG_FILES
+	return b
+
+
 func env_prefix() -> String:
 	return "MM_"
 

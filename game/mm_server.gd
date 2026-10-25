@@ -32,7 +32,7 @@ func _ready() -> void:
 	# an operator sets `MM_HIDE_SECONDS` or `--mm-round-seconds` without editing anything, and
 	# the cvars the module adds are the live half of the same numbers.
 	# Plus the cfg/ yml layers; strict (a typo or bad value stops the boot) on a dedicated server.
-	var binder := DotGameConfigBinder.create(config, "game-murder-mystery", "mm", "user://cfg/murder.json")
+	var binder := MmConfig.make_binder(config, "user://cfg/murder.json")
 	var loaded := binder.load_layers()
 
 	if not loaded.ok:

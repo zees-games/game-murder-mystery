@@ -1,0 +1,20 @@
+# game-murder-mystery: every key of this file at its code default, commented out. Uncomment a line to change it;
+# an operator overrides in cfg/server/game/game-murder-mystery/config_bots/game.yml. Layers: defaults < this < env < argv.
+
+# --- Bots
+#  [0..24]
+# minimum_players: 6
+# Whether the stand-ins talk in chat ("did anyone see that?"). Canned lines; see mm_bot_chat.gd.
+# bot_chat: true
+# Chance a stand-in says a line when it has the chance (0 never, 1 always). [0.0..1.0]
+# bot_chat_chance: 0.45
+# Seconds before the same stand-in may speak again. [0.0..120.0]
+# bot_chat_pause: 9.0
+# Metres within which another person who can see a murderer bot counts as a witness, so it waits. [1.0..200.0]
+# bot_witness_range: 28.0
+# Metres within which an unarmed bystander bot goes for a gun it can see. [1.0..200.0]
+# bot_fetch_gun_range: 25.0
+# Seconds a bystander bot runs from a murderer it saw. [0.5..60.0]
+# bot_flee_seconds: 6.0
+# Seconds a bot avoids a spot it got stuck at. [0.0..300.0]
+# bot_shun_seconds: 30.0

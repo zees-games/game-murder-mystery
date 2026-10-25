@@ -1,0 +1,39 @@
+# game-murder-mystery: every key of this file at its code default, commented out. Uncomment a line to change it;
+# an operator overrides in cfg/server/game/game-murder-mystery/config_round/game.yml. Layers: defaults < this < env < argv.
+
+# --- The round
+# Seconds at the top of a round when nobody can be hurt: the murderer cannot draw, the gun cannot fire. Long ... [0.0..60.0]
+# grace_seconds: 10.0
+# Seconds of play after the grace. When it runs out the bystanders win: the murderer had the whole round and ... [30.0..1800.0]
+# round_seconds: 180.0
+#  [0.0..60.0]
+# intermission_seconds: 8.0
+#  [0.0..300.0]
+# warmup_seconds: 8.0
+
+# --- The sides
+# How many murderers: one per this many players, between the two bounds. [2.0..64.0]
+# players_per_murderer: 12.0
+#  [1..8]
+# min_murderers: 1
+#  [1..8]
+# max_murderers: 2
+# How many bystanders start with the gun, the same way. [2.0..64.0]
+# players_per_gunner: 12.0
+#  [1..8]
+# min_gunners: 1
+#  [1..8]
+# max_gunners: 2
+
+# --- Points
+#  [0..100]
+# winner_points: 10
+#  [0..100]
+# kill_points: 5
+#  [0..100]
+# hero_points: 15
+#  [0..100]
+# survive_points: 5
+# doors_enabled: true
+# Metres from the eye at which a toy can be aimed at and used. [0.5..10.0]
+# toy_reach: 2.3

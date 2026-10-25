@@ -8,6 +8,9 @@ const MmPlayer := preload("mm_player.gd")
 const MmAvatars := preload("mm_avatars.gd")
 const MmVote := preload("mm_vote.gd")
 const MmMapConfig := preload("mm_map_config.gd")
+const MmAmbience := preload("mm_ambience.gd")
+## The workbench kind of the ambience cvar set (saved to cfg/.../ambience/server.yml).
+const AMBIENT_KIND := "ambience"
 
 ## This game, as a module a dedicated server loads.
 ##
@@ -511,7 +514,11 @@ func _bind_config(world: MmGame) -> DotResult:
 	workbench.permit_fn = func(actor: Variant, flag: String) -> bool:
 		return server != null and server.admins != null and actor is String \
 			and bool(server.admins.uid_has_permission(actor, flag))
-	workbench.add_set(binder.profile_set(), "Game settings")
+	for set: DotProfileSet in binder.profile_sets():
+		workbench.add_set(set, "Game settings: %s" % set.rel_path.trim_prefix("config_"))
+	var ambient_set := DotGameWorkbench.cvar_set(console, MmAmbience.cvar_types(), AMBIENT_KIND)
+	if ambient_set != null:
+		workbench.add_set(ambient_set, "Ambience (mm_ambient*)")
 	add_child(workbench)
 	var started := workbench.start()
 	var runtime: DotProfileRuntime = workbench.api.runtime if started.ok and workbench.api != null else null
@@ -521,6 +528,8 @@ func _bind_config(world: MmGame) -> DotResult:
 	binder.bind_cvars(add_cvar, DotConVar.FLAG_ARCHIVE,
 		func(name: String) -> bool: return console.has_name(name))
 	binder.bind_commands(add_command)
+	if ambient_set != null:
+		DotGameWorkbench.bind_cvar_set(ambient_set, runtime, console)
 	binder.field_changed.connect(_on_config_field)
 	if runtime != null:
 		binder.attach(runtime)
