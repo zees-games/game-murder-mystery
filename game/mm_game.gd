@@ -1,5 +1,6 @@
 extends Node3D
 
+const MmAmbience := preload("mm_ambience.gd")
 const MmCatalogue := preload("mm_catalogue.gd")
 const MmConfig := preload("mm_config.gd")
 const MmMap := preload("mm_map.gd")
@@ -190,6 +191,8 @@ var players: Dictionary = {}
 ## dot-player-char's `mp_*` view and body rules.
 var view_rules: DotPlayerViewRules = DotPlayerViewRules.new()
 var body_rules: DotPlayerBodyRules = DotPlayerBodyRules.new()
+## The ambience cvars (`mm_ambient*`): bound by the module (REPLICATED), followed by a client through its link.
+var ambient_rules: DotAmbienceRules = MmAmbience.make_rules()
 
 ## Binds [member config] to cvars, the cfg/ yml layers and the workbench; made by whoever builds the config.
 var config_binder: DotGameConfigBinder = null

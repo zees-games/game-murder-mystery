@@ -239,6 +239,7 @@ func _build_netcode() -> DotResult:
 	# predicts its own player.
 	var _view := game.view_rules.follow_cvars(link)
 	var _solid := game.body_rules.follow_cvars(link)
+	var _ambient := game.ambient_rules.follow_cvars(link)
 	# The server's sv_ragdoll* set: this end draws the bodies.
 	var _dead := game.ragdoll_rules.follow_cvars(link)
 	# And sv_toys*: a client hides the toys a server took away.
@@ -853,6 +854,9 @@ func _build_settings() -> void:
 
 	if audio != null:
 		settings.bind_audio(audio.manager)
+		# The server's mm_ambient* drive the quiet layer; the player's sliders multiply on top.
+		if audio.ambient != null:
+			audio.ambient.follow_settings(settings.settings, game.ambient_rules)
 
 	if blood != null:
 		blood.follow(settings.settings)
@@ -961,6 +965,8 @@ func _process(delta: float) -> void:
 	if blood != null:
 		blood.advance(delta)
 	var _shown := present_frame(net, game, player, not third_person, delta, -1.0, _watched_through_eyes())
+	if audio != null and audio.ambient != null and camera != null and camera.is_inside_tree() and game.physics != null:
+		audio.ambient.follow_roof(delta, camera.global_position, camera.get_world_3d().direct_space_state, game.physics.mask_of([&"world"]))
 	_present_hide()
 	_present_guns()
 

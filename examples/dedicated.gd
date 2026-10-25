@@ -3,6 +3,7 @@ extends Node
 const MmConfig := preload("../game/mm_config.gd")
 const MmEvents := preload("../game/net/mm_events.gd")
 const MmGame := preload("../game/mm_game.gd")
+const MmAmbience := preload("../game/mm_ambience.gd")
 const MmNetLink := preload("../game/net/mm_net_link.gd")
 const MmPlayer := preload("../game/mm_player.gd")
 
@@ -15,8 +16,8 @@ const MmPlayer := preload("../game/mm_player.gd")
 ## [DotGameModule]'s order runs, a cvar is typed at a console and a round is played by
 ## nothing but the stand-ins the module seats itself.
 
-const SECTIONS := 14
-const CHECKS := 107
+const SECTIONS := 15
+const CHECKS := 110
 
 const SERVER_DIR := "user://mm_dedicated"
 const PORT := 28931
@@ -62,6 +63,7 @@ func _run() -> void:
 		_test_finish_round_waits_for_a_live_round()
 		await _test_a_module_reload_keeps_one_link()
 		await _test_loading_cover()
+		await _test_ambient_cvars_reach_the_client()
 		await _test_it_unloads_cleanly()
 
 	_test_no_message_preloads_itself()
@@ -943,6 +945,67 @@ func _test_loading_cover() -> void:
 			gone = true
 			break
 	_check(gone and not roster.is_loading(userid), "it leaves and the roster forgets it")
+	side.queue_free()
+	_finished()
+
+
+## [b]`mm_ambient*` on a client.[/b] The server's ambience intent rides the replicated cvars over a real socket, and a
+## director that follows the game's rules (as [MmClient] wires it) has it in its layer's config.
+func _test_ambient_cvars_reach_the_client() -> void:
+	_section("the server's mm_ambient* reaches a client's ambience director, live")
+	var side := Node.new()
+	side.name = "AmbientClient"
+	add_child(side)
+	get_tree().set_multiplayer(MultiplayerAPI.create_default_interface(), side.get_path())
+	var mirror := Node.new()
+	mirror.name = name
+	side.add_child(mirror)
+	var link := DotClientLink.new()
+	link.name = "Server"
+	link.player_name = "Ambient"
+	link.transport_preference = "udp"
+	link.udp_address = "127.0.0.1:%d" % PORT
+	mirror.add_child(link)
+	link.connect_to_server("127.0.0.1:%d" % PORT)
+	var rules := MmAmbience.make_rules()
+	var _followed := rules.follow_cvars(link)
+	var director := DotAmbienceDirector.new()
+	director.ambient = DotAmbience.new()
+	director.follow_settings(null, rules)
+	var joined := false
+	for _i in 1800:
+		await get_tree().physics_frame
+		if link.replicated_cvar("mm_ambient_volume", "") != "":
+			joined = true
+			break
+	_check(joined and link.replicated_cvar("mm_ambient_dir", "x") == "x",
+		"the join carried mm_ambient_volume, and the machine-local mm_ambient_dir stayed home", str(link.replicated_cvars))
+	var _vol := server.console.set_cvar("mm_ambient_volume", "0.8")
+	var _mood := server.console.set_cvar("mm_ambient_mood", "swamp")
+	var _off := server.console.set_cvar("mm_ambient", "0")
+	var arrived := false
+	for _i in 900:
+		await get_tree().physics_frame
+		if is_equal_approx(director.ambient.config.volume, 0.8) and director.ambient.config.mood == "swamp" \
+				and not director.ambient.config.enabled:
+			arrived = true
+			break
+	_check(arrived, "a change of volume, mood and the switch reaches the director live", str(rules.describe()))
+	var _back_vol := server.console.set_cvar("mm_ambient_volume", "0.3")
+	var _back_mood := server.console.set_cvar("mm_ambient_mood", "")
+	var _back_on := server.console.set_cvar("mm_ambient", "1")
+	var back := false
+	for _i in 900:
+		await get_tree().physics_frame
+		if rules.is_on() and rules.mood == "":
+			back = true
+			break
+	_check(back, "and back", str(rules.describe()))
+	director.ambient.free()
+	director.free()
+	link.disconnect_from_server("done")
+	for _i in 120:
+		await get_tree().physics_frame
 	side.queue_free()
 	_finished()
 
