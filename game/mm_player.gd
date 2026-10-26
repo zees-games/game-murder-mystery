@@ -186,7 +186,7 @@ func _ready() -> void:
 ## the two must agree. The same for both sides, so a predicting client never has to know which
 ## side somebody is on to move them.
 static func tunables_for(config: MmConfig, speed_scale: float = 1.0) -> DotFpsTunables:
-	var t := DotFpsTunables.new()
+	var t := DotFpsTunables.with_profile("legacy")
 	t.max_speed = (config.run_speed if config != null else 6.0) * speed_scale
 	t.gravity = config.gravity if config != null else 20.0
 	t.jump_height = config.jump_height if config != null else 1.15
