@@ -17,8 +17,8 @@ const MmPlayer := preload("../game/mm_player.gd")
 ## [DotGameModule]'s order runs, a cvar is typed at a console and a round is played by
 ## nothing but the stand-ins the module seats itself.
 
-const SECTIONS := 15
-const CHECKS := 113
+const SECTIONS := 16
+const CHECKS := 116
 
 const SERVER_DIR := "user://mm_dedicated"
 const PORT := 28931
