@@ -1,4 +1,4 @@
-extends Node
+extends DotGameCheckSuite
 
 const MmConfig := preload("../game/mm_config.gd")
 const MmGame := preload("../game/mm_game.gd")
@@ -49,11 +49,8 @@ const MAX_STUCK := 12.0
 const SECTIONS := 1
 const CHECKS := 7
 
-var _passed := 0
-var _failed := 0
 var _entered := 0
 var _completed := 0
-var _failures := PackedStringArray()
 
 
 func _ready() -> void:
@@ -133,16 +130,7 @@ func _run() -> void:
 	_check(stuck <= MAX_STUCK, "nobody stays stuck for long", "%.1f s, %s" % [stuck, stuck_where])
 	_completed += 1
 
-	print("")
-	print("%d sections entered, %d finished" % [_entered, _completed])
-	print("%d passed, %d failed" % [_passed, _failed])
-	for line in _failures:
-		print("  FAIL  %s" % line)
-	var code := 1 if _failed > 0 else 0
-	if _entered != SECTIONS or _completed != SECTIONS or _passed + _failed != CHECKS:
-		print("ERROR: %d of %d sections, %d of %d checks." % [_completed, SECTIONS, _passed + _failed, CHECKS])
-		code = 1
-	get_tree().quit(code)
+	_report_sections(_entered, _completed, SECTIONS, CHECKS)
 
 
 func _round(map_id: String, index: int, difficulty: String) -> Dictionary:
@@ -231,13 +219,3 @@ func _section(name: String) -> void:
 	_entered += 1
 	print(name)
 
-
-func _check(ok: bool, what: String, detail: String = "") -> void:
-	var line := "%s%s" % [what, "" if detail == "" else "  (%s)" % detail]
-	if ok:
-		_passed += 1
-		print("  ok    %s" % line)
-		return
-	_failed += 1
-	_failures.append(line)
-	print("  FAIL  %s" % line)
