@@ -191,6 +191,10 @@ var players: Dictionary = {}
 ## dot-player-char's `mp_*` view and body rules.
 var view_rules: DotPlayerViewRules = DotPlayerViewRules.new()
 var body_rules: DotPlayerBodyRules = DotPlayerBodyRules.new()
+
+## `sv_falldamage*`: landing hard hurts. On in this game (dot-combat's default is off); the
+## server applies it through [member combat], a client never does.
+var fall_rules: DotFallDamageRules = _make_fall_rules()
 ## The ambience cvars (`mm_ambient*`): bound by the module (REPLICATED), followed by a client through its link.
 var ambient_rules: DotAmbienceRules = MmAmbience.make_rules()
 
@@ -591,6 +595,12 @@ func _build_progress() -> void:
 	)
 
 
+static func _make_fall_rules() -> DotFallDamageRules:
+	var rules := DotFallDamageRules.new()
+	rules.enabled = true
+	return rules
+
+
 ## Puts somebody in the world. [param wanted_side] is ignored but for a suite's 
 ## [constant MURDERERS], which makes them a murderer straight away.
 ##
@@ -642,6 +652,17 @@ func add_player(
 
 	if combat != null:
 		combat.register_health(player.entity_id, health)
+
+	if combat != null and player.controller != null:
+		var fall := DotFallDamage.new()
+		fall.name = "FallDamage"
+		fall.rules = fall_rules
+		fall.victim = player.entity_id
+		fall.controller = DotNodeRef.of_path(player.controller.get_path())
+		fall.controller.mode = DotNodeRef.Mode.ABSOLUTE
+		fall.combat = DotNodeRef.of_path(combat.get_path())
+		fall.combat.mode = DotNodeRef.Mode.ABSOLUTE
+		player.add_child(fall)
 
 	health.died.connect(func(damage: DotDamage) -> void: _on_player_died(player, damage))
 
