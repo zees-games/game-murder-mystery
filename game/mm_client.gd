@@ -14,6 +14,7 @@ const MmHud := preload("mm_hud.gd")
 const MmPaths := preload("mm_paths.gd")
 const MmPlayer := preload("mm_player.gd")
 const MmWeapons := preload("mm_weapons.gd")
+const MmWeaponIcons := preload("mm_weapon_icons.gd")
 
 ## One local player, a camera and a HUD over a [MmGame] — offline, or against a server.
 ##
@@ -188,6 +189,10 @@ static func _bot_name(index: int) -> String:
 ## `-- --bot_difficulty hard` at launch. Connected, the server's console holds them and a local
 ## copy would shadow it.
 func _bind_bot_console() -> void:
+	if console != null:
+		var local: Array = console.sources()
+		if not local.is_empty() and local[0] is DotConsoleLocal:
+			var _icons := MmWeaponIcons.shared.bind_console(local[0])
 	if not _offline or console == null or game == null:
 		return
 	var sources: Array = console.sources()

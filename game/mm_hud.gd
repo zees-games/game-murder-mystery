@@ -26,6 +26,7 @@ const BLIND_COLOUR := Color(0.01, 0.01, 0.015)
 
 ## The disc's colours, by what the player is.
 const MURDERER_COLOUR := Color(0.78, 0.12, 0.12)
+const MmWeaponIcons := preload("mm_weapon_icons.gd")
 const GUNNER_COLOUR := Color(0.20, 0.45, 0.90)
 const BYSTANDER_COLOUR := Color(0.32, 0.62, 0.36)
 
@@ -88,6 +89,8 @@ var _disc: Panel = null
 var _disc_label: Label = null
 var _as: Label = null
 var _lock: Label = null
+## The weapon or gun in hand as a sprite over the disc; hidden when it has none.
+var weapon_icon: TextureRect = null
 ## The gun's or the weapon's readiness, under the disc's words.
 var _meter_back: ColorRect = null
 var _meter_fill: ColorRect = null
@@ -170,6 +173,19 @@ func _build() -> void:
 	_disc_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.6))
 	_disc_label.add_theme_constant_override("outline_size", 4)
 	_disc.add_child(_disc_label)
+
+	weapon_icon = TextureRect.new()
+	weapon_icon.name = "WeaponIcon"
+	weapon_icon.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	weapon_icon.offset_left = 22.0
+	weapon_icon.offset_right = 142.0
+	weapon_icon.offset_top = -368.0
+	weapon_icon.offset_bottom = -306.0
+	weapon_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	weapon_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	weapon_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	weapon_icon.visible = false
+	_root.add_child(weapon_icon)
 
 	_as = _label(17)
 	_as.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
@@ -319,6 +335,7 @@ func _process(delta: float) -> void:
 		strip.hide_scores()
 
 	_draw_disc(role)
+	_draw_weapon_icon(role)
 	_draw_hints(role)
 	_draw_meter(role)
 	_draw_door_prompt()
@@ -340,6 +357,20 @@ func role_of() -> StringName:
 	if side == MmGame.BYSTANDERS:
 		return &"gunner" if player.has_gun else &"bystander"
 	return &""
+
+
+## The held weapon's sprite (`cl_weapon_icons`): the gun for a gunner, the murderer's weapon, dimmed while put away.
+func _draw_weapon_icon(role: StringName) -> void:
+	var sprite: Texture2D = null
+	if player != null and player.is_alive() and not player.watching:
+		if role == &"gunner":
+			sprite = MmWeaponIcons.shared.texture(MmWeaponIcons.GUN)
+		elif role == &"murderer":
+			sprite = MmWeaponIcons.shared.texture(game.weapon_id())
+	weapon_icon.texture = sprite
+	weapon_icon.visible = sprite != null
+	weapon_icon.modulate.a = 0.45 if role == &"murderer" and not player.weapon_drawn else 1.0
+	MmWeaponIcons.shared.filter(weapon_icon, true)
 
 
 func _draw_disc(role: StringName) -> void:
