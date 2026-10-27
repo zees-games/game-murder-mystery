@@ -210,6 +210,7 @@ func setup() -> DotResult:
 	ambient.default_mood = MmAmbience.DEFAULT_MOOD
 	ambient.prefix_moods = MmAmbience.PREFIX_MOODS
 	ambient.rules = MmAmbience.make_rules()
+	ambient.beds = ambience
 	add_child(ambient)
 	var _moods := ambient.setup()
 	ambient.follow_settings(null)
