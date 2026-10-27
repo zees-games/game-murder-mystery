@@ -4,8 +4,8 @@ extends RefCounted
 
 const PREFIX := "mm"
 ## Hiding is listening: the layer is felt, not heard, and the one-shots are rare so a step still stands out.
-const LEVEL := 0.3
-const RATE := 0.5
+const LEVEL := 0.15
+const RATE := 0.4
 const DEFAULT_MOOD := &"interior_horror"
 
 ## By map id prefix; the own maps and the converted ones are named by their author or their game.
