@@ -78,3 +78,5 @@ Read the family [CLAUDE.md](../../CLAUDE.md) first; this file is only what is sp
 1. **Put it live.** No remote, nothing pushed. dot-server-deploy has no content entries for `murder` or `murder_maps`, and dot-bootstrap's `projects.tsv` does not list this repository or murder-mystery-maps, so neither is linked or deployed by the tools yet.
 2. **Lag compensation is off** (`enable_lag_compensation = false`): a shot is measured against where people are on the server's tick, not where the shooter saw them. dot-net has it; it wants a browser test with real latency first.
 3. **Play it with people**: the weapon reach, the gun cooldown, the grace and the blood timing are numbers only play settles.
+
+**Combat feel (dot-game `DotGameCombatFeel`) is deliberately not adopted**: the single gun and the murderer's melee are `mm_weapons.gd` and game code, not a `DotArsenal`, and there is no spread-crosshair HUD. Moving them onto an arsenal is the prerequisite; then `feel.attach`, `bind_cvars` and `add_combat_feel`.
