@@ -1,6 +1,6 @@
 # size
 # Baselines only shrink: scripts/<gate> --update lowers or drops entries and refuses to add.
-examples/dedicated.gd	1287
+examples/dedicated.gd	1260
 examples/dedicated.gd::_test_a_round_runs	90
 examples/dedicated.gd::_test_loading_cover	129
 examples/dedicated.gd::_test_map_rotation_file	97
@@ -12,11 +12,11 @@ examples/headless_run.gd	1451
 examples/headless_run.gd::_test_doors	93
 examples/headless_run.gd::_test_the_client	274
 examples/headless_run.gd::_test_toys	92
-game/mm_bots.gd	1816
+game/mm_bots.gd	1797
 game/mm_bots.gd::_walk_to	149
 game/mm_catalogue.gd::practice	109
 game/mm_client.gd	1385
-game/mm_game.gd	2227
+game/mm_game.gd	1947
 game/mm_game.gd::_draw_roles	93
 game/mm_map_doc.gd::validate	168
 game/mm_module.gd	1039
