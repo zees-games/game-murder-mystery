@@ -841,6 +841,150 @@ def do_tableCoffee(by):
         for y in (lo.y + 0.03, hi.y - 0.03):
             add_cyl(o, (x, y, lo.z + 0.004), 0.012, 0.008, "brass", verts=8)
 
+def do_computerMouse(by):
+    o = by["computerMouse(Clone)"]
+    lo, hi = world_box([o])
+    cx = (lo.x + hi.x) / 2
+    add_box(o, (cx - 0.0015, lo.y + 0.004, hi.z - 0.003), (cx + 0.0015, lo.y + 0.045, hi.z), "gunmetal")
+    add_cyl(o, (cx, lo.y + 0.03, hi.z - 0.005), 0.0035, 0.006, "steel", axis="X", verts=10)
+    add_cyl(o, (cx, hi.y - 0.006, lo.z + 0.008), 0.0025, 0.012, "gunmetalDark", axis="Y", verts=6)
+    add_box(o, (lo.x + 0.004, lo.y + 0.004, lo.z), (hi.x - 0.004, hi.y - 0.004, lo.z + 0.002), "steel")
+
+def do_speakerSmall(by):
+    o = by["speakerSmall(Clone)"]
+    lo, hi = world_box([o])
+    cx = (lo.x + hi.x) / 2
+    add_box(o, (lo.x, lo.y, lo.z), (hi.x, hi.y, lo.z + 0.012), "walnutDark")
+    for z, r in ((0.095, 0.036), (0.215, 0.019)):
+        add_cyl(o, (cx, lo.y + 0.002, z), r + 0.004, 0.005, "brass", axis="Y", verts=18)
+        add_cyl(o, (cx, lo.y + 0.001, z), r, 0.005, "gunmetalDark", axis="Y", verts=18)
+        add_sphere(o, (cx, lo.y + r * 0.25, z), r * 0.32, "steel", 1.0)
+    add_box(o, (cx - 0.012, lo.y - 0.001, hi.z - 0.035), (cx + 0.012, lo.y + 0.001, hi.z - 0.032), "brass")
+
+def cushion_bench(o, lo, hi):
+    lv = [(a, z) for z, a in top_levels(o) if z > hi.z * 0.3]
+    seat = max(lv)[1] if lv else hi.z * 0.6
+    add_box(o, (lo.x + 0.02, lo.y + 0.02, seat - 0.002), (hi.x - 0.02, hi.y - 0.02, seat + 0.006), "velvet")
+    add_box(o, (lo.x + 0.02, lo.y + 0.02, seat + 0.006), (hi.x - 0.02, lo.y + 0.024, seat + 0.008), "brass")
+    for x in (lo.x + 0.015, hi.x - 0.015):
+        for y in (lo.y + 0.015, hi.y - 0.015):
+            add_cyl(o, (x, y, lo.z + 0.004), 0.012, 0.008, "brass", verts=8)
+    return seat
+
+def do_benchCushionLow(by):
+    o = by["benchCushionLow(Clone)"]
+    lo, hi = world_box([o])
+    cushion_bench(o, lo, hi)
+
+def do_benchCushion(by):
+    o = by["benchCushion(Clone)"]
+    lo, hi = world_box([o])
+    cushion_bench(o, lo, hi)
+    add_box(o, (lo.x + 0.01, hi.y - 0.012, hi.z - 0.012), (hi.x - 0.01, hi.y, hi.z), "brass")
+
+def do_radio(by):
+    o = by["radio(Clone)"]
+    lo, hi = world_box([o])
+    add_box(o, (lo.x, lo.y, lo.z), (hi.x, hi.y, lo.z + 0.008), "walnutDark")
+    add_box(o, (lo.x + 0.03, lo.y - 0.0015, lo.z + 0.06), (lo.x + 0.15, lo.y + 0.002, hi.z - 0.04), "paper")
+    add_box(o, (lo.x + 0.075, lo.y - 0.003, lo.z + 0.06), (lo.x + 0.079, lo.y + 0.002, hi.z - 0.04), "red")
+    for k in range(2):
+        add_cyl(o, (hi.x - 0.055 - k * 0.05, lo.y + 0.002, lo.z + 0.05), 0.016, 0.01, "brass", axis="Y", verts=14)
+    add_cyl(o, (hi.x - 0.03, hi.y - 0.01, hi.z - 0.005), 0.003, 0.012, "steel", verts=6)
+
+def do_kitchenCabinetDrawer(by):
+    o, d, dr = by["kitchenCabinetDrawer(Clone)"], by["door"], by["drawer"]
+    lo, hi = world_box([o, d, dr])
+    c = (lo.x + hi.x) / 2
+    add_box(o, (lo.x, lo.y, lo.z), (hi.x, hi.y, lo.z + 0.03), "gunmetalDark")
+    add_box(o, (lo.x - 0.001, lo.y - 0.002, hi.z - 0.014), (hi.x + 0.001, hi.y + 0.002, hi.z + 0.001), "slate")
+    add_box(o, (c - 0.06, lo.y - 0.006, hi.z * 0.8), (c + 0.06, lo.y, hi.z * 0.8 + 0.008), "brass")
+    add_box(o, (hi.x - 0.07, lo.y - 0.006, hi.z * 0.46), (hi.x - 0.06, lo.y, hi.z * 0.62), "brass")
+
+def do_kitchenFridge(by):
+    o = by["kitchenFridge(Clone)"]
+    lo, hi = world_box([v for v in by.values() if v.type == "MESH"])
+    c = (lo.x + hi.x) / 2
+    add_box(o, (lo.x, lo.y, lo.z), (hi.x, hi.y, lo.z + 0.04), "gunmetalDark")
+    for i in range(4):
+        z = lo.z + 0.01 + i * 0.006
+        add_box(o, (lo.x + 0.05, lo.y - 0.001, z), (hi.x - 0.05, lo.y + 0.002, z + 0.003), "gunmetal")
+    add_box(o, (hi.x - 0.07, lo.y - 0.006, hi.z * 0.62), (hi.x - 0.06, lo.y, hi.z * 0.85), "brass")
+    add_box(o, (hi.x - 0.07, lo.y - 0.006, hi.z * 0.2), (hi.x - 0.06, lo.y, hi.z * 0.5), "brass")
+
+def laundry(o, lo, hi):
+    add_box(o, (lo.x, lo.y, lo.z), (hi.x, hi.y, lo.z + 0.03), "gunmetalDark")
+    cx = (lo.x + hi.x) / 2
+    for k in range(2):
+        add_cyl(o, (lo.x + 0.07 + k * 0.05, lo.y + 0.002, hi.z - 0.045), 0.014, 0.01, "brass", axis="Y", verts=12)
+    add_box(o, (hi.x - 0.1, lo.y - 0.0012, hi.z - 0.055), (hi.x - 0.05, lo.y + 0.001, hi.z - 0.045), "glow")
+    add_box(o, (lo.x + 0.02, lo.y - 0.004, hi.z - 0.075), (hi.x - 0.02, lo.y, hi.z - 0.07), "brass")
+
+def do_dryer(by):
+    o = by["dryer(Clone)"]
+    lo, hi = world_box([v for v in by.values() if v.type == "MESH"])
+    laundry(o, lo, hi)
+
+def do_washer(by):
+    o = by["washer(Clone)"]
+    lo, hi = world_box([v for v in by.values() if v.type == "MESH"])
+    laundry(o, lo, hi)
+
+def do_lampWall(by):
+    o = by["lampWall(Clone)"]
+    lo, hi = world_box([o])
+    c = (lo.x + hi.x) / 2
+    add_box(o, (c - 0.04, hi.y - 0.006, lo.z + 0.01), (c + 0.04, hi.y, hi.z - 0.01), "brass")
+    add_cyl(o, (c, lo.y + 0.008, (lo.z + hi.z) / 2), 0.025, 0.006, "brass", axis="Y", verts=16)
+
+def table_top(o, lo, hi):
+    add_box(o, (lo.x, lo.y, hi.z - 0.018), (hi.x, hi.y, hi.z - 0.006), "walnutDark")
+    for x in (lo.x + 0.02, hi.x - 0.02):
+        for y in (lo.y + 0.02, hi.y - 0.02):
+            add_cyl(o, (x, y, lo.z + 0.004), 0.012, 0.008, "brass", verts=8)
+
+def do_tableCrossCloth(by):
+    o = by["tableCrossCloth(Clone)"]
+    lo, hi = world_box([o])
+    table_top(o, lo, hi)
+    add_box(o, (lo.x + 0.04, lo.y + 0.04, hi.z - 0.006), (hi.x - 0.04, hi.y - 0.04, hi.z - 0.003), "red")
+
+def do_tableCloth(by):
+    o = by["tableCloth(Clone)"]
+    lo, hi = world_box([o])
+    table_top(o, lo, hi)
+    add_box(o, (lo.x + 0.05, lo.y + 0.05, hi.z - 0.006), (hi.x - 0.05, hi.y - 0.05, hi.z - 0.003), "paper")
+
+def do_cabinetTelevision(by):
+    o = by["cabinetTelevision(Clone)"]
+    lo, hi = world_box([o])
+    c = (lo.x + hi.x) / 2
+    add_box(o, (lo.x, lo.y, lo.z), (hi.x, hi.y, lo.z + 0.02), "walnutDark")
+    add_box(o, (lo.x + 0.02, lo.y + 0.02, hi.z - 0.003), (hi.x - 0.02, hi.y - 0.02, hi.z + 0.001), "leather")
+    for x in (c - 0.2, c + 0.2):
+        add_box(o, (x - 0.03, lo.y - 0.006, hi.z * 0.6), (x + 0.03, lo.y, hi.z * 0.6 + 0.008), "brass")
+
+def do_tree_oak(by):
+    o = by["tree_oak"]
+    lo, hi = world_box([o])
+    for k in range(5):
+        a = k * 2 * math.pi / 5 + 0.3
+        add_cyl(o, (math.cos(a) * 0.045, math.sin(a) * 0.045, lo.z + 0.1), 0.02, 0.1, "woodBark", r2=0.006, verts=6)
+    add_cyl(o, (0, 0, 0.5), 0.018, 0.3, "woodBark", verts=6)
+    for k, (x, y, z, r) in enumerate(((0.16, 0.0, 0.8, 0.12), (-0.14, 0.1, 0.9, 0.13), (0.0, -0.18, 0.78, 0.11), (-0.05, 0.16, 1.05, 0.1))):
+        add_sphere(o, (x, y, z), r, "leafsGreen", 0.8)
+
+def do_plant_bush(by):
+    o = by["plant_bush"]
+    lo, hi = world_box([o])
+    c = (lo + hi) / 2
+    for k in range(6):
+        a = k * math.pi / 3
+        add_sphere(o, (math.cos(a) * 0.1, math.sin(a) * 0.1, lo.z + 0.1), 0.05, "grass", 0.8)
+    add_cyl(o, (c.x, c.y, lo.z + 0.03), 0.03, 0.06, "woodBark", verts=6)
+
+NATURE = ["tree_oak", "plant_bush"]
+
 def build(name):
     palette()
     for o in list(bpy.data.objects):
@@ -851,14 +995,18 @@ def build(name):
     # Bounds are taken before anything is added, from the stock model.
     lo0, hi0 = world_box(objs)
     names0 = sorted(o.name for o in bpy.data.objects)
+    nature = name in NATURE
+    if nature:
+        for m in bpy.data.materials:
+            PAL[m.name.split(".")[0]] = m
     for o in objs:
-        for i, s in enumerate(o.material_slots):
-            pass
-        reskin(o, OVERRIDES.get(name))
-        bevel(o)
+        if not nature:
+            reskin(o, OVERRIDES.get(name))
+            bevel(o)
     for o in objs:
-        for f in o.data.polygons:
-            f.use_smooth = False
+        if not nature:
+            for f in o.data.polygons:
+                f.use_smooth = False
     globals()["do_" + name](by)
     objs = meshes()
     lo, hi = world_box(objs)
@@ -870,8 +1018,9 @@ def build(name):
         o.matrix_world = Matrix.Translation(lo0) @ Matrix.Diagonal((*s, 1)) @ Matrix.Translation(-lo) @ o.matrix_world
     assert names0 == sorted(o.name for o in bpy.data.objects), "node names changed"
     bpy.ops.object.select_all(action="DESELECT")
-    os.makedirs(outdir, exist_ok=True)
-    bpy.ops.export_scene.gltf(filepath=os.path.join(outdir, name + ".glb"), export_format="GLB", export_yup=True,
+    od = os.path.join(here, "..", "assets", "props", "nature") if nature else outdir
+    os.makedirs(od, exist_ok=True)
+    bpy.ops.export_scene.gltf(filepath=os.path.join(od, name + ".glb"), export_format="GLB", export_yup=True,
                               export_apply=False, export_cameras=False, export_lights=False)
 
 ALL = ["pottedPlant", "chairCushion", "kitchenBar", "desk", "chairDesk", "bookcaseOpen", "loungeChair",
@@ -884,5 +1033,8 @@ ALL4 = ["books", "kitchenCabinet", "chairRounded", "sideTable", "computerKeyboar
         "cabinetBed", "kitchenFridgeLarge", "speaker", "tableRound", "loungeChairRelax", "toaster"]
 ALL5 = ["bedDouble", "bedBunk", "loungeSofaLong", "loungeDesignSofa", "rugRectangle", "rugRound", "lampSquareTable",
         "televisionVintage", "plantSmall1", "kitchenStove", "kitchenSink", "kitchenMicrowave", "tableCoffee"]
-for n in (names or ALL + ALL2 + ALL3 + ALL4 + ALL5):
+ALL6 = ["computerMouse", "speakerSmall", "benchCushionLow", "benchCushion", "radio", "kitchenCabinetDrawer",
+        "kitchenFridge", "dryer", "washer", "lampWall", "tableCrossCloth", "tableCloth", "cabinetTelevision",
+        "tree_oak", "plant_bush"]
+for n in (names or ALL + ALL2 + ALL3 + ALL4 + ALL5 + ALL6):
     build(n)

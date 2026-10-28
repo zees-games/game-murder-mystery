@@ -44,7 +44,8 @@ def place(path, x, y):
 step = 1.0
 for i, n in enumerate(names):
     place(os.path.join(here, "base", n + ".glb"), i * step, 1.0)
-    place(os.path.join(here, "..", "assets", "props", "furniture", n + ".glb"), i * step, 0.0)
+    kit = "nature" if n.startswith(("tree_", "plant_bush")) else "furniture"
+    place(os.path.join(here, "..", "assets", "props", kit, n + ".glb"), i * step, 0.0)
 bpy.ops.mesh.primitive_plane_add(size=60, location=(len(names) * step / 2, 0, -0.001))
 cx = (len(names) - 1) * step / 2
 sc.render.resolution_x = min(4000, 400 * len(names))
