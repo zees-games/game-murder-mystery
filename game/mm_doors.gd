@@ -5,27 +5,9 @@ const MmMaterials := preload("mm_materials.gd")
 
 ## A map's doors: panels a player opens and shuts with the use key.
 ##
-## [b]A door's pose is a pure function of the tick and of the last time it was used.[/b] The
-## same rule mg-deathrun's traps keep: the state of a door is `(open, since)`, the side it is
-## going to and the tick it set off on, and where the panel is on any tick follows from those
-## two numbers and the document. So the only thing that is ever sent is a use — `DOOR`, a door,
-## which way, and the tick — and a client that hears it late still poses the past correctly,
-## because the tick is part of the message. Nothing about a door is replicated per tick.
-##
-## [b]A static body moved through the physics server, not a kinematic one and not an
-## animation.[/b] mg-wipeout found that a kinematic body applies a new transform a physics step
-## late, and a body that is a step late is a door a player is predicted walking through on one
-## end and stopped by on the other. A static body written through `PhysicsServer3D` is where it
-## was put on the very next query.
-##
-## [b]On the world layer[/b], with the walls, so a shut door stops a body, a gunner's shot and a
-## touch alike: the sight rule and the touch rule ask "is there a wall between", and a shut door
-## is one. A door left open is not.
-##
-## [b]A door never shuts on anybody.[/b] A use is refused while any body stands anywhere the
-## panel passes through on its way, because a static panel posed inside a capsule leaves the
-## controller to push its way out, and somebody pinned in a door frame by a murderer slamming it
-## would be the door deciding a kill.
+## A door's pose is a pure function of `(open, since)` and the tick, so only the use is sent.
+## It is a static body moved through `PhysicsServer3D` (a kinematic body is a step late), on the
+## world layer, and a use is refused while any body stands in the panel's way.
 
 const CHANNEL := "mm.doors"
 

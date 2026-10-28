@@ -1,17 +1,8 @@
 extends DotMatchRules
 
-## A round ends when the game says so, and the game says who won.
-##
-## [b]dot-match's elimination rule nearly fits, and nearly is the problem.[/b] It ends a round
-## when a side has nobody alive — but a player who joined mid-round is benched rather than
-## dead, the grace must never end a round on a count, and the clock's winner is a
-## server setting rather than "whoever has more people up". What decides is [MmGame],
-## which knows all of that, and [DotMatchRules] is documented as the place a mode dot-match
-## does not ship goes, with the state machine left alone.
-##
-## [b]The answer is read, never computed here.[/b] dot-match's rules are meant to be pure
-## functions of what they are handed; this one is a pure function of what the game decided,
-## and a game that has not decided returns NONE every tick.
+## A round ends when the game says so, and the game says who won. dot-match's elimination rule
+## nearly fits, but a mid-round joiner is benched and the clock's winner is a server setting, so
+## the decision is [MmGame]'s and this rule only reads it (NONE every tick until it has decided).
 
 ## `func() -> Dictionary`: `{decided: bool, winner: int}`. Set by [MmGame].
 var decision_fn: Callable = Callable()

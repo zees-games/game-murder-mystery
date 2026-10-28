@@ -5,21 +5,9 @@ const MmPlayer := preload("mm_player.gd")
 const MmBindings := preload("mm_bindings.gd")
 const MmController := preload("mm_controller.gd")
 
-## What a player needs on screen: the clock, how many are still alive, what this player is (and
-## only this player: roles are secret), what they are holding, and when it is ready.
-##
-## [b]The role is drawn from this client's own knowledge.[/b] The disc and the line beside it
-## read [code]game.team_of(player)[/code], which on a client is the ROLE the server sent this
-## player alone (see mm_net_bridge.gd `local_role`); everybody else is a bystander on the wire,
-## so nothing here can show somebody else's role.
-##
-## [b]The clock and the door prompt are dot-ui's glance pieces.[/b] The clock is a
-## [DotScoreStrip] with everybody alive and the murderers left as its two side plates; the door
-## prompt is a [DotKeyPrompt] under the crosshair with the use key drawn as a key.
-##
-## [b]The keys are read from the bindings, not written here.[/b] The hints in the corner say
-## the key each action is on NOW, from the same table the menu's Controls page edits, so a
-## rebound key is never a hint that lies.
+## What a player needs on screen: the clock, how many are alive, this player's own role (roles
+## are secret, so only `game.team_of(player)`, the ROLE sent to this player alone), what they
+## hold and when it is ready. The clock and door prompt are dot-ui glance pieces; hints read the bindings.
 
 const BLIND_FADE_SEC := 0.25
 const BLIND_COLOUR := Color(0.01, 0.01, 0.015)

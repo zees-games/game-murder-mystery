@@ -3,20 +3,9 @@ extends Node
 const MmAmbience := preload("mm_ambience.gd")
 const MmPaths := preload("mm_paths.gd")
 
-## What this game makes a noise about, and the noise, on the client.
-##
-## [b]A murder is quiet and a shot is not.[/b] A stab is heard a room or two away, so a body
-## found is often the first anybody knows; the gun is heard across the map, so everybody knows a
-## shot was fired and roughly where. The end of the grace is a sting everybody hears: the
-## murderer can draw from now on.
-##
-## [b]A catalogue of ids and a table of stand-ins, which is the family's shape.[/b] dot-audio
-## decides what is audible, how many at once and how far; [method sound_catalogue] is those
-## decisions, naming paths under `audio/`, and [method sound_recipes] says which synthesised
-## voice stands in for each until a real `.ogg` is dropped in — [DotAudioSinkGodot] consults
-## the file before the stand-in.
-##
-## [b]Never on a server, and never deciding anything.[/b]
+## What this game makes a noise about, and the noise, on the client. A stab is heard a room or
+## two away, the gun across the map, the end of the grace by everybody. [method sound_catalogue]
+## names the ids and [method sound_recipes] the synthesised stand-in until a real `.ogg` exists.
 
 const CHANNEL := "mm.audio"
 

@@ -1,18 +1,9 @@
 extends Node
 
-## The cameras and bodies the first play test caught, in the real offline game:
-##
-## - the third-person and spectator chase cameras flown round the start and every
-##   checkpoint of the course (dot-core's DotCameraCheck): never inside, armed by the
-##   unprotected camera being in or behind the course on some frames;
-## - the player walked (the forward action held) into another player held still: with
-##   `mp_solidplayers 1` their capsules never overlap; with 0 they do (the armed half: the
-##   play test's face filling the screen);
-## - with `--render`, that moment from the player's eyes before (pass-through, no fade) and
-##   after, and both views.
-##
-##   tools/camera_check.sh            # headless; exit 1 on a failure
-##   tools/camera_check.sh --render   # and the frames, in screenshots/cameras/
+## The cameras and bodies the first play test caught, in the real offline game: the chase and
+## spectator cameras flown round the course (never inside, armed), and a player walked into one
+## held still (capsules never overlap with `mp_solidplayers 1`). `--render` adds the frames.
+## `tools/camera_check.sh [--render]`; exit 1 on a failure.
 
 const MmClient := preload("../game/mm_client.gd")
 const MmGame := preload("../game/mm_game.gd")

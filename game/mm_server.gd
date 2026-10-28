@@ -3,21 +3,9 @@ extends Node
 const MmConfig := preload("mm_config.gd")
 const MmGame := preload("mm_game.gd")
 
-## What a [DotServer] loads as its game scene. Never a client.
-##
-## [b]Small on purpose.[/b] Everything a dedicated server does is in `mm_module.gd`; this
-## exists because dot-server loads a SCENE and the game needs one, and because the world has
-## to be in the tree — registered under [constant MmGame.SERVICE] — before the module looks
-## for it. dot-server loads the scene and then the module, in that order, for exactly this
-## reason.
-##
-## [b]It lives in `game/`, not beside its own scene in `scenes/`.[/b] That is a deployment
-## constraint rather than a preference: a game is vendored by copying its `game/` wholesale
-## and its `scenes/*.tscn` — only the `.tscn` — so a script under `scenes/` is a script that
-## never reaches the build. The scene then fails to load with "referenced non-existent
-## resource", the module refuses to load because no game registered itself, and the server
-## reports that the game loaded but its module did not. Every other game in this family keeps
-## its server scene's script in `game/`, having learned it the same way.
+## What a [DotServer] loads as its game scene. Never a client. Everything a server does is in
+## `mm_module.gd`; the scene puts the world in the tree under [constant MmGame.SERVICE] before
+## the module looks for it. It lives in `game/` because only a game's `.tscn` is vendored from `scenes/`.
 
 const CHANNEL := "mm.server"
 

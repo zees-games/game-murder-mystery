@@ -5,29 +5,10 @@ const MmMaterials := preload("mm_materials.gd")
 const MmProps := preload("mm_props.gd")
 const MmDoors := preload("mm_doors.gd")
 
-## A map document, built: the building, the furniture, the lights and the sky.
-##
-## [b]The same document on every machine, and a server builds only what collides.[/b] Boxes
-## become one static body of box shapes on the world layer; props become one static body of
-## box shapes on the prop layer, each shape knowing which prop it is. A client also draws them.
-## A server draws nothing, so a dedicated server holds a few thousand shapes and no meshes.
-##
-## [b]Boxes are drawn batched, by material and by twelve-metre chunk.[/b] A school is a
-## thousand boxes, and a mesh per box is a thousand draw calls, which a browser does not give
-## you. One mesh per material is the other extreme and is wrong for a reason only the renderer
-## knows: the compatibility renderer the shell uses lights each mesh with at most eight omni
-## lights, so one floor mesh for the whole school would be lit by eight of its forty lamps and
-## every other room would be dark. A chunk is about a room, which is about a lamp.
-##
-## [b]Props are drawn as [MultiMeshInstance3D]s, one per model mesh.[/b] Two hundred chairs are
-## one draw call per chair mesh, not two hundred. They never move: they are the room.
-##
-## [b]A prop's collision is its catalogue pieces (or its box), turned the way the map turns
-## it.[/b] A tree is a trunk, its branches and its canopy, so a player can stand by the trunk or
-## jump onto a low branch; a table is a top and legs, so a player can crawl under it (dot-props'
-## [DotPropPieces], measured offline into `props/pieces.json`). What a bot's sight and the gun stop on
-## and what a player walks into or hides behind are the same shapes, so the two can never
-## disagree about where the sofa is.
+## A map document, built: the building, the furniture, the lights and the sky. A server builds
+## only what collides; a client also draws, boxes batched by material and twelve-metre chunk (the
+## compatibility renderer lights a mesh with at most eight lamps) and props as MultiMeshes.
+## A prop's collision is its catalogue pieces, so bots, shots and players agree on the sofa.
 
 const CHANNEL := "mm.map"
 
@@ -487,17 +468,9 @@ func _process(delta: float) -> void:
 		_weather.advance_with_camera(delta)
 
 
-## The dot-lighting document a map's `environment` describes.
-##
-## Brightness is 380 (game-arena's daylight) times the square of the map's `sun_energy`, so a
-## map that asked for a dimmer sun still gets one. The ambient is the light in the shade, a
-## near-neutral pale grey whatever the map, at the map's strength ([method light_profile]):
-## game-arena's pale cool fill turned every room, which is lit mostly by the fill, a cold
-## lavender; the map's own `ambient` colour is mixed in a quarter of the way, so a map lit by a
-## blue sky is a little cooler in its shade and one lit by an overcast one is not. The fog is the
-## map's own when it has `fog_end` (colour, start and end in metres, a density cap), else its
-## horizon from 120 m out (source units, metres / 0.01905), so it hazes the distance and never
-## a room; the map's old `fog` density is no longer read.
+## The dot-lighting document a map's `environment` describes: brightness 380 times the square
+## of `sun_energy`, a near-neutral ambient at the map's strength, and the map's own fog when it
+## has `fog_end`, else a haze from 120 m out that never reaches a room.
 static func light_document(env_doc: Dictionary) -> Dictionary:
 	var sun := MmMapDoc.colour(env_doc["sun_colour"])
 	var horizon := MmMapDoc.colour(env_doc["sky_horizon"])
@@ -532,21 +505,9 @@ static func light_document(env_doc: Dictionary) -> Dictionary:
 	}
 
 
-## What this machine draws of a map's light: dot-lighting's `painted()`, with the map's fill.
-##
-## [b]Shadows stay on in the browser[/b], unlike dot-lighting's `web()`: a shadow round a
-## corner is part of what a player reads, and the boxes are batched into a few dozen meshes.
-## `painted()` is the family's profile for flat-painted worlds (dot-lighting API 3): its light
-## is matched to the renderer (the Compatibility renderer this game and the client shell use
-## clips a sunlit pastel to white at Forward+'s numbers), with a lower exposure, a grade, and
-## a shadowless fill from the side the sun is not on. That fill has no shadow, so it reaches
-## into rooms as the ambient does, but from one side: a room's walls are different shades
-## instead of one even haze, which is where a murderer waits.
-##
-## [b]The ambient is the map's `ambient_energy` times 4 of `painted()`'s, the fill times
-## 2.8[/b] (2 and 1.4 at the stock 0.5): a room is lit by the fill and its lamps, not the
-## sun, and these keep a room as light as it was before `painted()` while the ground outside
-## loses its glare (mg-prop-hunt's numbers, from the same map format, rendered here too).
+## What this machine draws of a map's light: dot-lighting's `painted()` with the map's fill.
+## Shadows stay on in the browser, since the boxes are batched into few meshes. The ambient is
+## 4 times the map's `ambient_energy` and the fill 2.8, keeping rooms light and the ground dim.
 static func light_profile(ambient_energy: float = 0.5) -> DotLightProfile:
 	var p := DotLightProfile.painted()
 	p.sun_shadows = true

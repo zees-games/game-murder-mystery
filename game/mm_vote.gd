@@ -1,23 +1,8 @@
 extends Node
 
-## The players choose the next map.
-##
-## [DotVoteDirector] over a [DotVoteListSource] of this server's maps, and the only thing this
-## file decides is WHEN: a ballot opens [member open_after_sec] into the LAST round on a map
-## ([member due_fn]) and is applied when that round ends, so the next round starts on whatever
-## was chosen. Rocking the vote opens one in any round and changes the map at that round's
-## end. Everything about the ballot itself (how many options, the counting method, the
-## tie-break, nominations, cooldowns) is dot-vote's settings and none of it is restated here;
-## [method _rules] only says which of them a few-rounds-per-map game wants by default.
-##
-## [b]`trigger` is MANUAL, not ROUND_END.[/b] dot-vote's ROUND_END opens a ballot at a round's
-## end and applies it at the NEXT round's end, which is a round late. Opening it during the
-## last round and applying it at the end (`apply: END_OF_ROUND`) puts the choice on the very
-## next round.
-##
-## [b]Server side only.[/b] A client draws the ballot from the notice [member ballot_fn] sends
-## (the client shell's [DotBallotPanel]), and never holds a director: a client that applied a
-## result would be deciding what it plays.
+## The players choose the next map: [DotVoteDirector] over this server's maps; this file decides
+## only WHEN. A ballot opens into the LAST round on a map and applies at its end, so `trigger` is
+## MANUAL (ROUND_END would be a round late). Server side only: a client never holds a director.
 
 const CHANNEL := "murder.vote"
 

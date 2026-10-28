@@ -1,24 +1,8 @@
 extends RefCounted
 
-## What a player looks like, as a dot-user-avatar document: the schema, the stock avatar a
-## player without one of their own wears, and which skin a document asks for.
-##
-## [b]One slot, because this game's people differ in one thing.[/b] Every Blocky Character
-## carries byte-identical geometry and UVs, so the six people [MmFigure] can draw are six
-## atlases on one mesh — and the side a player is on goes on the torso as a tint, which is
-## the game's to decide and not the player's. A document with a hat slot in it would be a
-## promise this game has no art to keep.
-##
-## [b]Data only, and loads nothing.[/b] A dedicated server validates a document against
-## this schema without holding the art, which is dot-user-avatar's whole premise; which
-## atlas a skin means is [MmFigure]'s, on a client. [constant SKINS] and
-## [code]MmFigure.ATLASES[/code] are the same list in the same order, and `headless_run`
-## checks that they stay so.
-##
-## [b]The stock avatar is the old hash, exactly.[/b] Before this file a player's look came
-## from `hash(player_id)` into the atlas list; [method stock_avatar] makes the same choice
-## into a document, so nobody's character changed the day profiles arrived, and a server
-## with no platform draws everybody precisely as it did before.
+## What a player looks like, as a dot-user-avatar document: the schema, the stock avatar and
+## which skin a document asks for. One slot, because the six people differ only in atlas on one
+## mesh. Data only: [constant SKINS] and `MmFigure.ATLASES` are one list, which `headless_run` checks.
 
 const SCHEMA_ID := &"mm_people"
 

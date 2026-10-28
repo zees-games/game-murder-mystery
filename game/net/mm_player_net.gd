@@ -4,23 +4,9 @@ const MmNetCommand := preload("mm_net_command.gd")
 const MmPlayer := preload("../mm_player.gd")
 const MmController := preload("../mm_controller.gd")
 
-## What a networked player replicates: the movement state, their health, what shows in their
-## hand, their blood and shirt, and the numbers the owner needs about itself.
-##
-## [b]The movement half is dot-player-controller's own table and is not written here.[/b]
-## [DotFpsNetSync.state_specs] is what the controller says its state is, in the
-## quantisation it says it wants; a game that listed the fields itself would be a second
-## copy to drift — and the type names in that table are STRINGS precisely so the addon can
-## describe a dot-net layout without naming dot-net.
-##
-## [b]The game fields are not derivable from the movement.[/b] Health decides whether a body
-## is drawn at all; what shows in a hand and how much blood are the server's decisions about a
-## player, and a client that worked them out for itself would be running a
-## second copy of the rules.
-##
-## [b]Which side somebody is on is deliberately NOT here, and not anywhere public.[/b] The
-## owner learns their own role from a ROLE event; everybody else is a bystander on the wire
-## until the round's end names the murderer. See docs/design.md "Roles are secret".
+## What a networked player replicates: the movement state (dot-player-controller's own table),
+## health, what shows in a hand, blood and shirt. Which side somebody is on is deliberately NOT
+## here: the owner learns it from a ROLE event (docs/design.md "Roles are secret").
 
 var player: MmPlayer = null
 var bridge: Node = null
@@ -195,22 +181,9 @@ func _net_state_applied(tick: int) -> void:
 		player.global_position = player.controller.state.position
 
 
-## A teleport is not a movement, so the interpolator must not draw one.
-##
-## [b]A round start moves everybody across the map in one tick, and a watcher saw them
-## fly there.[/b] mg-smash-copter's finding. The interpolator blends between the two snapshots
-## either side of the render time, and when those are "where they were found" and "at the
-## start" the blend is a body sweeping across the map for a snapshot interval.
-##
-## So the server counts the times it PUT this player somewhere (`MmPlayer.place_at`), the
-## count replicates, and a mirror that sees it change drops the interpolator's track for this
-## entity before the new snapshot is added to it. A track with one sample answers with that
-## sample, so the body appears in its corner, one render delay early, rather than crossing
-## the sky to get there. Here, before the push, because this hook runs inside the snapshot
-## read and the manager adds the snapshot's values to the track just after it.
-##
-## Not on the predicted entity: nothing interpolates that, and its own camera is moved by
-## the prediction's rewind.
+## A teleport is not a movement, so the interpolator must not draw one. The server counts the
+## times it PUT this player somewhere and a mirror that sees it change drops the track before
+## the new snapshot is added, so the body appears in its corner rather than crossing the sky.
 func _forget_the_path() -> void:
 	if identity == null or identity.is_authoritative or identity.is_predicted():
 		_seen_warp = net_warp

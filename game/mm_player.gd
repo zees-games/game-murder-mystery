@@ -5,18 +5,9 @@ const MmController := preload("mm_controller.gd")
 const MmFigure := preload("mm_figure.gd")
 const MmAvatars := preload("mm_avatars.gd")
 
-## One person: how they move, what they carry, and how much blood is on them.
-##
-## [b]Everybody looks alike.[/b] A murderer, a gunner and a bystander are the same people in
-## the same shirts (a colour drawn per player per round, [member shirt]); what tells them apart
-## is what is in their hand ([member armed]) and, near the end, the blood on a murderer
-## ([member blood]). Their real role ([member team]) is the server's, and a client is told only
-## its own (see docs/design.md "Roles are secret").
-##
-## [b]Hit by rays and reach, not hitboxes.[/b] A stab is a distance and a cone from the
-## murderer's eye; a shot is a ray against the players' standing capsules. Both are measured by
-## the server, in [code]mm_game.gd[/code]. Health is dot-combat's, so dot-moderation's god,
-## buddha and slap mean what they mean everywhere else.
+## One person: how they move, what they carry, and how much blood is on them. Everybody looks
+## alike; only [member armed] and a murderer's [member blood] differ, and the real role
+## ([member team]) is the server's. Stabs and shots are measured in `mm_game.gd`; health is dot-combat's.
 
 ## Metres above a player's feet that their eyes are.
 const EYE_HEIGHT := 1.6

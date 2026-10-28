@@ -2,20 +2,9 @@ extends RefCounted
 
 const MmPaths := preload("mm_paths.gd")
 
-## The props a map is furnished with: the catalogue that `tools/measure_props.gd` measured out
-## of the vendored models.
-##
-## [b]A size per prop, read from a file, on every machine.[/b] A prop's collision box is its
-## size, and two ends building it from two different measurements would be a predicting client
-## walking round a sofa the server has somewhere else. The server cannot measure anything — a
-## headless process has the meshes but no reason to load them — so the size is measured once,
-## offline, into `props/catalogue.json`, and everybody reads the number.
-##
-## [b]Drawn as parts, not as scenes.[/b] A map holds hundreds of props and nearly every one
-## is one of a few dozen models, so a client asks [method parts] for a model's meshes and
-## their transforms and the map draws each one with a [MultiMeshInstance3D]: a few dozen draw
-## calls for a whole manor rather than one per chair. [method instance] builds one prop as a
-## scene, for a tool that wants to look at a single model.
+## The props a map is furnished with: the catalogue `tools/measure_props.gd` measured offline into
+## `props/catalogue.json`, so server and client build the same collision box. Drawn as parts
+## ([method parts], one MultiMesh per model mesh), not scenes; [method instance] builds one.
 
 const CHANNEL := "mm.props"
 

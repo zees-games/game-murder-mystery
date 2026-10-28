@@ -4,16 +4,8 @@ const MmConfig := preload("../game/mm_config.gd")
 const MmGame := preload("../game/mm_game.gd")
 
 ## Bot soak on the real game: N stand-ins play rounds back to back on one map for M simulated
-## minutes through dot-bot's DotBotSoak, fed by dot-spawn's DotSpawnWatch.
-##
-## [codeblock]
-## ./game.sh soak [map] [minutes]
-## godot --headless --path . res://tools/soak.tscn -- --map mm_mansion --bots 8 --minutes 2
-## [/codeblock]
-##
-## Takes the harness's own flags too (--soak-max-stuck-sec and the rest of DotBotSoakConfig).
-## Writes .godot/test-logs/soak-<map>.json, prints the SOAK line, exits 1 when the run fails.
-## A dead bot, one in the grace or one standing at its goal has no goal for the watch; a fall is a respawn, so the watch's fell-out check stays on.
+## minutes through dot-bot's DotBotSoak (`./game.sh soak [map] [minutes]`). Writes
+## `.godot/test-logs/soak-<map>.json`, prints the SOAK line, exits 1 when the run fails.
 
 const DEFAULT_MAP := "mm_mansion"
 const DEFAULT_MINUTES := 1.0

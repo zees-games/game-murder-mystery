@@ -4,21 +4,10 @@ const MmConfig := preload("../game/mm_config.gd")
 const MmGame := preload("../game/mm_game.gd")
 const MmMapDoc := preload("../game/mm_map_doc.gd")
 
-## Every map the game can be sent, built the way a server builds it and looked over for the
-## mistakes a map document makes without any error: a spawn inside a wall or over nothing, a
-## prop the catalogue does not have (built as nothing), a prop sunk into a wall or floating
-## over the floor, too little to hide behind, a door that opens into a wall or a wardrobe,
-## and a doorway something stands in, and a document too big to send.
-##
-## [b]Two kinds of map, two depths.[/b] This game's own maps (murder-mystery-maps, and the
-## practice house) get the whole audit here, [constant CHECKS_PER_MAP] checks each. The other
-## games' maps (Hide & Seek, Prop Hunt, Playground, mounted under `maps_extra/`) are audited in
-## their own repositories; here each is checked for what the conversion can break:
-## [constant CHECKS_PER_FOREIGN] checks that it converts, fits the wire, knows its props, has
-## clear spawns, and plays a round.
-##
-## Sections and checks are both counted; mg-smash-copter's notes say why the second matters.
-## Adding a map of ours adds a section and CHECKS_PER_MAP checks.
+## Every map the game can be sent, built the way a server builds it and looked over for what a
+## map document gets wrong without any error: a spawn in a wall, an unknown prop, a prop sunk or
+## floating, nothing to hide behind, a blocked door, a document too big to send. Our own maps get
+## [constant CHECKS_PER_MAP] checks each, the foreign ones [constant CHECKS_PER_FOREIGN].
 
 const MAPS := ["mm_practice", "mm_mansion", "mm_motel", "mm_silence_hollow", "mm_factory_winter", "mm_open_yard", "mm_office_murder"]
 const CHECKS_PER_MAP := 15

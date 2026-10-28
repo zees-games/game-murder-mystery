@@ -2,31 +2,10 @@ extends Node
 
 const MmPlayer := preload("mm_player.gd")
 
-## Where somebody who is out looks, and what the server lets them see.
-##
-## [b]The dead watch the rest of the round[/b], and are never shown who killed them: the world
-## hands [method on_died] no killer, so there is no freeze camera on the murderer for a dead
-## player to describe in all chat.
-##
-## [b]The camera part is four lines; who decides is the part that matters.[/b] dot-spectate
-## computes a transform and touches no camera, and the policy — may this person watch, whom,
-## through which camera — is the server's, so a client that decided for itself what it may
-## look at would be a client that may look at anything. On a server this runs an
-## authoritative [DotSpectatorManager]; on a connected client it runs a MIRROR that is told
-## each view change in a `SPECTATE` event and computes the camera itself from the players it
-## already draws. That split is what keeps the wire to one small event per decision rather
-## than a camera transform per frame.
-##
-## [b]No delay, and it would protect nothing here.[/b] dot-spectate's delay exists because a
-## spectator watching live is a live intelligence feed — but every player in this game is
-## always relevant (a map is a few rooms), so every client already receives every player's
-## live position in its snapshots. A delayed spectator camera would hide nothing that the
-## same client's own world is not already drawing. `delay_ticks` stays 0 and a mirror never
-## needs the history a delay samples, which is also why the mirror's `advance` records none.
-##
-## [b]No `class_name`, like everything in this game.[/b] Reached by preload from [MmGame].
-## It does not preload [MmGame] back: the world hands it the two dictionaries it reads and a
-## callable for the phase, which is a smaller contract than the world and no cycle.
+## Where somebody who is out looks, and what the server lets them see: the dead watch the rest
+## of the round and are never told who killed them. The policy is the server's (an authoritative
+## [DotSpectatorManager]); a client runs a mirror told each change in a `SPECTATE` event.
+## `delay_ticks` stays 0: every client already receives every player's position.
 
 const CHANNEL := "mm.spectate"
 

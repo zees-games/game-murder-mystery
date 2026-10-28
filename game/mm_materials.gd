@@ -1,38 +1,8 @@
 extends RefCounted
 
-## What a map's surfaces are made of: a wood floor, a tiled corridor, a carpet, a painted
-## wall, brick, grass, asphalt, glass. Generated here, once per process, as small tiling
-## textures; never a file.
-##
-## [b]Generated, not vendored, and the reason is the delivered pack.[/b] A texture a game
-## ships is a file inside a mount whose path the imported material recorded at the AUTHORED
-## location, which is the family's delivery bug in its sixth form; a texture made in code has
-## no path to be wrong. They are also tiny: twenty-odd 128-pixel images, generated in about a
-## third of a second on a client and never on a server, which draws nothing.
-##
-## [b]Mapped in world space (triplanar), so a box needs no UVs.[/b] A map is hundreds of boxes
-## of every size, and per-box UVs would stretch a plank across a two-metre wall and a
-## twenty-metre one alike. In world space a plank is the same width on every wall, which is
-## what makes a room read as a room rather than as a box with a picture on it.
-##
-## [b]A surface has a tint.[/b] A map document names a surface and may tint it, so one carpet
-## is a blue classroom and a red library without a second texture.
-##
-## [b]The building is drawn in the family's look[/b] (game-arena's built-in maps): every
-## surface a room is built of (floors, walls, ceilings, roofs, the ground outside) is
-## Kenney's light prototype grid, or his tiles on a floor, under a pastel that says what it
-## is ([constant PASTELS]: peach wood, periwinkle carpet, coral brick, mint grass). The map's
-## tint still multiplies it, paled halfway to white, so a mapper's red library is a pink one.
-## The furniture is Kenney's and keeps its own colours, which is the point: against pale
-## rooms a chair that is a player is a coloured thing among coloured things, not a model
-## against a photograph. Surfaces that are things rather than rooms (glass, water, court
-## lines, boards, lockers, metal, fabric, lamps) keep their generated look.
-##
-## [b]The two textures are files, and the reason the rest are not does not bite them[/b]:
-## they are loaded by a path through [code]MmPaths.rebase[/code] (as the furniture models
-## are), never referenced by an imported material, and a checkout without them falls back
-## to the generated look rather than failing. Kenney's Prototype Textures 1.0, CC0;
-## `assets/kenney/prototype/License.txt` is his, unchanged.
+## What a map's surfaces are made of, generated here once per process as small tiling textures,
+## never a file (a texture file in a pack records its AUTHORED path), and mapped in world space
+## so a box needs no UVs. The building uses Kenney's prototype grid (CC0) under [constant PASTELS].
 
 const MmPaths := preload("mm_paths.gd")
 

@@ -5,25 +5,9 @@ const MmGame := preload("../game/mm_game.gd")
 const MmPlayer := preload("../game/mm_player.gd")
 
 ## Stand-ins play whole rounds against each other on the real maps, and the suite holds what
-## they do to bands.
-##
-## [b]Why rounds, not a unit test.[/b] Whether a murderer bot is any good is whether it kills
-## anybody before the clock, and whether the bystanders are any good is whether the gun ever
-## finds it. So this plays rounds (eight stand-ins, the game drawing its own murderer and gun
-## by its default rules, `bot_difficulty medium`) and checks:
-##
-## - that the murderer kills somebody in most rounds, and does not win every round;
-## - that somebody fires the gun in some rounds, and a gun on the floor is fetched when one lies
-##   in view;
-## - that a murderer draws only when it means to (draws are not far over stabs);
-## - that the bystanders keep together during the grace (mean distance to the nearest other);
-## - that they talk, rationed;
-## - that no stand-in stays stuck for long.
-##
-## Eight rounds by default, two a map. `-- --rounds N` plays another number, `-- --first N`
-## starts at the Nth round's map and seed, `-- --difficulty hard` plays another preset, and
-## `MM_BOTS_TRACE=1` prints every death as it happens. Without `maps/` linked it plays the
-## practice house.
+## they do to bands: the murderer kills in most rounds without winning every one, the gun is
+## fired and fetched, draws are not far over stabs, bystanders keep together, talk is rationed
+## and nobody stays stuck. `-- --rounds N`, `--first N`, `--difficulty hard`, `MM_BOTS_TRACE=1`.
 
 ## Maps the rounds rotate through, when `maps/` is there: ours, and one of each other game's
 ## that is mounted.

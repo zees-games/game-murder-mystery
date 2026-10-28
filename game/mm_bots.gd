@@ -4,28 +4,9 @@ const MmPlayer := preload("mm_player.gd")
 const MmBotChat := preload("mm_bot_chat.gd")
 
 ## The stand-ins, by role, on dot-bot's settings: murderers that stalk, gunners that hunt, and
-## bystanders that keep together.
-##
-## - [b]The map is surveyed once[/b] when it is built (`_prepare`): dot-bot's [DotBotNav] bakes
-##   where a body can walk from the map's colliders, and dot-npc-ai's annotator scores places on
-##   it. Those places are where a bot wanders to and where a murderer looks for somebody alone.
-## - [b]A bystander keeps company[/b]: it walks towards the nearest knot of living people and
-##   loiters there, and runs from anybody it sees with a weapon drawn or standing over a body it
-##   saw fall. Unarmed and near a gun on the floor it goes and picks it up.
-## - [b]A gunner hunts the suspicious[/b]: suspicion is what it has seen (a weapon drawn, blood,
-##   the nearest person to a body that fell in view). Past [constant SURE] it turns on them, and
-##   fires when dot-bot's aim says it is on target. A gunner with nobody suspected walks with the
-##   group like anybody.
-## - [b]A murderer keeps the weapon away while anybody else can see it[/b], picks a living
-##   bystander with nobody else near ([constant ALONE]), walks to them with the crowd's pace,
-##   draws only when no third person has it in view, and stabs at arm's length. Late in the round
-##   it stops waiting for a clean moment. It knows who its fellow murderers are and never
-##   targets them; it knows nothing else anybody else does not.
-## - [b]Nobody cheats.[/b] A bot knows another's weapon only by seeing it drawn ([method _sees]:
-##   cone, range, nothing solid between), and a death only when it saw it or heard it close.
-## - [b]People do not collide with people,[/b] so a bot steps round anybody within a metre.
-##   Doors, sticking and paths are dot-bot's and the shared walking code below.
-## - [b]They talk[/b] (when `bot_chat`): canned lines from mm_bot_chat.gd, rationed.
+## bystanders that keep together. The map is surveyed once in `_prepare`. Nobody cheats: a bot
+## knows another's weapon only by seeing it drawn ([method _sees]), a death only by seeing or
+## hearing it, and a murderer knows only its fellow murderers.
 
 const CHANNEL := "mm.bots"
 

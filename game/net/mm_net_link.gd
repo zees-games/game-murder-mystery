@@ -2,23 +2,9 @@ extends Node
 
 const MmNetLink := preload("mm_net_link.gd")
 
-## The five remote calls this game needs, on one node that exists on both ends.
-##
-## A copy of the other games' links in shape — deliberately, per the family rule that a game
-## copies what it needs rather than growing a shared dependency — because it encodes the one
-## thing that cost this family a day: [b]Godot refuses an RPC unless both ends declare the
-## same set of `@rpc` methods[/b], and routes it by the receiver's NODE PATH. Using the same
-## script on both ends makes the set identical by construction; naming the node the same on
-## both ends and parenting it to a node that is itself named the same ([DotServer] on one
-## side and [DotClientLink] on the other, both called `Server`) is the whole of the routing.
-##
-## [codeblock]
-## Server            <- DotServer, or DotClientLink named to match
-##   HideSeek          <- this, on both
-## [/codeblock]
-##
-## The symptom of getting it wrong is not an error. It is a client that connects, goes
-## quiet, and is timed out for not authenticating.
+## The five remote calls this game needs, on one node that exists on both ends. Godot refuses an
+## RPC unless both ends declare the same `@rpc` set and routes it by NODE PATH, so one script,
+## named the same under nodes named the same. Getting it wrong is a client that goes quiet.
 
 const CHANNEL := "mm.link"
 

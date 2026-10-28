@@ -2,19 +2,9 @@ extends Node
 
 const MmPlayer := preload("mm_player.gd")
 
-## What a player keeps from a round: the numbers this game produces, and what they earn.
-##
-## [b]The numbers are the ones only this game has[/b]: rounds as the murderer and won as one,
-## kills, the murderer shot, an innocent shot by mistake, rounds survived. Each is declared once,
-## in [method schema], counted as it happens and reported by dot-stats as a DELTA ("add one",
-## never "now has forty") so two servers reporting one player add up rather than overwrite.
-##
-## [b]Achievements are rules over those numbers and nothing else[/b], through
-## [DotAchievementStatsLink].
-##
-## [b]Stand-ins are never counted.[/b] [b]Server side, and on an offline client, wherever the
-## world is authoritative.[/b] A player's numbers are filed under their scoped profile key when
-## they have one ([member durable_key_fn]).
+## What a player keeps from a round: the numbers only this game has (rounds as the murderer,
+## kills, innocents shot, rounds survived), declared once in [method schema] and reported to
+## dot-stats as DELTAS; achievements are rules over them. Stand-ins are never counted.
 
 const CHANNEL := "mm.progress"
 

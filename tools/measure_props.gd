@@ -1,19 +1,8 @@
 extends SceneTree
 
-## Measures every model a kit in `props/kits.json` names and writes `props/catalogue.json`:
-## each prop's id, title, model, scale, its size in metres and the offset that stands it on
-## the floor with its footprint centred.
-##
-## [codeblock]
-## godot --headless --path . --script tools/measure_props.gd           # write it
-## godot --headless --path . --script tools/measure_props.gd -- --check # fail if it is stale
-## [/codeblock]
-##
-## [b]Measured, never typed.[/b] A prop's collision box is its size, and a size somebody typed
-## is a sofa a player walks into a metre before they reach its picture. The
-## catalogue is what a server reads, because a headless server can measure nothing it has not
-## imported; the tool runs where the models are imported, and `headless_run` checks the file
-## agrees with the models.
+## Measures every model a kit in `props/kits.json` names and writes `props/catalogue.json`
+## (`-- --check` fails if it is stale). Measured, never typed: a collision box is the size, and a
+## headless server can measure nothing it has not imported, so everybody reads the file.
 
 const KITS := "res://props/kits.json"
 const OUT := "res://props/catalogue.json"

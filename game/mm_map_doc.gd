@@ -2,30 +2,10 @@ extends RefCounted
 
 const MmMaterials := preload("mm_materials.gd")
 
-## What a map IS: a JSON document, checked here before anything is built.
-##
-## [b]A map is a document, not a scene[/b], for mg-wipeout's reason, which every map-driven game
-## in this family has taken since: a scene per map is content to import, to rebase inside a
-## mounted pack and to keep in step across a server and every client; a document is a few tens
-## of kilobytes the server reads off disk and SENDS to each client when the map changes. A
-## client needs no map files, a server gets a new map by having a file dropped in a directory,
-## and the two ends cannot disagree about where a wall or a chair is, because there is one copy
-## and it travelled.
-##
-## [b]What is in one:[/b] boxes (the building: floors, walls, ceilings, glass, a pool), props
-## (the furniture, by catalogue id), lights, doors (see MmDoors), toys, optionally `terrain` (a converted
-## map's displacement ground as dot-map's heightfield), the spawn points
-## (`spawns: {players: [...]}`), and how the sky and the sun look. Every length is metres, every angle degrees. A box's `at`
-## is its CENTRE; a prop's `at` is the middle of its footprint ON the floor, so a mapper places
-## a chair by where it stands.
-##
-## [b]Normalised into plain arrays, never vectors.[/b] What a server encodes is what this
-## returned, and a vector's float32 components come back out of JSON as `0.300000011920929`:
-## twice the bytes for a map of a thousand boxes and a document whose digest moves when nothing
-## did. Rounded to the millimetre here, once.
-##
-## `maps/README.md` in murder-mystery-maps is the mapper's copy of this. Other games' maps are
-## read through [method import].
+## What a map IS: a JSON document, checked here before anything is built, which the server
+## sends to each client so the two cannot disagree. Lengths are metres, angles degrees; a box's
+## `at` is its CENTRE, a prop's the middle of its footprint ON the floor. Normalised into plain
+## arrays rounded to the millimetre, so the digest does not move. See `maps/README.md`.
 
 
 ## The format this build reads. A document written for a later one is refused rather than
