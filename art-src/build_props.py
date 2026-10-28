@@ -1,4 +1,4 @@
-"""Rebuilds twenty-two of the furniture models under assets/props/furniture/ for game-murder-mystery.
+"""Rebuilds thirty-four of the furniture models under assets/props/furniture/ for game-murder-mystery.
 
 Run:  blender -b -P art-src/build_props.py -- [name ...] [--out DIR]
 Bases: art-src/base/<name>.glb, Kenney's Furniture Kit (CC0, see assets/props/furniture/LICENSE-kenney-furniture-kit.txt).
@@ -59,6 +59,7 @@ def palette():
     PAL["linen"] = mat("linen", (0.5, 0.46, 0.38), 0.0, 0.9)
     PAL["shade"] = mat("shade", (0.55, 0.38, 0.17), 0.0, 0.8)
     PAL["screen"] = mat("screen", (0.008, 0.01, 0.014), 0.2, 0.08)
+    PAL["glow"] = mat("glow", (0.05, 0.5, 0.14), 0.0, 0.4)
     PAL["blotter"] = mat("blotter", (0.02, 0.17, 0.07), 0.0, 0.7)
 
 # Kit material name -> ours.
@@ -77,7 +78,10 @@ OVERRIDES = {"bedSingle": {"carpetWhite": "linen", "carpet": "velvet"}, "stoolBa
              "rugDoormat": {"wood": "kraftDark"}, "toilet": {"_defaultMat": "walnutDark"},
              "bathroomSink": {"_defaultMat": "porcelain"}, "televisionModern": {"metal": "gunmetal", "metalDark": "screen"},
              "lampRoundTable": {"metal": "brass"}, "showerRound": {"_defaultMat": "porcelain", "metalDark": "steel"},
-"cardboardBoxClosed": {"wood": "kraft", "woodDark": "kraftDark"}, "trashcan": {"metal": "steel", "metalDark": "gunmetalDark"}}
+"cardboardBoxClosed": {"wood": "kraft", "woodDark": "kraftDark"},
+             "cardboardBoxOpen": {"wood": "kraft", "woodDark": "kraftDark"}, "plantSmall2": {"wood": "terracotta"},
+             "computerScreen": {"metal": "gunmetal", "metalDark": "gunmetalDark"},
+             "loungeSofa": {"carpet": "leather", "wood": "walnutDark"}, "trashcan": {"metal": "steel", "metalDark": "gunmetalDark"}}
 
 def reskin(o, overrides=None):
     overrides = overrides or {}
@@ -409,6 +413,150 @@ def do_chair(by):
     add_sphere(o, (lo.x + 0.012, hi.y - 0.012, hi.z - 0.004), 0.011, "brass", 0.8)
     add_sphere(o, (hi.x - 0.012, hi.y - 0.012, hi.z - 0.004), 0.011, "brass", 0.8)
 
+def knob_in(host, c):
+    """A knob half sunk in the face, so it does not grow the box the collision is measured from."""
+    add_sphere(host, (c.x, c.y + 0.009, c.z), 0.011, "brass", 0.8)
+
+def do_sideTableDrawers(by):
+    o = by["sideTableDrawers(Clone)"]
+    lo, hi = world_box([o])
+    for k in ("drawerLeft", "drawerRight"):
+        d = by[k]
+        dlo, dhi = world_box([d])
+        c = (dlo + dhi) / 2
+        knob_in(d, c.__class__((c.x, dlo.y, c.z)))
+        add_box(d, (dlo.x + 0.012, dlo.y - 0.001, dhi.z - 0.03), (dhi.x - 0.012, dlo.y + 0.001, dhi.z - 0.026), "brass")
+    add_box(o, (lo.x + 0.01, lo.y + 0.01, lo.z), (hi.x - 0.01, hi.y - 0.01, lo.z + 0.02), "walnutDark")
+    add_box(o, (lo.x + 0.03, lo.y + 0.06, hi.z - 0.002), (lo.x + 0.15, lo.y + 0.16, hi.z + 0.012), "red", rot=0.15)
+    add_cyl(o, (hi.x - 0.1, lo.y + 0.12, hi.z + 0.002), 0.045, 0.006, "brass")
+
+def do_cabinetBedDrawer(by):
+    o, door, drawer = by["cabinetBedDrawer(Clone)"], by["door"], by["drawer"]
+    lo, hi = world_box([o])
+    for d, z in ((door, None), (drawer, None)):
+        dlo, dhi = world_box([d])
+        c = (dlo + dhi) / 2
+        knob_in(d, c.__class__((c.x, dlo.y, c.z)))
+    add_box(o, (lo.x + 0.01, lo.y + 0.01, lo.z), (hi.x - 0.01, hi.y - 0.01, lo.z + 0.02), "walnutDark")
+    add_box(o, (lo.x + 0.03, lo.y + 0.05, hi.z - 0.002), (lo.x + 0.11, lo.y + 0.13, hi.z + 0.004), "gunmetal")
+    add_box(o, (lo.x + 0.04, lo.y + 0.06, hi.z + 0.004), (lo.x + 0.10, lo.y + 0.12, hi.z + 0.006), "paper")
+    add_cyl(o, (hi.x - 0.06, hi.y - 0.07, hi.z), 0.03, 0.008, "brass")
+
+def case_books(o, seed):
+    lo, hi = world_box([o])
+    lv = sorted(z for z, a in top_levels(o) if z < hi.z - 0.05)
+    for i, z in enumerate(lv):
+        nxt = next((n for n in lv if n > z + 0.05), None)
+        under = (nxt - 0.02) if nxt else hi.z - 0.02
+        gap = under - z
+        if gap > 0.06:
+            books(o, Vector((lo.x + 0.03, lo.y + 0.04, 0)), Vector((hi.x - 0.03, hi.y - 0.03, 0)), z, gap, seed + i)
+    return lo, hi
+
+def do_bookcaseClosedWide(by):
+    o = by["bookcaseClosedWide(Clone)"]
+    lo, hi = case_books(o, 41)
+    add_box(o, (lo.x, lo.y, lo.z), (hi.x, hi.y, lo.z + 0.03), "walnutDark")
+    add_box(o, (lo.x, lo.y - 0.004, hi.z - 0.018), (hi.x, hi.y, hi.z), "brass")
+
+def do_bookcaseOpenLow(by):
+    o = by["bookcaseOpenLow(Clone)"]
+    lo, hi = case_books(o, 61)
+    add_box(o, (lo.x, lo.y, lo.z), (hi.x, hi.y, lo.z + 0.025), "walnutDark")
+    add_box(o, (lo.x, lo.y - 0.003, hi.z - 0.014), (hi.x, hi.y, hi.z), "brass")
+
+def do_loungeSofa(by):
+    o = by["loungeSofa(Clone)"]
+    lo, hi = world_box([o])
+    lv = [(a, z) for z, a in top_levels(o) if 0.08 < z < hi.z * 0.8]
+    seat = max(lv)[1] if lv else 0.2
+    for x in (lo.x + 0.03, hi.x - 0.03):
+        for y in (lo.y + 0.03, hi.y - 0.03):
+            add_cyl(o, (x, y, lo.z + 0.006), 0.017, 0.012, "brass", verts=10)
+    add_box(o, (lo.x + 0.12, lo.y + 0.12, seat), (lo.x + 0.28, lo.y + 0.27, seat + 0.07), "red", rot=0.3)
+    add_sphere(o, (lo.x + 0.2, lo.y + 0.2, seat + 0.072), 0.008, "brass", 0.5)
+    add_box(o, (hi.x - 0.30, lo.y + 0.14, seat), (hi.x - 0.14, lo.y + 0.28, seat + 0.06), "kraft", rot=-0.35)
+    add_box(o, (lo.x, hi.y - 0.015, hi.z - 0.012), (hi.x, hi.y, hi.z), "brass")
+
+def do_coatRackStanding(by):
+    o = by["coatRackStanding(Clone)"]
+    lo, hi = world_box([o])
+    c = (lo + hi) / 2
+    add_sphere(o, (c.x, c.y, hi.z - 0.012), 0.022, "brass", 1.0)
+    add_torus(o, (c.x, c.y, lo.z + 0.02), 0.1, 0.01, "brass")
+    for k in range(4):
+        a = k * math.pi / 2 + math.pi / 4
+        for h in (hi.z - 0.1, hi.z - 0.17):
+            ang = a + (0.0 if h > hi.z - 0.12 else math.pi / 4)
+            add_cyl(o, (c.x + math.cos(ang) * 0.045, c.y + math.sin(ang) * 0.045, h), 0.006, 0.07, "brass",
+                    axis="X" if abs(math.cos(ang)) > 0.7 else "Y", verts=8)
+    add_cyl(o, (c.x, c.y, hi.z - 0.205), 0.034, 0.01, "walnutDark")
+
+def do_bench(by):
+    o = by["bench(Clone)"]
+    lo, hi = world_box([o])
+    lv = [(a, z) for z, a in top_levels(o) if z > hi.z * 0.5]
+    seat = max(lv)[1] if lv else hi.z
+    add_box(o, (lo.x + 0.02, lo.y + 0.02, seat - 0.002), (hi.x - 0.02, hi.y - 0.02, seat + 0.012), "velvet")
+    for x in (lo.x + 0.012, hi.x - 0.012):
+        for y in (lo.y + 0.012, hi.y - 0.012):
+            add_cyl(o, (x, y, lo.z + 0.004), 0.013, 0.008, "brass", verts=8)
+    add_box(o, (lo.x + 0.02, lo.y + 0.02, seat + 0.012), (hi.x - 0.02, lo.y + 0.024, seat + 0.014), "brass")
+
+def do_plantSmall2(by):
+    o = by["plantSmall2(Clone)"]
+    lo, hi = world_box([o])
+    c = (lo + hi) / 2
+    top = lo.z + (hi.z - lo.z) * 0.32
+    add_torus(o, (c.x, c.y, top - 0.002), 0.045, 0.004, "brass")
+    add_cyl(o, (c.x, c.y, top - 0.004), 0.043, 0.006, "soil")
+    add_cyl(o, (c.x, c.y, lo.z + 0.004), 0.034, 0.008, "walnutDark")
+    for k in range(5):
+        a = k * 2 * math.pi / 5 + 0.3
+        add_cyl(o, (c.x + math.cos(a) * 0.03, c.y + math.sin(a) * 0.03, top + 0.04), 0.008, 0.1, "plant", r2=0.0, verts=6)
+
+def do_cardboardBoxOpen(by):
+    o = by["cardboardBoxOpen(Clone)"]
+    lo, hi = world_box([o])
+    c = (lo.x + 0.292 - 0.08 + 0.08) / 2
+    c = (lo.x + hi.x) / 2
+    add_box(o, (c - 0.016, lo.y - 0.001, lo.z + 0.02), (c + 0.016, lo.y + 0.001, hi.z * 0.5), "tape")
+    add_box(o, (c + 0.04, lo.y - 0.002, hi.z * 0.2), (c + 0.1, lo.y, hi.z * 0.34), "paper")
+    add_box(o, (c - 0.12, lo.y - 0.002, hi.z * 0.12), (c - 0.08, lo.y, hi.z * 0.2), "red")
+    add_box(o, (c - 0.07, lo.y + 0.06, hi.z * 0.5), (c + 0.06, lo.y + 0.17, hi.z * 0.5 + 0.01), "paper", rot=0.2)
+
+def do_computerScreen(by):
+    o = by["computerScreen(Clone)"]
+    lo, hi = world_box([o])
+    c = (lo.x + hi.x) / 2
+    z0, z1 = lo.z + 0.085, hi.z - 0.02
+    add_box(o, (lo.x + 0.02, lo.y - 0.0008, z0), (hi.x - 0.02, lo.y + 0.003, z1), "screen")
+    for i in range(5):
+        w = (hi.x - lo.x - 0.1) * (0.9 if i % 2 == 0 else 0.55)
+        z = z1 - 0.03 - i * 0.03
+        add_box(o, (lo.x + 0.05, lo.y - 0.0016, z), (lo.x + 0.05 + w, lo.y - 0.0006, z + 0.008), "glow")
+    add_box(o, (c + 0.05, lo.y - 0.0008, lo.z + 0.062), (c + 0.062, lo.y + 0.002, lo.z + 0.07), "red")
+
+def do_lampRoundFloor(by):
+    o = by["lampRoundFloor(Clone)"]
+    lo, hi = world_box([o])
+    c = Vector((0.06, 0.06, 0))
+    add_cyl(o, (c.x, c.y, lo.z + 0.01), 0.07, 0.02, "gunmetalDark", verts=20)
+    add_torus(o, (c.x, c.y, lo.z + 0.022), 0.07, 0.004, "brass")
+    add_sphere(o, (c.x, c.y, hi.z * 0.2), 0.016, "brass", 1.0)
+    add_torus(o, (c.x, c.y, hi.z - 0.003), 0.058, 0.004, "brass")
+    add_torus(o, (c.x, c.y, hi.z * 0.74), 0.07, 0.004, "brass")
+
+def do_lampSquareFloor(by):
+    o = by["lampSquareFloor(Clone)"]
+    lo, hi = world_box([o])
+    c = Vector((0.06, 0.06, 0))
+    add_box(o, (lo.x, lo.y, lo.z), (hi.x, hi.y, lo.z + 0.014), "gunmetalDark")
+    add_box(o, (lo.x + 0.008, lo.y + 0.008, lo.z + 0.014), (hi.x - 0.008, hi.y - 0.008, lo.z + 0.02), "brass")
+    add_sphere(o, (c.x, c.y, hi.z * 0.22), 0.015, "brass", 1.0)
+    add_box(o, (lo.x, lo.y, hi.z - 0.012), (hi.x, hi.y, hi.z), "brass")
+    add_box(o, (lo.x, lo.y, hi.z * 0.72), (hi.x, hi.y, hi.z * 0.72 + 0.008), "brass")
+
 def build(name):
     palette()
     for o in list(bpy.data.objects):
@@ -446,5 +594,7 @@ ALL = ["pottedPlant", "chairCushion", "kitchenBar", "desk", "chairDesk", "bookca
        "cardboardBoxClosed", "cabinetBedDrawerTable", "trashcan"]
 ALL2 = ["rugDoormat", "bedSingle", "bookcaseClosed", "stoolBar", "lampRoundTable", "toilet", "bathroomSink",
         "cabinetTelevisionDoors", "televisionModern", "table", "showerRound", "chair"]
-for n in (names or ALL + ALL2):
+ALL3 = ["sideTableDrawers", "cabinetBedDrawer", "bookcaseClosedWide", "loungeSofa", "coatRackStanding", "bench",
+        "plantSmall2", "cardboardBoxOpen", "bookcaseOpenLow", "computerScreen", "lampRoundFloor", "lampSquareFloor"]
+for n in (names or ALL + ALL2 + ALL3):
     build(n)
