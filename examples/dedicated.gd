@@ -821,15 +821,13 @@ func _test_a_module_reload_keeps_one_link() -> void:
 	mirror.add_child(client)
 	client.connect_to_server("127.0.0.1:%d" % PORT)
 
-	# The receiving half goes in once the client is seated, as a game scene does: the client
-	# link retires whatever it finds under it when it joins.
 	var known: Dictionary = {}
-	var receiver: MmNetLink = null
+	var receiver: MmNetLink = _seat_receiver_on_join(client, side)
+	var seated := false
 	for _i in 1800:
 		await get_tree().physics_frame
-		if server.playing_sessions().size() > 0 and client.get_node_or_null(NodePath("Dedicated")) == null:
-			receiver = MmNetLink.attached_to(client, null, false)
-			DotGameLink.attach(receiver, client, side, MmNetLink.NODE_NAME)
+		if receiver.is_inside_tree():
+			seated = true
 			# The server tells a peer nothing until it says READY (its world exists, which
 			# the bridge does when it is built); this stand-in has no bridge, so it says it.
 			var writer := DotNetWriter.new()
@@ -837,6 +835,8 @@ func _test_a_module_reload_keeps_one_link() -> void:
 				load("res://game/net/mm_request.gd").new(MmEvents.Ask.READY, PackedByteArray([0])), writer)
 			receiver.send_request(writer.to_bytes())
 			break
+	if not seated:
+		receiver = null
 	known.clear()
 
 	var heard := false
@@ -853,6 +853,21 @@ func _test_a_module_reload_keeps_one_link() -> void:
 		await get_tree().physics_frame
 	side.queue_free()
 	_finished()
+
+
+## A stand-in for the game's receiving half, seated the moment the client joins. The server
+## routes by node path, so without it every server RPC to this bare client logs "Node not found".
+## The client link retires what the game left under it on a game change, so it goes in after that.
+func _seat_receiver_on_join(client: DotClientLink, side: Node) -> MmNetLink:
+	var receiver := MmNetLink.attached_to(client, null, false)
+	client.game_changed.connect(func(_g: String, _c: String, _n: String) -> void:
+		_seat_after_retire.call_deferred(receiver, client, side), CONNECT_ONE_SHOT)
+	return receiver
+
+
+func _seat_after_retire(receiver: MmNetLink, client: DotClientLink, side: Node) -> void:
+	if is_instance_valid(client) and is_instance_valid(receiver) and not receiver.is_inside_tree():
+		DotGameLink.attach(receiver, client, side, MmNetLink.NODE_NAME)
 
 
 ## [b]A bystander behind its loading cover cannot be killed, and can once the cover lifts.[/b] A
@@ -887,6 +902,7 @@ func _test_loading_cover() -> void:
 	link.udp_address = "127.0.0.1:%d" % PORT
 	mirror.add_child(link)
 	link.connect_to_server("127.0.0.1:%d" % PORT)
+	var _stand_in := _seat_receiver_on_join(link, side)
 
 	var seat: Array = [null]
 	for _i in 1800:
@@ -1006,6 +1022,7 @@ func _test_ambient_cvars_reach_the_client() -> void:
 	link.udp_address = "127.0.0.1:%d" % PORT
 	mirror.add_child(link)
 	link.connect_to_server("127.0.0.1:%d" % PORT)
+	var _stand_in := _seat_receiver_on_join(link, side)
 	var rules := MmAmbience.make_rules()
 	var _followed := rules.follow_cvars(link)
 	var director := DotAmbienceDirector.new()
