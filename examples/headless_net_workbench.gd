@@ -156,4 +156,26 @@ func _rounds() -> void:
 	cwb.queue_free()
 	snet.queue_free()
 	cnet.queue_free()
+	_release()
 	host._finished()
+
+
+## The lambdas capture this object and hang off nodes this object holds: break the cycle.
+func _release() -> void:
+	snet.send_fn = Callable()
+	cnet.send_fn = Callable()
+	remote.enabled_fn = Callable()
+	remote.uid_fn = Callable()
+	remote.connected_fn = Callable()
+	remote.permit_uid_fn = Callable()
+	remote.now_fn = Callable()
+	cwb.remote_fn = Callable()
+	snet = null
+	cnet = null
+	swb = null
+	cwb = null
+	remote = null
+	cremote = null
+	slink = null
+	clink = null
+	crt = null
