@@ -87,7 +87,18 @@ OVERRIDES = {"bedSingle": {"carpetWhite": "linen", "carpet": "velvet"}, "stoolBa
              "computerKeyboard": {"metalDark": "gunmetalDark", "metalMedium": "steel"},
              "kitchenFridgeLarge": {"metalLight": "steel", "metalMedium": "gunmetal"},
              "speaker": {"metalMedium": "gunmetalDark"}, "loungeChairRelax": {"carpet": "leather", "metal": "brass"},
-             "toaster": {"metalMedium": "steel", "metal": "gunmetalDark"}}
+             "toaster": {"metalMedium": "steel", "metal": "gunmetalDark"},
+             "bedDouble": {"carpetWhite": "linen", "carpet": "red"}, "bedBunk": {"carpetWhite": "linen", "carpet": "leather"},
+             "loungeSofaLong": {"carpet": "velvet", "wood": "walnutDark"},
+             "loungeDesignSofa": {"carpetBlue": "leather", "metal": "steel"},
+             "rugRectangle": {"carpet": "velvet", "carpetDarker": "walnutDark"},
+             "rugRound": {"carpet": "leather", "carpetDarker": "gunmetal"},
+             "lampSquareTable": {"metal": "brass"}, "plantSmall1": {"wood": "terracotta"},
+             "televisionVintage": {"metal": "brass", "wood": "walnut", "metalMedium": "gunmetal", "metalDark": "screen"},
+             "kitchenStove": {"metal": "steel", "wood": "gunmetal", "metalDark": "gunmetalDark", "carpetWhite": "porcelain"},
+             "kitchenSink": {"wood": "walnut", "woodDark": "walnutDark", "metal": "brass", "metalLight": "steel", "metalDark": "gunmetalDark", "_defaultMat": "porcelain"},
+             "kitchenMicrowave": {"metalMedium": "gunmetal", "carpetWhite": "porcelain", "metalDark": "screen"},
+             "tableCoffee": {"wood": "walnut"}}
 
 def reskin(o, overrides=None):
     overrides = overrides or {}
@@ -692,6 +703,144 @@ def do_toaster(by):
     add_cyl(o, (hi.x - 0.03, lo.y + 0.002, 0.04), 0.011, 0.008, "brass", axis="Y", verts=12)
     add_box(o, (lo.x + 0.02, lo.y - 0.001, 0.09), (lo.x + 0.07, lo.y + 0.001, 0.095), "red")
 
+def do_bedDouble(by):
+    o, cover = by["bedDouble(Clone)"], by["cover"]
+    lo, hi = world_box([o])
+    clo, chi = world_box([cover])
+    cx = (lo.x + hi.x) / 2
+    add_box(cover, (clo.x - 0.002, clo.y + 0.32, chi.z - 0.004), (chi.x + 0.002, clo.y + 0.345, chi.z + 0.002), "brass")
+    add_box(cover, (clo.x - 0.002, chi.y - 0.1, chi.z - 0.004), (chi.x + 0.002, chi.y, chi.z + 0.003), "linen")
+    for x in (lo.x + 0.014, hi.x - 0.014):
+        add_sphere(o, (x, hi.y - 0.014, hi.z - 0.012), 0.014, "brass")
+    for name in ("pillowLeft", "pillowRight"):
+        plo, phi = world_box([by[name]])
+        add_box(by[name], (plo.x + 0.03, plo.y + 0.02, phi.z - 0.003), (phi.x - 0.03, phi.y - 0.02, phi.z), "paper")
+    add_box(o, (cx - 0.1, clo.y + 0.12, chi.z - 0.003), (cx + 0.1, clo.y + 0.24, chi.z + 0.003), "kraft", rot=0.0)
+
+def do_bedBunk(by):
+    o = by["bedBunk(Clone)"]
+    lo, hi = world_box([o])
+    for k in ("coverBottom", "coverTop"):
+        clo, chi = world_box([by[k]])
+        add_box(by[k], (clo.x - 0.002, clo.y + 0.2, chi.z - 0.004), (chi.x + 0.002, clo.y + 0.215, chi.z + 0.002), "brass")
+        add_box(by[k], (clo.x - 0.002, chi.y - 0.07, chi.z - 0.004), (chi.x + 0.002, chi.y, chi.z + 0.003), "linen")
+    for k in ("pillowBottom", "pillowTop"):
+        plo, phi = world_box([by[k]])
+        add_box(by[k], (plo.x + 0.025, plo.y + 0.02, phi.z - 0.003), (phi.x - 0.025, phi.y - 0.02, phi.z), "paper")
+    add_box(o, (lo.x, lo.y, lo.z), (hi.x, hi.y, lo.z + 0.01), "walnutDark")
+    for x in (lo.x + 0.012, hi.x - 0.012):
+        add_sphere(o, (x, hi.y - 0.012, hi.z - 0.01), 0.012, "brass")
+
+def sofa_extras(o, red_x, kraft_x):
+    # No feet or back rail: both sofas have their own legs and a bounding-box corner is not on the L-shaped one.
+    lo, hi = world_box([o])
+    lv = [(a, z) for z, a in top_levels(o) if 0.08 < z < hi.z * 0.8]
+    seat = max(lv)[1] if lv else 0.2
+    add_box(o, (red_x, lo.y + 0.12, seat), (red_x + 0.16, lo.y + 0.27, seat + 0.07), "red", rot=0.3)
+    add_box(o, (kraft_x, lo.y + 0.12, seat), (kraft_x + 0.16, lo.y + 0.26, seat + 0.06), "kraft", rot=-0.35)
+
+def do_loungeSofaLong(by):
+    o = by["loungeSofaLong(Clone)"]
+    lo, hi = world_box([o])
+    sofa_extras(o, lo.x + 0.14, hi.x - 0.3)
+
+def do_loungeDesignSofa(by):
+    o = by["loungeDesignSofa(Clone)"]
+    lo, hi = world_box([o])
+    sofa_extras(o, lo.x + 0.14, hi.x - 0.3)
+
+def rug_border(o, key, key2):
+    lo, hi = world_box([o])
+    z = hi.z
+    m = 0.03
+    for y in (lo.y + m, hi.y - m):
+        add_box(o, (lo.x + m, y - 0.007, z - 0.002), (hi.x - m, y + 0.007, z + 0.0004), key)
+    for x in (lo.x + m, hi.x - m):
+        add_box(o, (x - 0.007, lo.y + m, z - 0.002), (x + 0.007, hi.y - m, z + 0.0004), key)
+    c = (lo + hi) / 2
+    add_box(o, (c.x - 0.18, c.y - 0.012, z - 0.002), (c.x + 0.18, c.y + 0.012, z + 0.0004), key2)
+    add_box(o, (c.x - 0.012, c.y - 0.18, z - 0.002), (c.x + 0.012, c.y + 0.18, z + 0.0004), key2)
+
+def do_rugRectangle(by):
+    rug_border(by["rugRectangle(Clone)"], "brass", "red")
+
+def do_rugRound(by):
+    o = by["rugRound(Clone)"]
+    lo, hi = world_box([o])
+    c = (lo + hi) / 2
+    for r, key in ((0.4, "brass"), (0.3, "paper"), (0.1, "red")):
+        add_torus(o, (c.x, c.y, hi.z - 0.002), r, 0.004, key)
+
+def do_lampSquareTable(by):
+    o = by["lampSquareTable(Clone)"]
+    lo, hi = world_box([o])
+    c = (lo + hi) / 2
+    add_box(o, (c.x - 0.045, c.y - 0.045, lo.z), (c.x + 0.045, c.y + 0.045, lo.z + 0.01), "walnutDark")
+    add_sphere(o, (c.x, c.y, lo.z + 0.06), 0.012, "brass", 1.0)
+    add_box(o, (c.x - 0.042, c.y - 0.042, hi.z - 0.004), (c.x + 0.042, c.y + 0.042, hi.z), "brass")
+    add_box(o, (c.x - 0.055, c.y - 0.055, hi.z * 0.5), (c.x + 0.055, c.y + 0.055, hi.z * 0.5 + 0.004), "brass")
+
+def do_televisionVintage(by):
+    o = by["televisionVintage(Clone)"]
+    lo, hi = world_box([o])
+    add_box(o, (lo.x + 0.03, lo.y - 0.0005, lo.z + 0.04), (lo.x + 0.27, lo.y + 0.004, hi.z - 0.03), "screen")
+    for k in range(3):
+        add_cyl(o, (hi.x - 0.055, lo.y + 0.002, lo.z + 0.06 + k * 0.05), 0.014, 0.008, "brass", axis="Y", verts=12)
+    for x in (lo.x + 0.04, hi.x - 0.04):
+        for y in (lo.y + 0.04, hi.y - 0.04):
+            add_cyl(o, (x, y, lo.z + 0.006), 0.014, 0.012, "walnutDark", verts=8)
+    add_box(o, (lo.x + 0.06, lo.y + 0.06, hi.z - 0.003), (hi.x - 0.08, hi.y - 0.06, hi.z + 0.001), "gunmetalDark")
+
+def do_plantSmall1(by):
+    o = by["plantSmall1(Clone)"]
+    lo, hi = world_box([o])
+    c = (lo + hi) / 2
+    top = lo.z + (hi.z - lo.z) * 0.3
+    add_torus(o, (c.x, c.y, top - 0.002), 0.04, 0.004, "brass")
+    add_cyl(o, (c.x, c.y, top - 0.004), 0.038, 0.006, "soil")
+    add_cyl(o, (c.x, c.y, lo.z + 0.003), 0.03, 0.006, "walnutDark")
+
+def do_kitchenStove(by):
+    o, d = by["kitchenStove(Clone)"], by["door"]
+    lo, hi = world_box([o, d])
+    cx = (lo.x + hi.x) / 2
+    add_box(o, (lo.x, lo.y, lo.z), (hi.x, hi.y, lo.z + 0.03), "gunmetalDark")
+    add_box(o, (lo.x + 0.04, lo.y - 0.006, hi.z * 0.76), (hi.x - 0.04, lo.y - 0.002, hi.z * 0.77), "brass")
+    for k in range(4):
+        add_cyl(o, (lo.x + 0.07 + k * 0.1, lo.y + 0.002, hi.z * 0.9), 0.016, 0.01, "brass", axis="Y", verts=12)
+    for x in (lo.x + 0.11, hi.x - 0.11):
+        for y in (lo.y + 0.11, hi.y - 0.11):
+            add_torus(o, (x, y, hi.z + 0.0), 0.04, 0.005, "gunmetalDark")
+
+def do_kitchenSink(by):
+    o, d = by["kitchenSink(Clone)"], by["door"]
+    lo, hi = world_box([o, d])
+    cx = (lo.x + hi.x) / 2
+    add_box(o, (lo.x, lo.y, lo.z), (hi.x, hi.y, lo.z + 0.03), "gunmetalDark")
+    add_box(o, (lo.x, lo.y - 0.002, hi.z * 0.9), (hi.x, lo.y + 0.008, hi.z * 0.9 + 0.012), "slate")
+    add_box(o, (lo.x + 0.07, lo.y - 0.003, lo.z + 0.2), (lo.x + 0.1, lo.y, lo.z + 0.3), "linen")
+    add_box(o, (cx + 0.05, lo.y - 0.003, lo.z + 0.23), (cx + 0.08, lo.y, lo.z + 0.245), "red")
+
+def do_kitchenMicrowave(by):
+    o = by["kitchenMicrowave(Clone)"]
+    lo, hi = world_box([o])
+    add_box(o, (lo.x, lo.y, lo.z), (hi.x, hi.y, lo.z + 0.008), "gunmetalDark")
+    for k in range(3):
+        add_cyl(o, (hi.x - 0.04, lo.y - 0.002, lo.z + 0.05 + k * 0.035), 0.011, 0.008, "brass", axis="Y", verts=12)
+    add_box(o, (hi.x - 0.05, lo.y - 0.0012, hi.z - 0.04), (hi.x - 0.03, lo.y + 0.001, hi.z - 0.034), "glow")
+    add_box(o, (lo.x + 0.01, lo.y - 0.004, lo.z + 0.03), (lo.x + 0.016, lo.y, hi.z - 0.03), "brass")
+
+def do_tableCoffee(by):
+    o = by["tableCoffee(Clone)"]
+    lo, hi = world_box([o])
+    c = (lo + hi) / 2
+    add_box(o, (lo.x + 0.02, lo.y + 0.02, hi.z - 0.003), (hi.x - 0.02, hi.y - 0.02, hi.z + 0.001), "leather")
+    add_box(o, (lo.x, lo.y, hi.z - 0.012), (hi.x, lo.y + 0.006, hi.z - 0.002), "brass")
+    add_box(o, (lo.x, hi.y - 0.006, hi.z - 0.012), (hi.x, hi.y, hi.z - 0.002), "brass")
+    for x in (lo.x + 0.03, hi.x - 0.03):
+        for y in (lo.y + 0.03, hi.y - 0.03):
+            add_cyl(o, (x, y, lo.z + 0.004), 0.012, 0.008, "brass", verts=8)
+
 def build(name):
     palette()
     for o in list(bpy.data.objects):
@@ -733,5 +882,7 @@ ALL3 = ["sideTableDrawers", "cabinetBedDrawer", "bookcaseClosedWide", "loungeSof
         "plantSmall2", "cardboardBoxOpen", "bookcaseOpenLow", "computerScreen", "lampRoundFloor", "lampSquareFloor"]
 ALL4 = ["books", "kitchenCabinet", "chairRounded", "sideTable", "computerKeyboard", "bookcaseClosedDoors",
         "cabinetBed", "kitchenFridgeLarge", "speaker", "tableRound", "loungeChairRelax", "toaster"]
-for n in (names or ALL + ALL2 + ALL3 + ALL4):
+ALL5 = ["bedDouble", "bedBunk", "loungeSofaLong", "loungeDesignSofa", "rugRectangle", "rugRound", "lampSquareTable",
+        "televisionVintage", "plantSmall1", "kitchenStove", "kitchenSink", "kitchenMicrowave", "tableCoffee"]
+for n in (names or ALL + ALL2 + ALL3 + ALL4 + ALL5):
     build(n)
