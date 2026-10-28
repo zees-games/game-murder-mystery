@@ -30,7 +30,7 @@ const MmWeapons := preload("../game/mm_weapons.gd")
 
 const SECTIONS := 27
 
-const CHECKS := 179
+const CHECKS := 180
 
 const TICK_RATE := 64
 const TICK := 1.0 / float(TICK_RATE)
@@ -951,6 +951,8 @@ func _test_the_client() -> void:
 
 	# The clock is dot-ui's DotScoreStrip: everybody alive, and how many murderers are left.
 	hud.call("_process", 0.0)
+	var xh: DotCrosshair = hud.get("_crosshair")
+	_check(xh != null and not xh.suppressed and xh.alive_source.is_valid() and bool(xh.alive_source.call()), "a living player's crosshair is bound to their alive state")
 	var strip: DotScoreStrip = hud.get("strip")
 	_check(
 		strip.clock == DotScoreStrip.clock_text(world.seconds_left()) and strip.sides

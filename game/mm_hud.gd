@@ -97,7 +97,7 @@ var _meter_fill: ColorRect = null
 var _meter_label: Label = null
 ## The colour the disc was last drawn in, so a style is built only when it changes.
 var _disc_colour: Color = Color(0, 0, 0, 0)
-var _crosshair: ColorRect = null
+var _crosshair: DotCrosshair = null
 var _shout_for: float = 0.0
 
 
@@ -234,15 +234,20 @@ func _build() -> void:
 	prompt.visible = false
 	_root.add_child(prompt)
 
-	_crosshair = ColorRect.new()
+	# A dot, as before: no arms, no outline, no spread.
+	_crosshair = DotCrosshair.new()
 	_crosshair.name = "Crosshair"
-	_crosshair.color = Color(1.0, 1.0, 1.0, 0.75)
-	_crosshair.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	_crosshair.offset_left = -3.0
-	_crosshair.offset_top = -3.0
-	_crosshair.offset_right = 3.0
-	_crosshair.offset_bottom = 3.0
+	_crosshair.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_crosshair.length = 0.0
+	_crosshair.base_gap = 0.0
+	_crosshair.top_arm = false
+	_crosshair.dynamic = false
+	_crosshair.outline = false
+	_crosshair.dot_radius = 3.0
+	_crosshair.colour = Color(1.0, 1.0, 1.0, 0.75)
 	_crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if DotAddonApi.build_level("dot_ui") >= 14:
+		_crosshair.set(&"alive_source", func() -> bool: return player != null and player.is_alive())
 	_root.add_child(_crosshair)
 
 
@@ -339,7 +344,7 @@ func _process(delta: float) -> void:
 	_draw_hints(role)
 	_draw_meter(role)
 	_draw_door_prompt()
-	_crosshair.visible = player != null and player.is_alive() and not player.watching
+	_crosshair.suppressed = player != null and player.watching
 
 	if _shout_for > 0.0:
 		_shout_for -= delta
