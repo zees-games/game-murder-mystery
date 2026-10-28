@@ -1,6 +1,6 @@
 """One contact sheet of many furniture models: the stock model in the back row, the rebuilt one in front.
 
-Run (GPU box):  ./gpu.sh blender --stage <repo> --pull <outdir> -- -b -P art-src/render_grid.py -- <out.png> <name> [name ...]
+Run (GPU box, or locally on the CPU with SAMPLES=24 when the box's paths do not match):  ./gpu.sh blender --stage <repo> --pull <outdir> -- -b -P art-src/render_grid.py -- <out.png> <name> [name ...]
 Stock models come from art-src/base, rebuilt ones from assets/props/furniture. Three-quarter view from the front-left.
 """
 import bpy, sys, os
@@ -20,7 +20,8 @@ try:
     sc.cycles.device = "GPU"
 except Exception as e:
     print("no GPU", e)
-sc.cycles.samples = 64
+sc.cycles.samples = int(os.environ.get("SAMPLES", 64))
+sc.cycles.use_denoising = "SAMPLES" not in os.environ  # a local CPU build has no denoiser
 w = bpy.data.worlds.new("w")
 w.use_nodes = True
 w.node_tree.nodes["Background"].inputs[0].default_value = (0.62, 0.68, 0.76, 1)

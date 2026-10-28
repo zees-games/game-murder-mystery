@@ -28,7 +28,7 @@ Read the family [CLAUDE.md](../../CLAUDE.md) first; this file is only what is sp
 | `game/net/` | the codec (HELLO, MAP, ROLE, SHOT, GUN, DOOR, TOYS…), link, player behaviour, `mm_toy_net.gd`, the bridge |
 | `game/mm_client.gd`, `mm_hud.gd`, `mm_audio.gd`, `mm_figure.gd`, `mm_avatars.gd`, `mm_bindings.gd`, `mm_settings.gd`, `mm.tscn` | the client: first person, F5 for third; keys as dot-menu bindings; the Escape menu |
 | `game/mm_bots.gd`, `mm_bot_chat.gd` | the stand-ins by role on dot-bot and dot-npc-ai's annotations; their canned lines |
-| `props/`, `assets/props/`, `art-src/` | `kits.json`, the measured `catalogue.json` and `pieces.json`; vendored Kenney models (CC0), thirty-four furniture ones rebuilt by `art-src/build_props.py` (stock copies in `art-src/base/`, `.gdignore`d; rerun it, then `measure_props.gd -- --check`) |
+| `props/`, `assets/props/`, `art-src/` | `kits.json`, the measured `catalogue.json` and `pieces.json`; vendored Kenney models (CC0), forty-six furniture ones rebuilt by `art-src/build_props.py` (stock copies in `art-src/base/`, `.gdignore`d; rerun it, then `measure_props.gd -- --check`) |
 | `maps/`, `maps_extra/` | links: `../murder-mystery-maps/maps`; `hide-n-seek`, `prop-hunt`, `playground` to those games' map packs |
 | `examples/` | `headless_run`, `headless_maps`, `headless_bots`, `headless_net`, `dedicated` |
 | `tools/` | `shot.sh` (render a view: `cover` the loading cover, `grace`, `bystander`, `murderer`, `gunner`, `stab`, `shot`, `blood`, `end`, `ragdoll`, `door`, `spots`, `overview`, `room`), `camera_check.sh`, `audio_probe`, `measure_props.gd`, `load_probe.gd` |
