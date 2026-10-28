@@ -12,54 +12,22 @@ const MmGame := preload("../mm_game.gd")
 const MmMapDoc := preload("../mm_map_doc.gd")
 const MmPlayer := preload("../mm_player.gd")
 
-## Joins an [MmGame] to a [DotNetManager]. The netcode seam, and the only file in this
-## project that names both.
-##
-## [codeblock]
-## # server
-## bridge.attach(game, net)          # dot-game's DotGameNetcode does this
-## bridge.open_link(server)          # and this
-## bridge.add_player(peer_id, userid, "Ada")
-## bridge.server_tick(tick)          # instead of the game's own loop
-##
-## # client
-## bridge.attach(game, net)
-## bridge.open_link(client_link)
-## bridge.ask_ready()
-## bridge.client_tick(tick, command)
-## [/codeblock]
-##
-## [b]What crosses.[/b] A player's own movement is predicted, like every first-person game in
-## this family. The map arrives ONCE, as a document in `MAP`; after that what changes is who is
-## alive and what shows in a hand (per-tick, in [MmPlayerNet]), and a few reliable events: the
-## `TEAM` at the draw (always the public side), the owner's own `ROLE`, every `SHOT`, and a
-## `GUN` dropped or taken. [b]No message carries anybody's role but its owner's[/b]: see
-## docs/design.md "Roles are secret".
-##
-## [b]The ordering is the other half of the file.[/b] dot-net drives simulation per entity;
-## this game's tick is a whole-world property — every player moves, then the stabs, the shots
-## and the round are decided. [method ensure_game_ticked] reconciles the two: the first
-## behaviour through on a tick runs the whole world and the rest find it done.
+## Joins an [MmGame] to a [DotNetManager]: the netcode seam, and the only file here that names
+## both. The map crosses once in `MAP`; per tick only who is alive and what is in a hand
+## ([MmPlayerNet]); no message carries anybody's role but its owner's (docs/design.md). The
+## world ticks once per tick, in the first behaviour through ([method ensure_game_ticked]).
 
 const CHANNEL := "mm.net"
 
 ## Bytes of acknowledgement in front of every input packet. [method DotNetManager.encode_ack].
 const ACK_BYTES := 4
 
-## Commands in every input packet: this tick's and the four before it, so a lost packet
-## costs the server no tick unless the next four are lost too. Over WebSocket nothing is
-## ever lost; over ENet (the desktop client, since servers went dual-stack) one command a
-## packet was a tick the server ran on the previous command for every packet dropped.
-## game-arena measured it first: 80% of ticks with the right command at 20% loss with one
-## copy, 99-100% with three, and five closed the rest (2026-10-09).
+## Commands in every input packet: this tick's and the four before it, so over ENet a dropped
+## packet costs the server no tick unless the next four are lost too.
 const INPUT_COPIES := 5
 
-## How often the round clock and the numbers behind it go out, in ticks.
-##
-## [b]Twice a second, not per tick and not per snapshot.[/b] What it carries changes when
-## somebody dies or a second passes, and a client told sixty-four times a second would be
-## paying for sixty-two copies of the same numbers. The clock itself is advanced on the
-## client between messages — see [method _apply_clock].
+## How often the round clock and the numbers behind it go out, in ticks: twice a second, since
+## they change when somebody dies or a second passes. See [method _apply_clock].
 const CLOCK_EVERY := 32
 
 ## The client has been told who it is. [param player_id] is the session id.
@@ -172,16 +140,9 @@ var _ready_unseated: Dictionary = {}
 var _tick: int = 0
 var _game_ticked_for: int = -1
 
-## Server only: whether [method DotNetManager.server_tick] is on the stack, and the net ids
-## let go of while it was.
-##
-## [b]An entity let go of mid-tick leaks a lag-compensation track, for ever.[/b]
-## mg-smash-copter's finding: the world ticks inside the first player behaviour's
-## `_net_simulate`, so a player removed there is unregistered while `server_tick` is still
-## holding the identity list it took before simulating — and then records history for it. The registry has
-## already told the history to forget each id; the record makes a fresh track for it again,
-## and nothing ever forgets it a second time.
-## Forgotten again here once the manager has let go of its list.
+## Server only: whether [method DotNetManager.server_tick] is on the stack, and the net ids let go of
+## while it was. An entity removed mid-tick would otherwise get a fresh lag-compensation track
+## recorded after the registry forgot it, for ever; forgotten again once the manager lets go.
 var _in_server_tick := false
 var _unregistered_in_tick: Array[int] = []
 var _client_ticked_for: int = -1
@@ -271,35 +232,39 @@ func attach(p_game: Object, p_net: DotNetManager) -> DotResult:
 		game.world_rebuilt.connect(_pair_pending_toys)
 
 	if net.is_server:
-		game.player_added.connect(_on_player_added)
-		game.player_removed.connect(_on_player_removed)
-		game.world_rebuilt.connect(_on_world_rebuilt)
-		game.round_began.connect(_on_round_began)
-		game.round_over.connect(_on_round_over)
-		game.phase_changed.connect(_on_phase_changed)
-		game.player_died.connect(_on_player_died)
-		game.side_changed.connect(func(id: StringName, side: int) -> void:
-			_broadcast(MmEvents.Kind.TEAM, MmEvents.write_team(session_of(id), public_side(side)))
-		)
-		game.role_drawn.connect(func(id: StringName, _side: int, _gun: bool) -> void:
-			_tell_role(session_of(id)))
-		game.shot.connect(func(by: StringName, from: Vector3, to: Vector3, hit: StringName) -> void:
-			_broadcast(MmEvents.Kind.SHOT, MmEvents.write_shot(session_of(by), from, to, hit != &"")))
-		game.gun_dropped.connect(func(drop_id: int, at: Vector3) -> void:
-			_broadcast(MmEvents.Kind.GUN, MmEvents.write_gun(drop_id, true, at)))
-		game.gun_taken.connect(func(drop_id: int, _by: StringName) -> void:
-			_broadcast(MmEvents.Kind.GUN, MmEvents.write_gun(drop_id, false, Vector3.ZERO)))
-		game.door_used.connect(func(index: int, open: bool, flip: bool, tick: int, _by: StringName) -> void:
-			_broadcast(MmEvents.Kind.DOOR, MmEvents.write_door(index, open, flip, tick)))
-		# To the one who asked, never broadcast: a refusal is that person's business.
-		game.refused.connect(func(id: StringName, why: String) -> void:
-			var peer_id := peer_for_player(session_of(id))
-			if peer_id > 0:
-				notice(peer_id, why))
-		if game.spectate != null:
-			game.spectate.view_changed.connect(_on_spectate_changed)
+		_connect_server_signals()
 
 	return DotResult.success(true)
+
+
+func _connect_server_signals() -> void:
+	game.player_added.connect(_on_player_added)
+	game.player_removed.connect(_on_player_removed)
+	game.world_rebuilt.connect(_on_world_rebuilt)
+	game.round_began.connect(_on_round_began)
+	game.round_over.connect(_on_round_over)
+	game.phase_changed.connect(_on_phase_changed)
+	game.player_died.connect(_on_player_died)
+	game.side_changed.connect(func(id: StringName, side: int) -> void:
+		_broadcast(MmEvents.Kind.TEAM, MmEvents.write_team(session_of(id), public_side(side)))
+	)
+	game.role_drawn.connect(func(id: StringName, _side: int, _gun: bool) -> void:
+		_tell_role(session_of(id)))
+	game.shot.connect(func(by: StringName, from: Vector3, to: Vector3, hit: StringName) -> void:
+		_broadcast(MmEvents.Kind.SHOT, MmEvents.write_shot(session_of(by), from, to, hit != &"")))
+	game.gun_dropped.connect(func(drop_id: int, at: Vector3) -> void:
+		_broadcast(MmEvents.Kind.GUN, MmEvents.write_gun(drop_id, true, at)))
+	game.gun_taken.connect(func(drop_id: int, _by: StringName) -> void:
+		_broadcast(MmEvents.Kind.GUN, MmEvents.write_gun(drop_id, false, Vector3.ZERO)))
+	game.door_used.connect(func(index: int, open: bool, flip: bool, tick: int, _by: StringName) -> void:
+		_broadcast(MmEvents.Kind.DOOR, MmEvents.write_door(index, open, flip, tick)))
+	# To the one who asked, never broadcast: a refusal is that person's business.
+	game.refused.connect(func(id: StringName, why: String) -> void:
+		var peer_id := peer_for_player(session_of(id))
+		if peer_id > 0:
+			notice(peer_id, why))
+	if game.spectate != null:
+		game.spectate.view_changed.connect(_on_spectate_changed)
 
 
 ## Opens the link under [param parent], whose NAME is half the RPC routing.
@@ -1408,15 +1373,8 @@ func _apply_hello(reader: DotNetReader) -> void:
 
 	local_player_id = int(hello["player_id"])
 
-	# [b]The server's tick rate, before anything is derived from it.[/b] Another game in
-	# this family shipped with HELLO carrying this and nothing reading it: a browser client
-	# counted at the 60 its export declared against a server on 128, so the correction rate
-	# was 0.96 and every replicated time was out by 128/60. Produced correctly and consumed
-	# by nothing, and invisible to a one-process suite because one process has one engine
-	# rate and both ends agree whatever the wire says.
-	#
-	# Before `sync_from_server`, because the clock converts its error and its lead through
-	# `tick_rate` and would otherwise do that arithmetic at the old rate.
+	# The server's tick rate, before anything derives from it: the clock converts its error and
+	# lead through `tick_rate`, and a one-process suite cannot see a wrong one.
 	_adopt_tick_rate(int(hello["tick_rate"]))
 
 	var rtt := float(rtt_source.call()) if rtt_source.is_valid() else 0.0
@@ -1432,16 +1390,9 @@ func _apply_hello(reader: DotNetReader) -> void:
 	hello_received.emit(local_player_id)
 
 
-## Puts the whole client — the world, every controller and the ENGINE — on the server's rate.
-##
-## That last one is not cosmetic. Measured in another game in this family at 60 against 128:
-## the simulation stayed correct, because the clock is asked how many ticks a frame is worth
-## — it just ran them in bursts of two and three, and the camera advanced 74 mm on six frames
-## out of seven and 112 mm on the seventh. A 47% change in apparent speed, eight times a
-## second.
-##
-## A server never calls this: its rate is `sv_tickrate`, and adopting a peer's would be a
-## client telling the server how fast to run.
+## Puts the whole client (world, controllers and the ENGINE) on the server's rate: a client at
+## 60 against 128 ran the ticks in bursts and the camera lurched. A server never calls this:
+## adopting a peer's rate would be a client telling the server how fast to run.
 func _adopt_tick_rate(rate: int) -> void:
 	if net == null or net.is_server or game == null or rate <= 0 or rate == game.tick_rate:
 		return
@@ -1516,22 +1467,10 @@ func _apply_join(reader: DotNetReader) -> void:
 		player.sampler = null
 		player.samples_input = false
 
-		# [b]This client's own player is owned by this client, and nobody else's is.[/b]
-		# Until 2026-09-25 every mirror was built with owner 0, this client's own included,
-		# so `is_owner` was false for the local player, `registry.predicted()` was empty and
-		# `client_tick` simulated nobody: the player moved only when a snapshot came back, a
-		# round trip behind the keys, and the camera — drawn from `render_state`, a blend
-		# against a previous tick the controller never recorded — lurched between where the
-		# player was last teleported and where the server had them. Every check passed
-		# anyway, because a client adopting the server's answer also agrees with the server.
-		#
-		# By session and not by a peer id on the wire: JOIN does not carry one, and what
-		# `is_owner` compares is the owner against THIS registry's local peer — so the local
-		# peer id is the only right value whatever the server calls the connection, and the
-		# wire (and therefore a published pack's server half) is unchanged. HELLO, which sets
-		# `local_player_id`, is sent before every JOIN in `_admit` on the same reliable
-		# channel; [method _apply_hello] still claims a player that got here first, because
-		# an order is a property of the server, not of this file.
+		# This client's own player is owned by this client: `is_owner` compares against THIS
+		# registry's local peer, JOIN carries none, and mirrors built with owner 0 left
+		# `registry.predicted()` empty, so the player moved only when a snapshot came back.
+		# HELLO precedes every JOIN; [method _apply_hello] still claims a player that got here first.
 		var identity := _build_entity(player, _mirror_owner(session_id))
 		var registered := net.registry.register(
 			identity, int(join["net_id"]), net.clock.tick, net.config

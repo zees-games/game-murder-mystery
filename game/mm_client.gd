@@ -16,20 +16,9 @@ const MmPlayer := preload("mm_player.gd")
 const MmWeapons := preload("mm_weapons.gd")
 const MmWeaponIcons := preload("mm_weapon_icons.gd")
 
-## One local player, a camera and a HUD over a [MmGame] — offline, or against a server.
-##
-## [b]One client for both, and the offline half is not a demo mode.[/b] It is the same world
-## class with `authoritative` true, stand-ins on both sides, and nothing else different. What
-## changes is where the answers come from, and the whole of that difference is [MmNetBridge].
-##
-## [b]Which half runs is decided by whether there is a link in the registry.[/b] A dot-server
-## client publishes a [DotClientLink] under `dot_client_link` before the game scene loads; no
-## link means nobody connected us to anything, and the honest answer is a playable round.
-## `--offline` forces it.
-##
-## [b]First person for everybody[/b], because a murder round is about who you can see from
-## where you are standing; F5 hangs the camera behind you instead, which is presentation only.
-## The simulation is the same either way.
+## One local player, a camera and a HUD over a [MmGame], offline or against a server. Offline is
+## the same world class with `authoritative` true and stand-ins; a [DotClientLink] in the registry
+## under `dot_client_link` picks the connected half, `--offline` forces it. First person (F5 for third).
 
 const CHANNEL := "mm.client"
 
@@ -143,13 +132,8 @@ func _ready() -> void:
 
 
 ## The load gate is [member DotGameClient.gate]: covered, and the local body and the input still,
-## until the level is built, the local player exists and its camera is current.
-##
-## [b]Without it the first frames showed a half-built world.[/b] Offline the body spawned and
-## fell in the tick the first map landed, a connected client drew a HUD with no player and no
-## camera until JOIN, and a map change tore the level down in front of a body that kept
-## falling. A frozen player is also skipped by [method MmPlayer.simulate], which the world
-## calls by name and `process_mode` does not stop.
+## until the level is built and the local player and its camera exist. A frozen player is also
+## skipped by [method MmPlayer.simulate], which `process_mode` does not stop.
 
 
 ## A map is built: held from the moment the old one starts to go, released once the new one
@@ -164,8 +148,6 @@ func _hold_for_maps() -> void:
 func _covered() -> bool:
 	return gate != null and not gate.is_open()
 
-
-# --- Offline ---------------------------------------------------------------
 
 func _start_offline() -> void:
 	for i in range(offline_bots):
@@ -211,8 +193,6 @@ func _bind_bot_console() -> void:
 	if index >= 0 and index + 1 < args.size():
 		DotLog.result(CHANNEL, "bot difficulty from the command line", DotBotSettings.of(game).set_difficulty(args[index + 1]))
 
-
-# --- Connected -------------------------------------------------------------
 
 func _build_netcode() -> DotResult:
 	net = DotNetManager.new()
@@ -325,8 +305,6 @@ func _adopt(candidate: MmPlayer) -> void:
 	if hud != null:
 		hud.bind(game, player)
 
-
-# --- What the world, or the server, says --------------------------------------
 
 ## Offline: the world is the authority, so its own signals are what happened. A connected
 ## client hears the same from the bridge and calls the same functions with the same arguments,
@@ -519,8 +497,6 @@ func _on_death(session_id: int, _by: int, why: StringName) -> void:
 			chat.say_locally("%s was killed" % who.display_name, Color(0.95, 0.55, 0.55))
 
 
-# --- Dead bodies -----------------------------------------------------------
-
 ## Where the dead lie: dot-player-char's ragdolls under the game's (the server's) rules.
 var ragdolls: DotPlayerRagdolls = null
 
@@ -556,9 +532,8 @@ func _ragdoll_sound(id: StringName, at: Vector3, volume: float) -> void:
 
 
 ## [param who]'s body falls the way the server picked ([member MmPlayer.death]), copied from the
-## figure this client draws; the figure itself stays hidden while they are dead
-## ([method MmPlayer.present_body]). Nobody's figure, nothing: a first-person player who never
-## had one drawn here. Called from [method _on_death], solo and connected alike.
+## figure this client draws; the figure itself stays hidden while they are dead. Called from
+## [method _on_death], solo and connected alike.
 func _fall(who: MmPlayer) -> void:
 	if who == null or ragdolls == null or who.figure == null or not who.figure.is_inside_tree():
 		return
@@ -568,8 +543,6 @@ func _fall(who: MmPlayer) -> void:
 	var velocity := who.controller.state.velocity if who.controller != null else Vector3.ZERO
 	var _body := ragdolls.spawn(who.figure, who.death if who.death != null else DotPlayerDeath.new(), velocity)
 
-
-# --- The camera ------------------------------------------------------------
 
 func _build_camera() -> void:
 	if camera != null or player == null:
@@ -692,8 +665,6 @@ func _key(action: StringName) -> String:
 	return str(row.get("default", action))
 
 
-# --- The Tab board ---------------------------------------------------------
-
 func _dress_board() -> void:
 	if board == null:
 		return
@@ -747,10 +718,8 @@ func _prepare_board(snap: Dictionary) -> void:
 	add_bot_rows(snap, game)
 
 
-## Online the board is dot-server's roster, which lists sessions only, and a stand-in is not
-## one: the HUD counted four hidden while the board said nobody. Adds a row for each bot in
-## the world that the roster does not carry, keyed as `board_snapshot()` keys it so
-## `_decorate_row` finds its team, points and face. Static so a suite can run it on a world.
+## Online the board is dot-server's roster, which lists sessions only, so a stand-in needs a row
+## of its own, keyed as `board_snapshot()` keys it. Static so a suite can run it on a world.
 static func add_bot_rows(snap: Dictionary, world: MmGame) -> void:
 	var rows: Array = snap.get("players", []) as Array
 	var listed := {}
@@ -818,8 +787,6 @@ func _portrait(atlas: String) -> Texture2D:
 	_portraits[atlas] = texture
 	return texture
 
-
-# --- Chat, sound, settings ---------------------------------------------------
 
 ## dot-game's chat box and microphone, with this game's channels and voice format.
 func _build_chat() -> void:
@@ -955,8 +922,6 @@ func _pointer_ours() -> bool:
 	return Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
 
 
-# --- The frame -------------------------------------------------------------
-
 func _physics_process(delta: float) -> void:
 	# The use key, held: the game makes the press from the edge, on the server or here.
 	var use := _key_held(MmBindings.USE)
@@ -1003,10 +968,9 @@ func _held(action: StringName) -> bool:
 	return _pointer_ours() and not _covered() and InputMap.has_action(action) and Input.is_action_pressed(action)
 
 
-## Whether the keyboard action [param action] is held now. Unlike [method _held] this does not need
-## the pointer captured: a browser captures it only on a click (and tab-away or Escape frees it),
-## and a key is no click. Q gated on the capture did nothing for a solo player in a tab whose
-## pointer lock was not held. The menu, the chat and the cover still block it through the platform.
+## Whether the keyboard action [param action] is held now. Unlike [method _held] it does not need
+## the pointer captured: a browser captures it only on a click. The menu, the chat and the
+## cover still block it through the platform.
 func _key_held(action: StringName) -> bool:
 	if _covered() or not InputMap.has_action(action) or not Input.is_action_pressed(action):
 		return false
@@ -1142,8 +1106,6 @@ func _present_effects(delta: float) -> void:
 		game.effects.advance(delta)
 
 
-# --- Watching, once out -----------------------------------------------------
-
 func is_spectating() -> bool:
 	return player != null and game != null and game.spectate != null \
 		and game.spectate.is_spectating(player.player_id)
@@ -1278,13 +1240,9 @@ func spectate_step(direction: int) -> void:
 		chat.notice(moved.error.message)
 
 
-## Everything a frame draws that a tick does not, in this order: the netcode's interpolation,
-## then every player in their shirt (never a side's colour: that would be the secret), then
-## every admin beacon. Returns how many are
-## shown. Static so the net suite drives exactly this and not a copy of it.
-##
-## [param first_person] is whether [param own]'s camera is behind their eyes, which hides their
-## own body.
+## Everything a frame draws that a tick does not: the netcode's interpolation, every player in
+## their shirt (never a side's colour, which would be the secret), every admin beacon. Returns
+## how many are shown; static so the net suite drives exactly this. [param first_person] hides [param own]'s body.
 static func present_frame(
 	p_net: DotNetManager,
 	p_game: MmGame,
@@ -1299,12 +1257,9 @@ static func present_frame(
 	if networked:
 		p_net.interpolate_frame(alpha)
 
-	# Your own player is drawn at the clock's render alpha, not the engine's fraction: the
-	# clock stretches and shrinks its ticks while it settles on the server, so a physics frame
-	# now and then runs no tick or two, and drawn at the engine's fraction the eye stood still
-	# on one frame and moved double on the next. `DotFpsController.render_state` reads it from
-	# `render_clock` (dot-player-controller); by name both ways, so a shell older than either
-	# draws as before. Null offline, where every physics frame is one tick.
+	# Your own player is drawn at the clock's render alpha, not the engine's fraction: the clock
+	# stretches its ticks while it settles on the server, so the engine's fraction stood the eye
+	# still one frame and doubled it the next. Null offline, where each frame is one tick.
 	if own != null and own.controller != null:
 		own.controller.set(&"render_clock", p_net.clock if networked else null)
 

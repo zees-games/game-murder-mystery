@@ -869,7 +869,6 @@ func _test_the_client() -> void:
 	client.set(&"force_offline", true)
 	client.set(&"config_file", "user://cfg/headless-none.json")
 	add_child(client)
-	# The map used to be drawn, and steered, while it was still being built.
 	var platform: DotGameClient = client.get("platform")
 	var covered := platform != null and platform.gate != null and not platform.is_shown() \
 		and platform.is_input_blocked()
@@ -972,8 +971,7 @@ func _test_the_client() -> void:
 		"a theme picked in the menu reaches the clock and the HUD's lines at once, the accent kept")
 	_t = themed.settings.set_value(&"ui_theme", &"midnight")
 
-	# A slain stand-in falls as dot-player-char's ragdoll: the world picked the fall, and the
-	# client copied the body from the figure it draws, under the game's rules, the figure hidden.
+	# A slain stand-in falls as dot-player-char's ragdoll, copied from the figure, which is hidden.
 	world._set_phase(MmGame.Phase.PLAY)
 	var ragdolls: DotPlayerRagdolls = client.get("ragdolls")
 	var victim: MmPlayer = null
@@ -985,12 +983,8 @@ func _test_the_client() -> void:
 	_check(victim != null and ragdolls != null and ragdolls.rules == world.ragdoll_rules,
 		"the client keeps the dead under the game's sv_ragdoll* rules")
 	if victim != null:
-		# Most of this is pinned, because the fall is a physics outcome and it differed
-		# run to run: the seat is the map's first spawn (the ones the seating picked included
-		# a table top, where a body jittered for six seconds), the killer stands a metre off as
-		# a stab or a shot would have it (a death with no direction pushes nothing). The tick the
-		# reaction is seeded from is not pinned any more: a face plant stood up on some ticks
-		# until dot-player-char kept its spin up, and the sweep below covers every facing.
+		# Mostly pinned, because the fall is a physics outcome that differed run to run: the seat is
+		# the map's first spawn and the killer stands a metre off, as a stab or a shot would have it.
 		var spot: Array = world.map.spawn(MmGame.SPAWN_GROUP, 0)
 		victim.place_at(spot[0], 0.0)
 		var killer: MmPlayer = null
@@ -1009,9 +1003,8 @@ func _test_the_client() -> void:
 		var bodies := ragdolls.live()
 		_check(bodies.size() == 1 and not victim.figure.visible,
 			"and the client laid the body down from the figure, which is hidden", str(bodies.size()))
-		# Until it settles, not for a fixed second: how long a fall takes depends on the reaction
-		# the seed picked and where it lands, and a count of frames judged some bodies mid-air.
-		# The ragdoll freezes itself at rules.max_sim_time, so this ends.
+		# Until it settles, not for a fixed second: a frame count judged some bodies mid-air. The
+		# ragdoll freezes itself at rules.max_sim_time, so this ends.
 		for i in 900:
 			await get_tree().physics_frame
 			if bodies.size() != 1 or not is_instance_valid(bodies[0]) or bodies[0].settled:
@@ -1028,18 +1021,10 @@ func _test_the_client() -> void:
 			detail = "%s ground=%.2f centre.y=%.2f lowest=%.2f" % [bodies[0].describe(), ground_y, at.y, bodies[0].lowest_point()]
 		_check(down and ground_y > -INF and bodies[0].centre().y - ground_y < 0.8 and bodies[0].lowest_point() - ground_y > -0.25,
 			"once it settles, the body lies on the ground under it: not standing, not through it", detail)
-		# The same fall again and again, nobody pushing, at four facings. This is what the pinned
-		# seed above dodged, and the seed was never the cause: a face plant spins the whole body
-		# 1.6 rad/s about its toes and draws nothing from the seed. About one fall in six stays up
-		# on its feet with no wall in the way (the spin dies in a few frames, the box still flush
-		# with the floor; seen at facings with nothing within 2 m ahead), so it is dot-player-char's
-		# to fix (nightly ragdoll-faceplant-upright-1). A body that has a wall ahead is excused.
-		# This stays armed: a game whose falls all stay up, or a fix that makes none, shows here.
-		# Where the sweep stands is picked for clear floor, not taken as seat 0: seat 0 of the
-		# practice house has a seat cushion and a table edge a third of a metre ahead, and a body
-		# that falls across a 0.3-0.5 m solid ends up draped over it (centre 1.1 m, one arm on the
-		# floor, settled, six parts): lying down, but not by this check's bounds, and whether it
-		# fell on the cushion or beside it differed run to run (one full run in about three).
+		# The same fall again and again at four facings, nobody pushing, which the pinned seed above
+		# dodged: about one fall in six stays up on its feet with no wall ahead, which is
+		# dot-player-char's to fix (nightly ragdoll-faceplant-upright-1). A body with a wall ahead is
+		# excused. The sweep stands on clear floor, not seat 0, which has a cushion ahead.
 		var sweep_spot: Vector3 = spot[0]
 		var best_clear := -1.0
 		var sweep_state := world.get_world_3d().direct_space_state
@@ -1085,10 +1070,8 @@ func _test_the_client() -> void:
 				c + Vector3.UP * 0.3, c + Vector3.DOWN * 6.0,
 				world.physics.layer_mask(&"world") | world.physics.layer_mask(&"prop")))
 			var gy := (gh["position"] as Vector3).y if not gh.is_empty() else -INF
-			# "Through the floor" is judged against the floor, not against whatever is under the
-			# centre: a body lying across a 0.3 m solid by the seat has an arm on the floor and the
-			# ray from its middle lands on the solid, so lowest-gy read -0.30 and a body that was
-			# plainly lying down failed one run in several (lowest 0.00, settled, 6 parts, landed).
+			# "Through the floor" is judged against the floor, not whatever is under the centre: a body
+			# lying across a 0.3 m solid by the seat has an arm on the floor and the ray lands on the solid.
 			var floor_y := minf(gy, sweep_spot.y)
 			if c.y - gy < 0.8 and b.lowest_point() - floor_y > -0.25:
 				continue

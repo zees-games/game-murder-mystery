@@ -12,43 +12,17 @@ const MmAmbience := preload("mm_ambience.gd")
 ## The workbench kind of the ambience cvar set (saved to cfg/.../ambience/server.yml).
 const AMBIENT_KIND := "ambience"
 
-## This game, as a module a dedicated server loads.
-##
-## [b]A hundred and forty lines, against the five hand-written modules' 837 to 1,816.[/b]
-## [DotGameModule] holds the netcode and its four load-bearing constants, the bridge, the
-## message seal, the identity layer, the roster, the authoritative tick and a teardown in
-## the reverse order. Two of those five hand-written copies had the same line wrong and
-## nobody could ever join those servers. What is left here is what is actually this game's:
-## the cvars an operator turns between rounds, the console commands, the map vote, and the rule
-## that keeps enough people in a round for one to happen.
-##
-## [b]No `class_name`, and that is a requirement rather than a style.[/b]
-## [method DotModuleHost.load_module] takes a PATH and constructs the module itself — it
-## must, because that is the shape that lets an operator name one in a config file — and a
-## module delivered inside a dot-cloud pack cannot have a `class_name` at all: a mounted
-## pack's globals are not registered in the host.
-##
-## [codeblock]
-## server.modules.load_module("res://game/mm_module.gd")
-## [/codeblock]
+## This game, as a module a dedicated server loads. No `class_name`: a module in a dot-cloud pack
+## cannot have one, and [method DotModuleHost.load_module] takes a PATH and constructs it.
 
-# [b]No `const CHANNEL` here, and its absence is the point.[/b] [DotGameModule] already
-# declares one and GDScript refuses to let a subclass redeclare it — which is the right
-# refusal: a module logs through [method DotModule.log_info], which stamps the module's own
-# name, so a second channel would split one module's records across two places an operator
-# has to know to turn up separately.
+# No `const CHANNEL` here: [DotGameModule] declares one and a subclass may not redeclare it; a
+# module logs through [method DotModule.log_info], which stamps its own name.
 
 ## Seconds between checks of how many people are in the round.
 const ROSTER_INTERVAL := 2.0
 
-## Where the services keep punishments. Empty is [DotGameServices]'s own default,
-## `user://murder_punishments.json` — the store a real server enforces.
-##
-## [b]Static, because nothing holds this module before it exists[/b]: dot-server constructs
-## it from a path inside `load_module`, so there is no instance for a host to set a field on
-## first. `examples/dedicated.tscn` points it at a directory of its own; before it could,
-## every run appended the live tools' audit warnings to the real store, 106 of them by the
-## time anybody counted.
+## Where the services keep punishments; empty is `user://murder_punishments.json`. Static, because
+## dot-server constructs the module from a path, so no instance exists for a host to set a field on.
 static var punishments_file: String = ""
 
 ## The `mm_bots` cvar, held so the tick does not look it up sixty times a second.
@@ -103,11 +77,8 @@ func _game_missing_hint() -> String:
 
 
 ## The netcode's numbers, which are the game's and not the addon's.
-##
-## Tick rate from the world, so `sv_tickrate` reaches it: the server sets the engine's
-## physics rate from that cvar at boot, the world is built after the server and reads it,
-## and this reads the world. A number written here instead would be a netcode running at a
-## rate the operator did not choose, silently.
+## Tick rate comes from the world so `sv_tickrate` reaches it; a number written here would run
+## the netcode at a rate the operator did not choose.
 func _net_config() -> DotNetConfig:
 	var config := DotNetConfig.new()
 	config.tick_rate = (game as MmGame).tick_rate
@@ -128,13 +99,8 @@ func _make_bridge() -> Node:
 	return MmNetBridge.new()
 
 
-## Chat, voice and moderation, over [DotGameServices].
-##
-## [b]The bridge is handed over as the link, and that is the whole of the wiring.[/b] A chat
-## line goes out through `send_chat` and a voice frame through `send_voice`, both on this
-## game's own wire. [DotGameModule] does the rest: it assigns the bridge's `voice_relay_fn`,
-## checks `check_admission` before seating anybody, and tells the roster to follow this layer
-## so a leaver is forgotten by the rate limiter and the voice router together.
+## Chat, voice and moderation, over [DotGameServices]; the bridge is handed over as the link
+## and [DotGameModule] wires the voice relay, admission and the roster.
 func _make_services() -> Node:
 	var services := MmServices.new()
 	services.bridge = bridge
@@ -143,14 +109,8 @@ func _make_services() -> Node:
 
 
 ## Profiles, avatars and admission: dot-platform's [DotPlatformIdentity] over this game's
-## one-slot schema. [DotGameModule] builds it before the services and loads dot-platform's
-## own module beside it.
-##
-## [b]Authentication is not here and was never this game's.[/b] Whether a player is proven
-## to be somebody is the host's `dot_auth_server`, the same for every game it runs; what
-## this layer does is everything after — a scoped profile, the name on it, and a face.
-## With authentication off everybody is a guest with a profile of their own, which is what
-## a LAN server is.
+## one-slot schema, built before the services. Authentication is the host's `dot_auth_server`;
+## with it off everybody is a guest with a profile of their own.
 func _make_identity() -> Node:
 	var identity_layer := DotPlatformIdentity.new()
 	identity_layer.avatar_schema = MmAvatars.schema()
@@ -210,14 +170,46 @@ func _game_load() -> DotResult:
 	_add_tunables(world)
 	_build_vote(world)
 
+	_bind_rule_cvars(world)
+	var configured := _bind_config(world)
+	if not configured.ok:
+		return configured
+	_bind_world_cvars(world)
+
+	_bots = add_cvar(
+		"mm_bots", "1",
+		"Automatic stand-ins: 1 keeps as many as bot_quota and bot_quota_mode say, 0 none at all."
+	)
+
+	# [b]How many is dot-server's [DotBotQuota][/b], so `bot_quota` and `bot_quota_mode` mean the
+	# same on every server. The default is this game's `minimum_players` in fill mode; `mm_bots`
+	# stays the switch it was.
+	_quota = DotBotQuota.install(self, world.config.minimum_players)
+
+	# Started here, not in the world's `_ready`: `start()` builds the map, and one built before
+	# the bridge existed would have nothing listening to `world_rebuilt`, so no client would
+	# ever be told of it.
+	var _delivered: int = await _add_delivered_maps(world)
+	var _rotation_again := world.load_rotation()
+
+	# The vote was built above, before these arrived; read without them, its list held only
+	# the practice map and never opened a ballot. mm_reload refreshes it the same way.
+	if vote != null:
+		vote.refresh_maps()
+
+	world.start()
+
+	log_info("the map is up", world.describe())
+	return DotResult.success(null)
+
+
+func _bind_rule_cvars(world: MmGame) -> void:
 	# sv_falldamage and its tunables: dot-combat's, on by default in this game. Server-side
 	# only, so no REPLICATED: the damage is the server's and arrives as health.
 	var _fall := world.fall_rules.bind_cvars(add_cvar, DotConVar.FLAG_NOTIFY)
 
-	# dot-player-controller's mp_forceview (first or third person: the player's choice, or one
-	# held) and mp_solidplayers (players and stand-ins block each other, 1 by default).
-	# REPLICATED: the client places its own camera under the first and predicts its own
-	# player under the second.
+	# mp_forceview and mp_solidplayers, REPLICATED: the client places its own camera under the
+	# first and predicts its own player under the second.
 	var _views := world.view_rules.bind_cvars(
 		add_cvar, DotConVar.FLAG_ARCHIVE | DotConVar.FLAG_NOTIFY | DotConVar.FLAG_REPLICATED
 	)
@@ -229,9 +221,9 @@ func _game_load() -> DotResult:
 		add_cvar, DotConVar.FLAG_ARCHIVE | DotConVar.FLAG_NOTIFY | DotConVar.FLAG_REPLICATED,
 		DotConVar.FLAG_ARCHIVE | DotConVar.FLAG_NOTIFY
 	)
-	var configured := _bind_config(world)
-	if not configured.ok:
-		return configured
+
+
+func _bind_world_cvars(world: MmGame) -> void:
 	# Dead bodies: dot-player-char's sv_ragdoll* set. The server only picks each death's reaction
 	# from them; REPLICATED, because the clients draw the bodies (see the client's netcode).
 	var _ragdolls := world.ragdoll_rules.bind_cvars(
@@ -252,56 +244,9 @@ func _game_load() -> DotResult:
 		if str(made.get(&"name")) == DotSpectatorRules.CVAR_FORCE_CAMERA:
 			_force_camera_cvar = made
 
-	_bots = add_cvar(
-		"mm_bots", "1",
-		"Automatic stand-ins: 1 keeps as many as bot_quota and bot_quota_mode say, 0 none at all."
-	)
 
-	# [b]How many is dot-server's [DotBotQuota], so `bot_quota` and `bot_quota_mode` mean the
-	# same thing on every server in the family.[/b] The default is this game's own minimum
-	# (`minimum_players`, from the config file) in fill mode, which is the rule it ran before
-	# the policy was shared: stand-ins top the round up to that many players, a person who
-	# joins takes a stand-in's place, and the stand-in comes back when they leave. `mm_bots`
-	# stays the switch it always was, so a server config that sets it means what it meant.
-	_quota = DotBotQuota.install(self, world.config.minimum_players)
-
-	# [b]Started here and not in the world's own `_ready`.[/b] `start()` builds the map and puts
-	# everybody on it, and a world that did that before the bridge existed would have built a
-	# map with nothing listening to `world_rebuilt` — one the server knows about and no client
-	# is ever told about. Invisible floors: a player stands on nothing and the server says they
-	# are fine.
-	var _delivered: int = await _add_delivered_maps(world)
-	var _rotation_again := world.load_rotation()
-
-	# The vote was built above, before these arrived; read without them, its list held only
-	# the practice map and never opened a ballot. mm_reload refreshes it the same way.
-	if vote != null:
-		vote.refresh_maps()
-
-	world.start()
-
-	log_info("the map is up", world.describe())
-	return DotResult.success(null)
-
-
-## The maps the SERVER names for this game, fetched and added to the catalogue. Returns how
-## many documents they held.
-##
-## [b]The server's list, not this game's.[/b] A map pack used to be a `server_dependencies`
-## entry in `game.yml`, which travels in this game's own pack — so a new map meant a release
-## of the game, and a server owner could not choose which maps to run. The owner names them
-## now in their deployment's map config (dot-server-deploy's `cfg/content.yml`, which fills
-## [member DotGameDescriptor.maps]); [DotGameContent] fetches each pack and hands back its
-## `maps/` directory. A server that still names one under `server_dependencies` keeps working,
-## because DotGameContent reads those too.
-##
-## [b]Still server-only.[/b] The server sends the map it is playing in MAP, so a client never
-## needs a map file and none of these is in a client's content sync. With nothing named, this
-## game plays its built-in map.
-##
-## [b]Called after EVERY catalogue load[/b], not only the first: `load_from` forgets everything
-## read before, and a reload that did not come back here dropped every delivered map — which
-## is what mg-wipeout and mg-deathrun did until the three were moved onto DotGameContent.
+## The maps the SERVER names (via [DotGameContent]) added to the catalogue; returns how many
+## documents. Server-only, and called after EVERY catalogue load, which forgets what it read.
 func _add_delivered_maps(world: MmGame) -> int:
 	if server == null or world.catalogue == null:
 		return 0
@@ -328,13 +273,8 @@ func _wire_identity() -> void:
 	hook_post("player_renamed", _on_profile)
 
 
-## What a session looks like: what dot-platform resolved for them, or the stock person.
-##
-## [b]Through the platform module's `player_for`, and never the hub by a key made here.[/b]
-## The hub keys a player by their scoped profile key, which only admission knows; a lookup
-## by `u<session>` finds nobody, every time, and falls through to stock — which reads as
-## "this player has no avatar" rather than as a wrong key. Duck-typed, because a server
-## without dot-platform is a configuration.
+## What a session looks like: dot-platform's `player_for`, never the hub by a key made here (it
+## keys by the scoped profile key only admission knows), or the stock person. Duck-typed.
 func _avatar_for(session_id: int) -> DotAvatar:
 	var session := server.session_by_userid(session_id) if server != null else null
 	var platform: Object = server.modules.get_module("platform") \
@@ -363,14 +303,9 @@ func _on_profile(event: DotEvent) -> void:
 	link.refresh_player(session_id, session.display_name, _avatar_for(session_id))
 
 
-## The numbers an operator is actually going to want to change, as cvars.
-##
-## [b]Live, and each one writes through to the configuration the world already reads.[/b] A
-## server owner finds their server's balance by moving one of them between rounds with people
-## watching; a JSON file and a restart is a balance nobody tunes.
-##
-## [b]What is NOT here is anything the round has already decided.[/b] `mm_players_per_murderer`
-## changes how many are drawn for the NEXT round; it does not make anybody a murderer now.
+## The numbers an operator is going to want to change, as cvars, each writing through to the
+## configuration the world already reads. Nothing here changes the round in progress:
+## `mm_players_per_murderer` applies to the NEXT draw.
 func _add_tunables(world: MmGame) -> void:
 	var config := world.config
 

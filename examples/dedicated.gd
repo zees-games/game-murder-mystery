@@ -933,9 +933,8 @@ func _test_loading_cover() -> void:
 	var userid: int = seat[0].userid
 	var key := StringName("u%d" % userid)
 	var victim: MmPlayer = game.players[key]
-	# A seat that joins mid-round is benched: watching, and invulnerable. Every refusal below
-	# would then pass for the wrong reason, and the slay would be refused as the bench's, so
-	# the seat is put in the round first, as a lobby join would be.
+	# A seat joining mid-round is benched, so every refusal below would pass for the wrong
+	# reason: the seat is put in the round first, as a lobby join would be.
 	victim.watching = false
 	game._heal(victim)
 	_check(roster.is_loading(userid), "the server holds the seat as loading from its spawn", str(roster.describe()))

@@ -151,9 +151,35 @@ func _build() -> void:
 	_shout.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_shout.add_theme_color_override("font_color", Color(0.99, 0.86, 0.40))
 
-	# Bottom left: a disc in the role's colour with a letter on it, what you are, and what you
-	# are holding.
-	# Above the chat box, which also draws bottom-left.
+	_build_status()
+
+	watching_label = _label(20)
+	watching_label.name = "Watching"
+	watching_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	watching_label.offset_left = -520.0
+	watching_label.offset_right = 520.0
+	watching_label.offset_top = -140.0
+	watching_label.offset_bottom = -104.0
+	watching_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	watching_label.add_theme_color_override("font_color", Color(0.80, 0.90, 1.0))
+
+	# What the use key would do, under the crosshair while a door is in reach.
+	prompt = DotKeyPrompt.new()
+	prompt.name = "DoorPrompt"
+	prompt.font_size = 15
+	prompt.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	prompt.offset_left = -240.0
+	prompt.offset_right = 240.0
+	prompt.offset_top = 14.0
+	prompt.offset_bottom = 46.0
+	prompt.visible = false
+	_root.add_child(prompt)
+
+	_build_crosshair()
+
+
+func _build_status() -> void:
+	# Bottom left, above the chat box: a disc in the role's colour with a letter on it.
 	_disc = Panel.new()
 	_disc.name = "Disc"
 	_disc.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
@@ -212,28 +238,8 @@ func _build() -> void:
 	_meter_label.offset_top = -241.0
 	_meter_label.offset_bottom = -219.0
 
-	watching_label = _label(20)
-	watching_label.name = "Watching"
-	watching_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-	watching_label.offset_left = -520.0
-	watching_label.offset_right = 520.0
-	watching_label.offset_top = -140.0
-	watching_label.offset_bottom = -104.0
-	watching_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	watching_label.add_theme_color_override("font_color", Color(0.80, 0.90, 1.0))
 
-	# What the use key would do, under the crosshair while a door is in reach.
-	prompt = DotKeyPrompt.new()
-	prompt.name = "DoorPrompt"
-	prompt.font_size = 15
-	prompt.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	prompt.offset_left = -240.0
-	prompt.offset_right = 240.0
-	prompt.offset_top = 14.0
-	prompt.offset_bottom = 46.0
-	prompt.visible = false
-	_root.add_child(prompt)
-
+func _build_crosshair() -> void:
 	# A dot, as before: no arms, no outline, no spread.
 	_crosshair = DotCrosshair.new()
 	_crosshair.name = "Crosshair"

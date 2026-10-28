@@ -15,27 +15,11 @@ const MmController := preload("mm_controller.gd")
 const MmBots := preload("mm_bots.gd")
 const MmWeapons := preload("mm_weapons.gd")
 
-## The simulation. Headless, authoritative, and the only thing that decides anything.
+## The simulation: headless, authoritative, and the only thing that decides anything.
 ##
-## [b]A round is a grace and then the hunt.[/b] At the top of each round the server draws one or
-## more murderers and hands one or more bystanders the gun; everybody else is unarmed. For
-## [member MmConfig.grace_seconds] nobody can hurt anybody, and everybody scatters. Then the
-## murderer may draw their weapon and stab whoever is in reach, and whoever holds the gun may
-## shoot. A shot that misses drops the gun where the shooter stands, for another bystander to
-## pick up. The murderers win when nobody else is left; everybody else wins when the murderers
-## are dead or the clock runs out. Near the end the murderer starts to show blood.
-##
-## [b]Roles are secret.[/b] [member sides] holds the truth and lives on the server; dot-match
-## sees everybody as one team on the wire, and a client is told only its own role. See
-## docs/design.md "Roles are secret" and net/mm_net_bridge.gd.
-##
-## [b]What it owns and what it borrows.[/b] The round and the scoreboard are dot-match's
-## (decided through [MmRules]); the draw is dot-team's [DotTeamRotation]; health is
-## dot-combat's. The map, the weapons and the rules of this game are its own.
-##
-## [b]Every hit is measured by the server between bodies it simulates.[/b] A client cannot say
-## "I stabbed them", only press the attack key; the server looks at where it has everybody on
-## that tick (see [method _advance_weapons]).
+## A round is a grace and then the hunt; the server draws the murderers and the gunners. Roles are
+## secret: [member sides] lives on the server and a client is told only its own (docs/design.md).
+## The round is dot-match's, the draw dot-team's, health dot-combat's; every hit is measured here.
 
 const CHANNEL := "mm.game"
 
@@ -95,11 +79,9 @@ const DIED_SHOT := &"shot"
 
 ## How high a standing body's capsule is hit by a shot, from the feet.
 
-## Lag compensation. How far back a stab or a shot looks at the other bodies, in ms, for a
-## shooter's latency (`mm_max_unlag_ms`; 0 judges everything on the present). A command carries
-## how far behind its tick the client drew everybody ([member MmPlayer.view_lag]); the server
-## puts the others where they were then, capped here so a client claiming more still only gets
-## this. The shooter is never moved. Bots and local players send -1 and see the present.
+## Lag compensation: how far back (ms, `mm_max_unlag_ms`, 0 = present) a stab or shot looks at the
+## other bodies, from [member MmPlayer.view_lag] capped here. The shooter is never moved; bots
+## and local players send -1.
 var max_unlag_ms: float = 1000.0
 
 ## Ticks of position kept per body: two seconds at 64.
@@ -178,10 +160,8 @@ var toy_rules: DotPropToyRules = DotPropToyRules.new()
 const PERSON_MASS := 70.0
 var effects: DotFxManager = null
 var spectate: MmSpectate = null
-## Who a spectator may watch and whether they may fly a free camera: dot-spectate's
-## `mp_forcecamera`, `mp_freeroam` and `mp_freeroam_speed`. One object for the life of the
-## game, shared with [MmSpectate]'s manager, so a cvar change reaches the rules in use. Bound
-## by the module (REPLICATED) and followed by a client, which is the end that flies the camera.
+## dot-spectate's `mp_forcecamera`, `mp_freeroam` and `mp_freeroam_speed`: one object shared with
+## [MmSpectate]'s manager, bound by the module (REPLICATED) and followed by a client.
 var spectate_rules: DotSpectatorRules = DotSpectatorRules.new()
 var progress: MmProgress = null
 
@@ -325,12 +305,9 @@ func _ready() -> void:
 	DotLog.info(CHANNEL, "world ready", config.describe())
 
 
-## The `<pack>/<subdir>` directories of the map packs a host running this game with no server
-## has mounted for it: the client shell's Solo play, which fetches the packs a server owner
-## would name (dot-server-deploy's `client/solo.json`) because a tab has no server to name
-## them. Read the way the module reads its server's ([DotGameContent]). Empty everywhere else:
-## a server, a suite, a run from the repository. Looked up by name and duck-typed, because a
-## delivered game may not name a host's class.
+## The `<pack>/<subdir>` map directories a host running this game without a server has mounted
+## (the client shell's Solo play), read as the module reads its server's. Empty elsewhere;
+## duck-typed, because a delivered game may not name a host's class.
 static func solo_map_dirs(subdir: String) -> PackedStringArray:
 	var host: Object = DotRegistry.get_service(SOLO_SERVICE)
 	if host == null or not host.has_method(&"map_dirs"):
@@ -379,14 +356,8 @@ func apply_pass_through() -> void:
 
 ## Three layers: the building, the people, and the furniture.
 ##
-## [b]People do not collide with people in the layout.[/b] Two players shoving is a race
-## decided by who walked into whom, drawn in the past on every client; somebody who could be
-## pinned in a corner by a murderer's body, or block a doorway with their own, would be
-## playing a different game. So `mp_solidplayers` is 0 here by default (`_init`); the first
-## play test's stand-in walking into the camera is handled by the camera fade, which hides a
-## body at the lens. An owner who sets 1 gets each player's motor mask and hull; a touch is a
-## distance the server measures (`tag_range` 1.2 m, past the 0.7 m two bodies keep), so
-## tagging works either way.
+## `mp_solidplayers` is 0 by default (`_init`): a murderer's body pinning somebody in a corner
+## would be a different game, and a touch is a server-measured distance (`tag_range`) either way.
 func _build_physics() -> void:
 	physics = DotPhysicsLayout.custom(&"murder", [&"world", &"player", &"prop", &"toy", &"footprint"])
 
@@ -617,12 +588,9 @@ static func make_fall_rules() -> DotFallDamageRules:
 	return rules
 
 
-## Puts somebody in the world. [param wanted_side] is ignored but for a suite's 
-## [constant MURDERERS], which makes them a murderer straight away.
-##
-## [b]Somebody who joins during the hunt watches until the next round.[/b] A newcomer with no
-## role would be a free body for the murderer, and one handed a role would change a round that
-## is half over. During the grace they are a bystander.
+## Puts somebody in the world. [param wanted_side] is ignored but for a suite's
+## [constant MURDERERS]. Somebody who joins during the hunt watches until the next round: a
+## newcomer with no role would be a free body for the murderer.
 func add_player(
 	player_id: StringName,
 	display_name: String,
@@ -943,10 +911,8 @@ var forced_roles: Dictionary = {}
 
 
 ## Who is the murderer and who has the gun this round, and everybody's shirt.
-##
-## The murderers by [DotTeamRotation] over a history, so the same person is not drawn three
-## rounds running; the gunners at random from the rest. [member forced_roles] overrides the
-## draw for the people it names (a suite, an operator's test), and the rest are drawn round it.
+## Murderers by [DotTeamRotation] over a history, gunners at random from the rest;
+## [member forced_roles] overrides the draw for the people it names.
 func _draw_roles() -> void:
 	var keys: Array[StringName] = []
 
@@ -1104,10 +1070,9 @@ var map_rotation_defs: DotMapCatalogue = null
 var map_rotation: DotMapRotation = null
 
 
-## Reads maps.yml (the game's shipped `res://maps.yml` under the server's
-## [member MmConfig.map_rotation_file], looked for in the `--config` directory too) and
-## applies it. A file that is present and unreadable is an ERROR and changes nothing: rotating
-## every map is a better failure than rotating none.
+## Reads maps.yml (the shipped `res://maps.yml` under [member MmConfig.map_rotation_file], also
+## looked for in the `--config` directory) and applies it. A present but unreadable file is an
+## ERROR and changes nothing: rotating every map beats rotating none.
 func load_rotation() -> DotResult:
 	var stem := config.map_rotation_file if config != null else ""
 	var dir := DotMapRotationFile.config_dir_arg()
@@ -1205,10 +1170,8 @@ func rotation_commands() -> Dictionary:
 	return rotation_file.commands() if rotation_file != null else {}
 
 
-## The next map, built.
-## Every map this server plays, as the map menu (M) lists them: `{id, name, detail, current}`,
-## the blurb under the name. Solo the client's list, online the server's (the module hands it
-## to dot-vote's map menu), so both say the same.
+## Every map this server plays, as the map menu (M) lists them: `{id, name, detail, current}`.
+## Solo the client's list, online the server's, so both say the same.
 func map_rows() -> Array:
 	var out: Array = []
 	if catalogue == null:
@@ -1438,9 +1401,7 @@ func _advance_blood() -> void:
 
 
 ## Everybody's hands, this tick: the holster key, the attack key, and the guns on the floor.
-##
-## [b]Edges, made here from the held state[/b], as the use key's are: the keys ride in every
-## input packet, so a stab is never a round trip behind the key that made it.
+## Edges are made here from the held state, because the keys ride in every input packet.
 func _advance_weapons() -> void:
 	if not authoritative:
 		return
@@ -1753,11 +1714,8 @@ func _advance_holds() -> void:
 			var _let_go := player.controller.remove_modifier(MmController.HOLD)
 
 
-## Everybody's hand on the doors: a use is the use key going down in front of one, and then
-## every door is posed for this tick, before anybody moves against it.
-##
-## [b]An edge, made here from the held state,[/b] as mg-deathrun makes its button presses: the
-## key rides in every input packet, so a use is never a round trip behind the key that made it.
+## Everybody's hand on the doors: a use is the use key going down in front of one, then every
+## door is posed for this tick. The edge is made here from the held state, as for the weapons.
 func _advance_doors() -> void:
 	if map == null or map.doors == null or map.doors.count() == 0:
 		return
