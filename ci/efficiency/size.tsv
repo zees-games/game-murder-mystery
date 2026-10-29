@@ -16,7 +16,7 @@ game/mm_bots.gd	1797
 game/mm_bots.gd::_walk_to	149
 game/mm_catalogue.gd::practice	109
 game/mm_client.gd	1385
-game/mm_game.gd	1606
+game/mm_game.gd	1451
 game/mm_game.gd::_draw_roles	93
 game/mm_map_doc.gd::validate	168
 game/mm_module.gd	1039

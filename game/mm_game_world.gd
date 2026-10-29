@@ -37,10 +37,8 @@ func apply_pass_through() -> void:
 	body_rules.apply_exceptions(entries)
 
 
-## Three layers: the building, the people, and the furniture.
-##
-## `mp_solidplayers` is 0 by default (`_init`): a murderer's body pinning somebody in a corner
-## would be a different game, and a touch is a server-measured distance (`tag_range`) either way.
+## Three layers: the building, the people, and the furniture. `mp_solidplayers` is 0 by default
+## (`_init`): a murderer's body pinning somebody in a corner would be a different game.
 func _build_physics() -> void:
 	physics = DotPhysicsLayout.custom(&"murder", [&"world", &"player", &"prop", &"toy", &"footprint"])
 
