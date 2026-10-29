@@ -35,7 +35,7 @@ signal hello_received(player_id: int)
 signal roster_changed(player_id: int)
 
 ## A round began or ended. [param why] is the server's sentence about who won.
-signal round_changed(number: int, began: bool, winner: int, why: String)
+signal round_changed(number: int, began: bool, winner: int, why: String, killer: int)
 
 ## The round changed half. Client side.
 signal phase_received(phase: int)

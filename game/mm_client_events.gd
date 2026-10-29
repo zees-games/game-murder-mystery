@@ -107,8 +107,10 @@ func _on_map(map_id: StringName) -> void:
 			" — %s" % blurb if blurb != "" else ""], Color(0.80, 0.90, 1.0))
 
 
-func _on_round(number: int, began: bool, winner: int, why: String = "") -> void:
+func _on_round(number: int, began: bool, winner: int, why: String = "", killer: int = 0) -> void:
 	if began:
+		if killcam != null and killcam.is_playing():
+			killcam.skip()
 		hud.shout("ROUND %d" % number, 2.0)
 		return
 
@@ -124,6 +126,45 @@ func _on_round(number: int, began: bool, winner: int, why: String = "") -> void:
 
 	if chat != null and why != "":
 		chat.say_locally(why, Color(0.98, 0.86, 0.40))
+
+	_play_killcam(killer)
+
+
+## The round's last kill again, from the drawn frames. [param killer] is known only now, after
+## the reveal; during the round the buffer holds the kill with no killer.
+func _play_killcam(killer: int) -> void:
+	if killcam == null or killer == 0 or game.config.killcam_seconds <= 0.0:
+		return
+	var kill := killcam.buffer.last_event(&"kill")
+	if kill.is_empty():
+		return
+	(kill["data"] as Dictionary)["killer"] = killer
+	var _playing := killcam.match_ended()
+
+
+## The killcam's host, off unless dot-replay has it (API 6).
+func _build_killcam() -> void:
+	if DotAddonApi.build_level("dot_replay") < 6:
+		return
+	killcam = DotKillcamHost.new()
+	MmKillcamBodies.configure(killcam)
+	killcam.name = "FinalKillcam"
+	killcam.players_fn = func() -> Array: return game.players.values() if game != null else []
+	killcam.player_for_fn = func(id: int) -> Variant: return _player_of(id)
+	killcam.id_of_fn = func(p: MmPlayer) -> int: return _session(p.player_id)
+	killcam.no_id = 0
+	killcam.seconds_fn = func() -> float: return game.config.killcam_seconds if game != null else 0.0
+	add_child(killcam)
+
+
+## Records the frame, or draws the replay over it.
+func _killcam_frame() -> void:
+	if killcam == null:
+		return
+	killcam.hide_while_playing = [hud, _view_model]
+	if game.physics != null:
+		killcam.world_mask = game.physics.layer_mask(&"world") | game.physics.layer_mask(&"prop")
+	killcam.frame()
 
 
 ## [param who]'s body falls the way the server picked ([member MmPlayer.death]), copied from the
@@ -144,7 +185,9 @@ func _fall(who: MmPlayer) -> void:
 		held.visible = false
 
 
-func _on_death(session_id: int, _by: int, why: StringName) -> void:
+func _on_death(session_id: int, by: int, why: StringName) -> void:
+	if killcam != null and why != MmGame.DIED_FELL:
+		killcam.note_kill(by, session_id, String(why))
 	var who := _player_of(session_id)
 	_fall(who)
 

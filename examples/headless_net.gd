@@ -17,7 +17,7 @@ const WorkbenchSection := preload("headless_net_workbench.gd")
 ## Sections and checks are both counted; mg-smash-copter's notes say why the second matters.
 
 const SECTIONS := 17
-const CHECKS := 111
+const CHECKS := 114
 
 
 func _ready() -> void:

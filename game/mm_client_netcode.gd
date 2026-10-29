@@ -10,7 +10,7 @@ func _hear_the_world() -> void:
 	game.world_rebuilt.connect(func() -> void: _on_map(game.map.id()))
 	game.phase_changed.connect(_on_phase)
 	game.round_began.connect(func(n: int, _map: StringName) -> void: _on_round(n, true, 0))
-	game.round_over.connect(func(n: int, winner: int, why: String) -> void: _on_round(n, false, winner, why))
+	game.round_over.connect(func(n: int, winner: int, why: String) -> void: _on_round(n, false, winner, why, _session(game.last_killer) if game.last_killer != &"" else 0))
 	game.player_died.connect(func(id: StringName, by: StringName, why: StringName) -> void:
 		_on_death(_session(id), _session(by) if by != &"" else 0, why))
 	game.role_drawn.connect(func(id: StringName, side: int, gun: bool) -> void:

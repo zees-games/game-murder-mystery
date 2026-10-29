@@ -24,6 +24,9 @@ func _test_the_codec() -> void:
 	_check(bool(round_info["ok"]) and int(round_info["winner"]) == MmGame.MURDERERS and not bool(round_info["began"])
 		and str(round_info["why"]) == "time; Ada was the murderer", "ROUND carries the winning side and the sentence")
 
+	var killed := MmEvents.read_round(DotNetReader.new(MmEvents.write_round(3, false, 1, "x", 7)))
+	_check(int(killed["killer"]) == 7 and int(round_info["killer"]) == 0, "ROUND carries the last killer only when given one (0 otherwise)")
+
 	var role := MmEvents.read_role(DotNetReader.new(MmEvents.write_role(MmGame.MURDERERS, false, &"cleaver")))
 	var gunner := MmEvents.read_role(DotNetReader.new(MmEvents.write_role(MmGame.BYSTANDERS, true, &"knife")))
 	_check(bool(role["ok"]) and int(role["side"]) == MmGame.MURDERERS and not bool(role["gun"]) and role["weapon_id"] == &"cleaver"
@@ -410,6 +413,7 @@ func _test_the_round_ends() -> void:
 	_stand_in.place_at(KITCHEN_B, 0.0)
 	await _steps(SERVER_TICK_RATE)
 	_look(_stand_in, KITCHEN_A + Vector3(0.0, 1.2, 0.0))
+	_server_game.config.killcam_seconds = 3.0
 	var fired := _server_game.attack_now(_stand_in.player_id)
 	await _steps(8)
 	var shots: Array = _heard["shots"]
@@ -421,6 +425,11 @@ func _test_the_round_ends() -> void:
 		"the bystanders won, and the client is told", str(_heard.get("round_over")))
 	_check(_heard.has("round_over") and str(_heard["round_over"][2]).contains("Ada was the murderer"),
 		"with the server's own sentence, which names the murderer at last", str(_heard.get("round_over")))
+	# The killer is named once, at round end and only with the killcam on; DEATH never names it.
+	_check(_heard.has("round_over") and int(_heard["round_over"][3]) == _server_bridge.session_of(_stand_in.player_id),
+		"the round's end names the last killer for the killcam", str(_heard.get("round_over")))
+	_server_game.config.killcam_seconds = 0.0
+	_check(_server_bridge.last_killer_session() == 0, "with the killcam off, no killer is ever sent")
 	_finished()
 
 

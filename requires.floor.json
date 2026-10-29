@@ -1,6 +1,7 @@
 {
   "format": 1,
   "addons": {
+    "dot_replay": 6,
     "dot_ui": 13
   }
 }

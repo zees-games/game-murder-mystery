@@ -42,6 +42,7 @@ func _ready() -> void:
 	MmPlayer.register_actions(_sampler)
 
 	_build_hud()
+	_build_killcam()
 	_build_chat()
 	_build_audio()
 	_build_settings()

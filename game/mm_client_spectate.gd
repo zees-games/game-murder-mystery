@@ -98,6 +98,7 @@ func _process(delta: float) -> void:
 		audio.ambient.follow_roof(delta, camera.global_position, camera.get_world_3d().direct_space_state, game.physics.mask_of([&"world"]))
 	_present_hide()
 	_present_guns()
+	_killcam_frame()
 
 	if camera == null or player == null:
 		return

@@ -200,7 +200,14 @@ func _on_round_began(number: int, _layout_id: StringName) -> void:
 
 
 func _on_round_over(number: int, winner: int, why: String) -> void:
-	_broadcast(MmEvents.Kind.ROUND, MmEvents.write_round(number, false, winner, why))
+	_broadcast(MmEvents.Kind.ROUND, MmEvents.write_round(number, false, winner, why, last_killer_session()))
+
+
+## The session of the round's last killer, or 0. Sent only at round end and only with the killcam on.
+func last_killer_session() -> int:
+	if game.config.killcam_seconds <= 0.0 or game.last_killer == &"":
+		return 0
+	return session_of(game.last_killer)
 
 
 func _on_phase_changed(phase: int) -> void:

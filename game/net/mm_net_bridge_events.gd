@@ -98,7 +98,8 @@ func _apply_round(reader: DotNetReader) -> void:
 		int(round_info["round"]),
 		bool(round_info["began"]),
 		int(round_info["winner"]),
-		str(round_info["why"])
+		str(round_info["why"]),
+		int(round_info["killer"])
 	)
 
 

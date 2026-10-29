@@ -233,6 +233,9 @@ var _next_drop_id: int = 1
 ## Who the murderers were, by display name, once the round is decided. Empty while it runs.
 var revealed: PackedStringArray = PackedStringArray()
 
+## The last player killed by another, for the final killcam; reset each round.
+var last_killer: StringName = &""
+
 var _tick: int = 0
 var _round_seed: int = 0
 var _rounds_on_map: int = 0

@@ -144,9 +144,9 @@ func _listen_to_server() -> void:
 		(_heard["guns"] as Array).append([drop_id, down, at]))
 	_client_bridge.death_received.connect(func(who: int, by: int, why: StringName) -> void:
 		(_heard["deaths"] as Array).append([who, by, why]))
-	_client_bridge.round_changed.connect(func(n: int, began: bool, winner: int, why: String) -> void:
+	_client_bridge.round_changed.connect(func(n: int, began: bool, winner: int, why: String, killer: int) -> void:
 		if not began:
-			_heard["round_over"] = [n, winner, why])
+			_heard["round_over"] = [n, winner, why, killer])
 
 
 func _look(player: MmPlayer, target: Vector3) -> void:

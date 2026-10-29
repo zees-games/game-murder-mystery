@@ -6,6 +6,7 @@ const MmAudio := preload("mm_audio.gd")
 const MmBindings := preload("mm_bindings.gd")
 const MmBlood := preload("mm_blood.gd")
 const MmFigure := preload("mm_figure.gd")
+const MmKillcamBodies := preload("mm_killcam_bodies.gd")
 const MmSettings := preload("mm_settings.gd")
 const MmServices := preload("mm_services.gd")
 const MmNetBridge := preload("net/mm_net_bridge.gd")
@@ -43,6 +44,9 @@ var gate: DotLoadGate = null
 ## pointer and the input block. See [DotGameClient].
 var platform: DotGameClient = null
 var hud: MmHud = null
+
+## The final killcam ([DotKillcamHost]); null without dot-replay API 6.
+var killcam: DotKillcamHost = null
 var board: DotMenuScoreboard = null
 var chat: DotGameChatClient = null
 var audio: MmAudio = null

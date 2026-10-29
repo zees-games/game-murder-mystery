@@ -363,6 +363,7 @@ func _on_round_started(number: int) -> void:
 	_winner = 0
 	_winner_name = ""
 	revealed = PackedStringArray()
+	last_killer = &""
 	play_elapsed = 0.0
 	bots.reset()
 	_to_respawn.clear()
@@ -1357,6 +1358,7 @@ func _on_player_died(player: MmPlayer, damage: DotDamage) -> void:
 		var killer: MmPlayer = players.get(by) if by != &"" else null
 
 		if killer != null and killer != player:
+			last_killer = by
 			killer.kills += 1
 			if team_of(by) == MURDERERS:
 				killer.points += config.kill_points

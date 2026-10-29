@@ -210,6 +210,9 @@ func spawn_rules() -> DotSpawnRules:
 @export_range(0.0, 10.0, 0.1) var death_cam_seconds: float = 1.5
 @export_range(0.0, 10.0, 0.1) var freeze_cam_seconds: float = 1.5
 
+## Seconds of the final killcam replayed after the reveal; 0 is off. On, the last killer is sent at round end.
+@export_range(0.0, 10.0, 0.1) var killcam_seconds: float = 0.0
+
 # --- Progress --------------------------------------------------------------
 
 @export_group("Progress")

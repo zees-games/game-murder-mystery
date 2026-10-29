@@ -7,6 +7,8 @@
 # death_cam_seconds: 1.5
 #  [0.0..10.0]
 # freeze_cam_seconds: 1.5
+# Seconds of the final killcam replayed after the reveal; 0 is off. On, the last killer is sent at round end. [0.0..10.0]
+# killcam_seconds: 0.0
 
 # --- Progress
 # keep_progress: true

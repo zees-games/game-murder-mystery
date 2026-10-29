@@ -325,12 +325,13 @@ static func read_clock(r: DotNetReader) -> Dictionary:
 
 ## A round began or ended. [param winner] is a side, or 0 for a draw, and [param why] the
 ## sentence the server decided it with, which is what the HUD prints.
-static func write_round(number: int, began: bool, winner: int, why: String = "") -> PackedByteArray:
+static func write_round(number: int, began: bool, winner: int, why: String = "", killer: int = 0) -> PackedByteArray:
 	var w := _w()
 	w.write_varint(number)
 	w.write_bool(began)
 	w.write_varint(maxi(winner, 0))
 	w.write_string(why, TEXT_BYTES)
+	w.write_varint(maxi(killer, 0))
 	return w.to_bytes()
 
 
@@ -339,7 +340,8 @@ static func read_round(r: DotNetReader) -> Dictionary:
 	var began := r.read_bool()
 	var winner := r.read_varint()
 	var why := r.read_string(TEXT_BYTES)
-	return {"round": number, "began": began, "winner": winner, "why": why, "ok": r.ok()}
+	var killer := r.read_varint()
+	return {"round": number, "began": began, "winner": winner, "why": why, "killer": killer, "ok": r.ok()}
 
 
 static func write_phase(phase: int) -> PackedByteArray:
