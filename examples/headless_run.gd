@@ -26,9 +26,9 @@ const MmWeapons := preload("../game/mm_weapons.gd")
 ## ([method MmCatalogue.practice]): the wall between the rooms at x 0 with its door at
 ## z -1..0.8, the kitchen east of it, the living room west, the garden past x 10.
 
-const SECTIONS := 27
+const SECTIONS := 28
 
-const CHECKS := 191
+const CHECKS := 192
 
 ## The first chair round the kitchen table in the practice house: where it stands.
 const CHAIR_AT := Vector3(3.6, 0.0, 1.2)
@@ -82,6 +82,7 @@ func _run() -> void:
 	await _test_the_map_menu()
 	await _test_gore()
 	_test_weapons_table()
+	await _test_figure_game_time()
 
 	for world in _worlds.duplicate():
 		await _dispose(world)
@@ -1309,6 +1310,32 @@ func _test_fall_damage() -> void:
 	_check(hurt["off"] == 0.0, "cvar off: a 14 m drop does not hurt", "lost %.1f" % hurt["off"])
 	_finished()
 
+
+
+## A figure stepped under a slowed time scale advances by game time, not by the wall clock.
+func _test_figure_game_time() -> void:
+	_section("a figure's clip advances by game time under slow motion")
+	var figure = (load("res://game/mm_figure.gd") as GDScript).new()
+	add_child(figure)
+	figure.build(1.8, "a", Color.WHITE)
+	var anim: AnimationPlayer = figure.person.find_children("*", "AnimationPlayer", true, false)[0]
+	var old := Engine.time_scale
+	Engine.time_scale = 0.05
+	figure.pose(Vector3.ZERO, 0.0, 3.0)
+	await get_tree().process_frame
+	figure.pose(Vector3.ZERO, 0.0, 3.0)
+	var from := anim.current_animation_position
+	var wall := Time.get_ticks_usec()
+	for i in 6:
+		await get_tree().process_frame
+		figure.pose(Vector3.ZERO, 0.0, 3.0)
+	var wall_s := (Time.get_ticks_usec() - wall) / 1e6
+	var moved := absf(anim.current_animation_position - from)
+	Engine.time_scale = old
+	figure.queue_free()
+	_check(moved > 0.0 and moved < wall_s * 0.5,
+		"at 0.05x time the clip moves a fraction of the wall time", "clip %.4f s over %.4f s wall" % [moved, wall_s])
+	_finished()
 
 
 func _section(name: String) -> void:

@@ -44,9 +44,6 @@ var clip: StringName = &""
 
 ## The person, under this node.
 var person: DotHumanoidFigure = null
-
-var _posed_at_usec: int = -1
-
 ## What the hand shows now (an MmPlayer ARMED_ value) and the weapon id, and the node drawn.
 var armed: int = 0
 var weapon_id: StringName = &""
@@ -77,7 +74,6 @@ func build(height: float, atlas_path: String, colour: Color) -> void:
 	atlas = atlas_path
 	team_colour = colour
 	clip = &""
-	_posed_at_usec = -1
 	var look := DotHumanoidLook.from_letter(atlas_path)
 	if look == null:
 		DotLog.debug(CHANNEL, "no look for the atlas; stock look used", {"atlas": atlas_path})
@@ -188,11 +184,8 @@ func pose(at: Vector3, yaw_radians: float, speed: float) -> void:
 	rotation = Vector3(0.0, yaw_radians, 0.0)
 	if person == null:
 		return
-	var now := Time.get_ticks_usec()
-	# A figure that was hidden for a minute is not a minute behind: clamped.
-	var delta := 0.0 if _posed_at_usec < 0 else clampf((now - _posed_at_usec) / 1e6, 0.0, 0.1)
-	_posed_at_usec = now
-	person.animate(speed, delta)
+	# Game time, as the body moves: a wall-clock step skated the feet (slow motion, fixed-rate frames).
+	person.animate(speed, person.frame_delta())
 	clip = person.clip
 
 
