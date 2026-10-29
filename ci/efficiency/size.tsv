@@ -17,9 +17,5 @@ game/mm_client.gd	1385
 game/mm_game.gd	1451
 game/mm_game.gd::_draw_roles	93
 game/mm_map_doc.gd::validate	168
-game/mm_module.gd	1039
-game/mm_module.gd::_add_tunables	123
-game/mm_module.gd::_build_vote	120
-game/mm_module.gd::_game_load	82
 tools/measure_props.gd::_initialize	128
 tools/shot.gd::_run	197
