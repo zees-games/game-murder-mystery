@@ -8,6 +8,9 @@ const MmBotChat := preload("mm_bot_chat.gd")
 
 const CHANNEL := "mm.bots"
 
+var _smoke := DotBotWorld.new()
+var _blind: Dictionary = {}
+
 
 const LOUD_SPRINT := 0.45
 const LOUD_RUN := 0.28
@@ -320,6 +323,25 @@ func _finish_annotation(doc: Dictionary) -> DotNpcAiNavAnnotations:
 
 func _los(a: Vector3, b: Vector3) -> bool:
 	return bool(game.call("_clear_between", a, b, true))
+
+
+## Sight (not walking) is refused through a smoke sphere.
+func _sight_los(a: Vector3, b: Vector3) -> bool:
+	return _smoke.line_of_sight(a, b) and _los(a, b)
+
+
+## Smoke: nobody sees through the sphere until [param seconds] pass.
+func add_smoke(center: Vector3, radius: float, seconds: float) -> int:
+	return _smoke.add_sight_blocker(center, radius, now() + seconds)
+
+
+## A flash: this stand-in sees and targets nothing for [param seconds].
+func blind_for(player_id: StringName, seconds: float) -> void:
+	_blind[player_id] = maxf(float(_blind.get(player_id, -INF)), now() + seconds)
+
+
+func is_blind(player_id: StringName) -> bool:
+	return now() < float(_blind.get(player_id, -INF))
 
 
 func _state_of(player: MmPlayer) -> Dictionary:

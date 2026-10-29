@@ -30,8 +30,8 @@ const MAX_SPREAD := 12.0
 ## The longest any stand-in may stay stuck, in seconds.
 const MAX_STUCK := 12.0
 
-const SECTIONS := 1
-const CHECKS := 7
+const SECTIONS := 2
+const CHECKS := 14
 
 var _entered := 0
 var _completed := 0
@@ -114,7 +114,58 @@ func _run() -> void:
 	_check(stuck <= MAX_STUCK, "nobody stays stuck for long", "%.1f s, %s" % [stuck, stuck_where])
 	_completed += 1
 
+	await _test_grenades()
 	_report_sections(_entered, _completed, SECTIONS, CHECKS)
+
+
+func _test_grenades() -> void:
+	_section("a stand-in does not see through smoke, and is blind while flashed")
+	var config := MmConfig.new()
+	config.minimum_players = 0
+	config.map_ids = PackedStringArray(["mm_practice"])
+	var game := MmGame.new()
+	game.config = config
+	game.tick_rate = TICK_RATE
+	game.authoritative = true
+	game.register_service = false
+	add_child(game)
+	game.set_physics_process(false)
+	await get_tree().physics_frame
+	var me := game.add_player(&"u1", "Me")
+	var other := game.add_player(&"u2", "Other")
+	game.start()
+	for _i in range(4):
+		game.simulate(TICK)
+		await get_tree().physics_frame
+
+	var bots: Object = game.bots
+	var spot: Vector3 = me.controller.state.position
+	var face := func() -> void:
+		me.controller.state.position = spot
+		other.controller.state.position = spot + Vector3(2.0, 0.0, 0.0)
+		me.controller.state.yaw = -90.0
+		me.controller.state.pitch = 0.0
+	face.call()
+	_check(bots._sees(me, other), "before any smoke it sees the other")
+	var mid: Vector3 = me.eye_position().lerp(other.eye_position(), 0.5)
+	var _id: int = bots.add_smoke(mid, 0.8, 5.0)
+	_check(not bots._sees(me, other), "with a cloud between them it does not")
+	for _i in range(6 * TICK_RATE):
+		game.simulate(TICK)
+	face.call()
+	_check(bots._sees(me, other), "when the cloud ends it does again")
+	bots.blind_for(me.player_id, 2.0)
+	_check(not bots._sees(me, other), "a flashed stand-in sees nothing")
+	_check(bots.is_blind(me.player_id), "and is blind")
+	for _i in range(3 * TICK_RATE):
+		game.simulate(TICK)
+	face.call()
+	_check(not bots.is_blind(me.player_id), "the flash wears off")
+	_check(bots._sees(me, other), "and it sees again")
+	_completed += 1
+	remove_child(game)
+	game.free()
+	await get_tree().process_frame
 
 
 func _round(map_id: String, index: int, difficulty: String) -> Dictionary:

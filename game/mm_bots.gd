@@ -12,6 +12,8 @@ func reset() -> void:
 	_sounds.clear()
 	_deaths.clear()
 	chat.reset()
+	_smoke.sight_blockers.clear()
+	_blind.clear()
 	doors_shut = 0
 	longest_stuck = 0.0
 
@@ -155,9 +157,12 @@ func _hear_steps(players: Dictionary) -> void:
 ## Whether [param player] sees [param other]'s head or chest with its own eyes and settings.
 ## Nobody here hides, so a person is a person whether they stand still or not.
 func _sees(player: MmPlayer, other: MmPlayer) -> bool:
+	if is_blind(player.player_id):
+		return false
+	_smoke.prune_sight_blockers(now())
 	var eye := player.eye_position()
 	var chest := other.controller.state.position + Vector3(0.0, 1.0, 0.0)
-	if eye.distance_to(chest) < FELT_WITHIN and _los(eye, chest):
+	if eye.distance_to(chest) < FELT_WITHIN and _sight_los(eye, chest):
 		return true
 	return _sees_point(player, other.eye_position()) or _sees_point(player, chest)
 
@@ -165,7 +170,7 @@ func _sees(player: MmPlayer, other: MmPlayer) -> bool:
 func _sees_point(player: MmPlayer, point: Vector3) -> bool:
 	var profile := settings().profile
 	var forward := DotBotAim.direction(player.controller.state.yaw, player.controller.state.pitch)
-	return DotBotHiding.sees(player.eye_position(), forward, profile.fov, profile.sight, point, _los)
+	return DotBotHiding.sees(player.eye_position(), forward, profile.fov, profile.sight, point, _sight_los)
 
 
 ## Suspicion from what this bot sees now: a drawn weapon is certain, blood is close to it.
@@ -389,7 +394,7 @@ func _guard(player: MmPlayer, command: DotFpsCommand, state: Dictionary, players
 	var target: MmPlayer = players.get(top[0]) if top[0] != &"" else null
 	var aim := _aim_of(player)
 
-	if target == null or float(top[1]) < SURE * 0.5:
+	if target == null or float(top[1]) < SURE * 0.5 or is_blind(player.player_id):
 		aim.release()
 		_loiter(player, command, state, players, true)
 		return
@@ -441,6 +446,11 @@ func _murder(player: MmPlayer, command: DotFpsCommand, state: Dictionary, player
 
 	if phase != 2:
 		# The grace: be one of the crowd.
+		_put_away(player, state)
+		_loiter(player, command, state, players, false)
+		return
+
+	if is_blind(player.player_id):
 		_put_away(player, state)
 		_loiter(player, command, state, players, false)
 		return
