@@ -9,6 +9,7 @@ const MmMapDoc := preload("../game/mm_map_doc.gd")
 const MmProgress := preload("../game/mm_progress.gd")
 const MmProps := preload("../game/mm_props.gd")
 const MmSettings := preload("../game/mm_settings.gd")
+const MmViewArms := preload("../game/mm_view_arms.gd")
 const MmWeapons := preload("../game/mm_weapons.gd")
 
 ## The simulation, headless: the prop catalogue and the map documents, the draw of the roles,
@@ -27,7 +28,7 @@ const MmWeapons := preload("../game/mm_weapons.gd")
 
 const SECTIONS := 27
 
-const CHECKS := 182
+const CHECKS := 186
 
 ## The first chair round the kitchen table in the practice house: where it stands.
 const CHAIR_AT := Vector3(3.6, 0.0, 1.2)
@@ -909,6 +910,13 @@ func _test_the_client() -> void:
 		await get_tree().process_frame
 	_check(self_p.weapon_drawn and self_p.armed() == MmPlayer.ARMED_WEAPON,
 		"Q, held through the offline client, draws the knife", "mouse_mode=%s input_blocked=%s" % [Input.mouse_mode, platform.is_input_blocked()])
+	for i in 8:
+		await get_tree().process_frame
+	var hands: MmViewArms = client.get("view_arms")
+	_check(not MmViewArms.available() or (hands != null and hands.holding()),
+		"and your arms are on it in first person", str(hands.holding() if hands != null else "no arms"))
+	_check(not MmViewArms.available() or (hands != null and hands.hand_error() >= 0.0 and hands.hand_error() < 0.05),
+		"the hand is on the knife's grip", str(hands.hand_error() if hands != null else -1))
 	_check(client.get("_view_model_of") == String(self_p.weapon_id), "and it is in the hand in first person", str(client.get("_view_model_of")))
 	Input.action_press(MmBindings.HOLSTER)
 	for i in 6:
@@ -917,11 +925,16 @@ func _test_the_client() -> void:
 	for i in 3:
 		await get_tree().process_frame
 	_check(not self_p.weapon_drawn, "and Q again puts it away")
+	_check(not MmViewArms.available() or not hands.holding(), "and the arms are gone with it")
 	world.forced_roles = {&"local": &"gunner"}
 	world._on_round_started(world.round_number + 1)
 	for i in 4:
 		await get_tree().process_frame
 	_check(hud.call("role_of") == &"gunner", "and a gunner's says that")
+	for i in 8:
+		await get_tree().process_frame
+	_check(not MmViewArms.available() or (hands.holding() and hands.hand_error() >= 0.0 and hands.hand_error() < 0.05),
+		"a gunner's arms hold the gun in two hands, both within 5 cm of the grips", str(hands.hand_error()))
 	var icon_script: Script = load("res://game/mm_weapon_icons.gd")
 	var icons: DotWeaponIconStyle = icon_script.get("shared")
 	var icon_rect: TextureRect = hud.get("weapon_icon")

@@ -16,6 +16,7 @@ const MmGame := preload("mm_game.gd")
 const MmHud := preload("mm_hud.gd")
 const MmPaths := preload("mm_paths.gd")
 const MmPlayer := preload("mm_player.gd")
+const MmViewArms := preload("mm_view_arms.gd")
 const MmWeapons := preload("mm_weapons.gd")
 const MmWeaponIcons := preload("mm_weapon_icons.gd")
 
@@ -105,6 +106,10 @@ var _view_model: Node3D = null
 
 
 var _view_model_of: String = ""
+
+
+## The arms holding [member _view_model]; null until something is first held.
+var view_arms: MmViewArms = null
 
 
 var _swing_at: float = -10.0

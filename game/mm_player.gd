@@ -389,6 +389,11 @@ func present_body(hidden: bool, at: Vector3, shirt_colour: Color) -> bool:
 var _attacks_drawn: int = 0
 
 
+## The drawn person's look, for the first-person arms (the figure is never built for your own eyes).
+func view_look() -> DotHumanoidLook:
+	return DotHumanoidLook.from_letter(_atlas())
+
+
 func _atlas() -> String:
 	var index := MmAvatars.skin_index(avatar)
 

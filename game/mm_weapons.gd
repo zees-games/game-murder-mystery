@@ -39,6 +39,18 @@ const GUN_PARTS := [
 ]
 
 
+## Where the first-person hands go, in the shape's space: `grip` the firing hand's palm and
+## `support` the other hand (absent: one hand). The gun is under the id "gun".
+const GRIPS := {
+	&"knife": {"grip": Vector3(0.0, 0.05, 0.0)},
+	&"cleaver": {"grip": Vector3(0.0, 0.05, 0.0)},
+	&"axe": {"grip": Vector3(0.0, 0.1, 0.0)},
+	&"bat": {"grip": Vector3(0.0, 0.1, 0.0)},
+	&"sword": {"grip": Vector3(0.0, 0.05, 0.0)},
+	&"gun": {"grip": Vector3(0.0, -0.07, 0.02), "support": Vector3(-0.02, -0.08, -0.03)},
+}
+
+
 static func ids() -> Array[StringName]:
 	var out: Array[StringName] = []
 	for id: StringName in TABLE:

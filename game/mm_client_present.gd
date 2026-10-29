@@ -18,6 +18,12 @@ func _present_hide() -> void:
 			var _heard := audio.on_countdown()
 
 
+## Where the weapon rests in front of the camera, low and right of the crosshair.
+const VIEW_REST := Vector3(0.08, -0.27, -0.42)
+## Drawn larger than the world model, or the fists hide it.
+const VIEW_SCALE := 1.7
+
+
 func _present_view_model() -> void:
 	if camera == null or player == null:
 		return
@@ -36,19 +42,37 @@ func _present_view_model() -> void:
 		if what != "":
 			var parts: Array = MmWeapons.GUN_PARTS if what == "gun" else MmWeapons.entry(StringName(what))["parts"]
 			_view_model = MmWeapons.build(parts, 1.0)
+			_view_model.scale = Vector3.ONE * VIEW_SCALE
 			_view_model.name = "ViewModel"
 			camera.add_child(_view_model)
-			_view_model.position = Vector3(0.22, -0.2, -0.42)
 			if what != "gun":
 				_view_model.rotation = Vector3(-PI / 2.6, 0.15, 0.0)
+		_hold_in_arms(_view_model, what)
+	var sway := Vector3.ZERO
+	if view_arms != null:
+		var v := player.controller.state.velocity
+		sway = view_arms.follow(camera.global_position, camera.global_rotation.y, Vector2(v.x, v.z).length(), get_process_delta_time())
 	if _view_model != null:
 		# A jab forward for a moment after each attack.
 		var since := float(Time.get_ticks_msec()) / 1000.0 - _swing_at
 		var jab := maxf(0.0, 1.0 - since / 0.18) * 0.18
-		_view_model.position.z = -0.42 - jab
+		_view_model.position = VIEW_REST + Vector3(0.0, 0.0, -jab) + sway
 		if player.attacks != _swings_seen:
 			_swings_seen = player.attacks
 			_swing_at = float(Time.get_ticks_msec()) / 1000.0
+
+
+## Puts the first-person arms on the weapon in hand, or away; a shell without them draws the bare weapon.
+func _hold_in_arms(weapon: Node3D, what: String) -> void:
+	if not MmViewArms.available():
+		return
+	if view_arms == null:
+		if weapon == null:
+			return
+		view_arms = MmViewArms.new()
+		view_arms.name = "ViewArmsYaw"
+		add_child(view_arms)
+	view_arms.hold(weapon, what, player.view_look(), MmPlayer.BODY_HEIGHT)
 
 
 func _present_guns() -> void:

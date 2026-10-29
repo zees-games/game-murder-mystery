@@ -115,6 +115,9 @@ func _run() -> void:
 	game._place_everybody()
 	if _view != "grace":
 		game._set_phase(MmGame.Phase.PLAY)
+	# _place_everybody empties every hand, so the gunner is handed the gun after it.
+	if mine == &"gunner":
+		local.has_gun = true
 
 	if _doors != "" and game.map.doors != null:
 		for index in range(game.map.doors.count()):
