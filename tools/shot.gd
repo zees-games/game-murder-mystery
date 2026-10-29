@@ -95,7 +95,7 @@ func _run() -> void:
 	# hears its role the way a round tells it.
 	var roles := {}
 	var mine := &"bystander"
-	if _view in ["murderer", "stab", "end"]:
+	if _view in ["murderer", "stab", "end", "killcam"]:
 		mine = &"murderer"
 	elif _view in ["gunner", "shot"]:
 		mine = &"gunner"
@@ -246,6 +246,18 @@ func _run() -> void:
 			game._kill(victim, null, MmGame.DIED_STABBED)
 			print("slew %s at %s: %s" % [victim.display_name, feet.snapped(Vector3.ONE * 0.1), victim.death.describe() if victim.death != null else "no fall"])
 			await _seconds_of(_seconds)
+		"killcam":
+			# The last kill replayed after the reveal: the round ends and the killcam plays.
+			game.config.killcam_seconds = 6.0
+			game.match_node.rules.intermission_sec = 30.0
+			await _seconds_of(1.5)
+			var prey := _somebody_else(game, local)
+			game._kill(prey, local, MmGame.DIED_STABBED)
+			await _seconds_of(1.0)
+			game._decide(MmGame.MURDERERS, "the last bystander fell")
+			await _seconds_of(maxf(_seconds, 1.0))
+			var kc: Variant = _client.get("killcam")
+			print("killcam playing: %s" % [kc != null and kc.is_playing()])
 		"end":
 			# The round decided: the panel that names the murderer at last.
 			game.config.intermission_seconds = 30.0

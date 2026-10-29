@@ -14,6 +14,7 @@
 #   tools/shot.sh --view=shot                                     # the gun fired: the tracer
 #   tools/shot.sh --view=blood --seconds=4                        # the murderer with 4 of 7 blood
 #   tools/shot.sh --view=end                                      # the round's end, the murderer named
+#   tools/shot.sh --view=killcam --seconds=2 --mm-killcam-seconds=6   # the final killcam, after the reveal
 #   tools/shot.sh --view=ragdoll --seconds=0.6                    # a stand-in slain, its body 0.6 s into the fall
 #   tools/shot.sh --view=spots --mm-map-ids=hs_manor              # where the stand-ins wander, from above
 #   tools/shot.sh --view=door                                     # at a door: the use-key prompt
