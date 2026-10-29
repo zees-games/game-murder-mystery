@@ -61,6 +61,7 @@ func build(doc: Dictionary) -> void:
 		})
 
 	pose_at(0)
+	DotLog.debug(CHANNEL, "doors built", {"doors": doors.size()})
 
 
 func clear() -> void:
@@ -150,6 +151,7 @@ func moving(index: int, tick: int) -> bool:
 func toggle(index: int, tick: int, user: Vector3) -> bool:
 	var open := not is_open(index)
 	apply(index, open, flips_for(index, user) if open else is_flipped(index), tick)
+	DotLog.debug(CHANNEL, "door used", {"door": index, "open": open})
 	return open
 
 

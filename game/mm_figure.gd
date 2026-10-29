@@ -80,6 +80,7 @@ func build(height: float, atlas_path: String, colour: Color) -> void:
 	_posed_at_usec = -1
 	var look := DotHumanoidLook.from_letter(atlas_path)
 	if look == null:
+		DotLog.debug(CHANNEL, "no look for the atlas; stock look used", {"atlas": atlas_path})
 		look = DotHumanoidLook.stock(hash(atlas_path))
 	if colour != Color.WHITE:
 		look = look.with_side(colour, TEAM_TINT)
