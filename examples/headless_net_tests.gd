@@ -53,10 +53,9 @@ func _test_the_codec() -> void:
 		and absf(float(clock["play_elapsed"]) - 40.25) < 0.1 and int(clock["alive"]) == 5
 		and int(clock["murderers"]) == 1 and bool(clock["playable"]), "CLOCK", str(clock))
 
-	# A kind goes out in a fixed field the writer masks without a word, so one past it aliases a
-	# smaller kind: game-zombie-zone sent HURT and AMMO as HELLO and MAP that way.
-	# The largest MAP a reader accepts survives the event's own body cap. At 4096 a 4100-byte map
-	# went out whole and was read back as no bytes, silently (hs_park with its toys).
+	# A kind goes out in a fixed masked field, so one past it aliases a smaller kind.
+	# The largest MAP a reader accepts must survive the event's own body cap: at 4096 a
+	# 4100-byte map was read back as no bytes, silently.
 	var biggest := PackedByteArray()
 	biggest.resize(MmEvents.MAP_BYTES)
 	var outgoing := MmEvent.new(MmEvents.Kind.MAP, MmEvents.write_map(biggest))
@@ -344,10 +343,9 @@ func _test_a_shot_is_rewound() -> void:
 	_finished()
 
 
-## The same claim end to end: the client's own command carries the lag it measured from its
-## interpolation and the input lead, the server reads it off the wire, and a shot aimed at where
-## the client DREW a moving murderer hits it. With the rewind off, or capped to nothing, the same
-## shot at the same drawn position misses, because the target has moved on by the lag.
+## The client's command carries its measured lag, the server reads it off the wire, and a shot aimed
+## at where the client DREW a moving murderer hits it; with the rewind off or capped to nothing
+## the same shot misses, because the target has moved on.
 func _test_a_lagged_shot_over_the_link() -> void:
 	_section("a shot aimed at what the client drew hits over the link, and not without the rewind")
 	await _into_play({_me(): &"gunner", _stand_in.player_id: &"murderer", _second.player_id: &"murderer"})
@@ -524,11 +522,9 @@ func _test_a_door_crosses() -> void:
 	_finished()
 
 
-## A client whose MAP never came (one past a browser socket's buffer, or a format behind) still
-## reads every snapshot. dot-net stops reading one at the first entity a client does not know,
-## so the TOYS for a map it has not built are registered as mirrors anyway, and paired with
-## its toys when the map arrives. Armed: registering them only once the map was built here
-## froze every player seated after the toys.
+## A client whose MAP never came still reads every snapshot: dot-net stops at the first entity it
+## does not know, so the TOYS are registered as mirrors anyway and paired when the map arrives.
+## Armed: registering them only after the map was built froze every player seated after them.
 func _test_a_client_without_the_map() -> void:
 	_section("a client without the server's map still follows every player, and pairs the toys when it comes")
 	await _steps(4)

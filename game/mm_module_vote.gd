@@ -2,12 +2,8 @@ extends "mm_module_config.gd"
 
 
 ## Joins the bridge's chat seam to the services layer's router.
-##
-## [b]Here rather than in either of them, because this is the only object that holds
-## both.[/b] The bridge knows what arrived on the wire and nothing about what a line means;
-## the services layer knows the rules and nothing about the wire. That separation is why a
-## client cannot send a line with somebody else's name on it: what crosses is a channel id
-## and a string, and everything else is decided on this side.
+## Here because only this object holds both: a client can send a channel id and a string, so it
+## cannot send a line under somebody else's name.
 func _wire_chat() -> void:
 	if bridge == null or services == null:
 		return
@@ -34,12 +30,8 @@ func _on_bot_said(player_id: StringName, text: String) -> void:
 
 
 ## The players' vote for the next map, over dot-vote: `!vote`, `!rtv`, `!nominate`.
-##
-## [b]Opened [member MmVote.open_after_sec] into the last round on a map and applied when that
-## round ends[/b]; see [code]game/mm_vote.gd[/code]. A server owner turns it off or reshapes it
-## in `user://cfg/murder_vote.json` or `game.yml`'s `metadata: map_vote:`, keyed as dot-vote's
-## [DotVoteRules]. A vote that cannot be built is a WARN and the rotation alone, never a server
-## that will not start.
+## Opened into the last round on a map and applied when it ends (see `game/mm_vote.gd`); an
+## unbuildable vote is a WARN and the rotation alone, never a server that will not start.
 func _build_vote(world: MmGame) -> void:
 	if world.catalogue == null:
 		return
@@ -177,11 +169,8 @@ func _wire_map(world: MmGame) -> void:
 	)
 
 
-## An achievement is told to the one person who earned it.
-##
-## [b]As a notice, which a client already draws in its chat box[/b], rather than a new event
-## kind: an unlock is text for one player, which is exactly what a notice is — and a stand-in
-## never earns one, because [MmProgress] does not count them.
+## An achievement is told to the one person who earned it, as a notice the client already draws;
+## a stand-in never earns one, because [MmProgress] does not count them.
 func _wire_progress(world: MmGame) -> void:
 	if bridge == null:
 		return
@@ -220,11 +209,9 @@ func _on_say_requested(peer_id: int, channel_id: StringName, text: String) -> vo
 	bridge.call("notice", peer_id, said.error.message)
 
 
-## A `!command` typed into chat. Run through the console as the person who typed it.
-##
-## [b]As THEM, not as the server.[/b] `run_command_as_uid` builds a context with that
-## player's own flags, so `!kick` from somebody without the flag is refused by the same file
-## that refuses it at the console — rather than by this function having an opinion.
+## A `!command` typed into chat, run through the console as the person who typed it.
+## As THEM, not the server: `run_command_as_uid` uses that player's own flags, so the refusal is
+## the one the console gives.
 func _on_chat_command(peer_id: int, command: String, args: PackedStringArray) -> void:
 	if server == null:
 		return

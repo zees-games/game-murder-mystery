@@ -262,23 +262,15 @@ func _on_config_field(key: String, _value: Variant, source: String) -> void:
 
 
 ## A number as an operator would type it: `34`, not `34.000000`.
-##
-## [b]Not `%g`, which GDScript's format strings do not have.[/b] It is accepted by the parser
-## and fails at RUNTIME with "unsupported format character" — inside `_game_load`, which is
-## the one place in the module sequence that unwinds everything above it. The symptom in
-## game-buses-from-hell was a server whose netcode came up, logged that it was ready, and
-## then reported that the game would not load.
+## Not `%g`: GDScript parses it but fails at RUNTIME, inside `_game_load`, which unwinds the whole
+## module sequence.
 static func _number(value: float) -> String:
 	return "%d" % int(round(value)) if is_equal_approx(value, round(value)) else "%.3f" % value
 
 
 ## One cvar, its default taken from the configuration rather than written twice.
-##
-## [b]The default is the value the world was built with, and that is the whole point.[/b] A
-## cvar declared with a literal default is a second copy of a number that
-## `defaults < JSON < environment < argv` has already decided — so an operator who set
-## `MM_ROUND_SECONDS=240` would see `mm_round_seconds` report 300 and, worse, would reset
-## their own setting the moment anything wrote the value back.
+## A literal default would be a second copy of a number `defaults < JSON < env < argv` has decided,
+## and would reset an operator's own setting the moment anything wrote the value back.
 func _tunable(
 	cvar_name: String, current: float, description: String, apply: Callable
 ) -> void:
