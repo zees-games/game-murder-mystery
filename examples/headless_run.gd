@@ -27,7 +27,7 @@ const MmWeapons := preload("../game/mm_weapons.gd")
 
 const SECTIONS := 27
 
-const CHECKS := 181
+const CHECKS := 182
 
 ## The first chair round the kitchen table in the practice house: where it stands.
 const CHAIR_AT := Vector3(3.6, 0.0, 1.2)
@@ -986,8 +986,12 @@ func _test_the_client() -> void:
 			killer.place_at(spot[0] - Vector3(1.0, 0.0, 0.0), 90.0)
 		for i in 60:
 			await get_tree().physics_frame
+		victim.figure.hold(1, &"knife")
 		world._kill(victim, killer, MmGame.DIED_SLAIN)
 		await get_tree().process_frame
+		var dropped := ragdolls.get_node_or_null("DroppedWeapon") as RigidBody3D
+		_check(dropped != null and not victim.figure.held_node().visible,
+			"a slain player's weapon drops as a prop while the hand's copy hides")
 		_check(victim.death != null and DotPlayerDeathReactions.stock().has(victim.death.reaction),
 			"the world picked how the body falls", str(victim.death.describe()) if victim.death != null else "none")
 		var bodies := ragdolls.live()

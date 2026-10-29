@@ -164,6 +164,11 @@ func bleed(stage: int) -> void:
 		_blood.add_child(mesh)
 
 
+## What is in the hand now, for a death that drops it as a prop. Null when nothing is drawn.
+func held_node() -> Node3D:
+	return _held if _held != null and is_instance_valid(_held) else null
+
+
 ## The drawn model, for a death that breaks it apart or falls. Null before [method build].
 func body_node() -> Node3D:
 	return person

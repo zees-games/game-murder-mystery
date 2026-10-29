@@ -137,6 +137,11 @@ func _fall(who: MmPlayer) -> void:
 		game.ragdoll_rules.collision_mask = game.physics.layer_mask(&"world") | game.physics.layer_mask(&"prop")
 	var velocity := who.controller.state.velocity if who.controller != null else Vector3.ZERO
 	var _body := ragdolls.spawn(who.figure, who.death if who.death != null else DotPlayerDeath.new(), velocity)
+	# The blade or gun falls with the hand that held it, as a short-lived prop (sv_ragdoll_weapon_drop).
+	var held := who.figure.held_node()
+	if held != null:
+		var _prop := ragdolls.drop_prop(held, velocity)
+		held.visible = false
 
 
 func _on_death(session_id: int, _by: int, why: StringName) -> void:
