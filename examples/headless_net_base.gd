@@ -82,6 +82,18 @@ func _build() -> bool:
 	var lead_bit := int((DotNetMessageRegistry as Script).get_script_constant_map().get("FEATURE_INPUT_LEAD", 0))
 	_client_net.messages.features &= ~lead_bit
 
+	_wire_bridges(server_side, client_side)
+
+	# Started AFTER the bridge exists, which is what the module does: a map laid out before
+	# anything listened to `world_rebuilt` would be a map no client is ever sent.
+	_server_game.start()
+	_check(not _server_game.map_doc.is_empty(), "the server lays its map out on start")
+	_finished()
+	return _failed == failed_before
+
+
+## Seats the bridges, links them, and starts the two stand-ins.
+func _wire_bridges(server_side: Node, client_side: Node) -> void:
 	_server_bridge = MmNetBridge.new()
 	_server_bridge.name = "Bridge"
 	server_side.add_child(_server_bridge)
@@ -116,13 +128,6 @@ func _build() -> bool:
 	# suite wants them where it puts them.
 	_stand_in.is_bot = false
 	_second.is_bot = false
-
-	# Started AFTER the bridge exists, which is what the module does: a map laid out before
-	# anything listened to `world_rebuilt` would be a map no client is ever sent.
-	_server_game.start()
-	_check(not _server_game.map_doc.is_empty(), "the server lays its map out on start")
-	_finished()
-	return _failed == failed_before
 
 
 ## Turns a server-side stand-in to look at [param target], and keeps it looking.
