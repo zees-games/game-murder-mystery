@@ -1,7 +1,5 @@
 # frame-hazards
 # Baselines only shrink: scripts/<gate> --update lowers or drops entries and refuses to add.
-game/mm_client.gd::_key::string_build	1
-game/mm_client.gd::_present_guns::string_build	1
 game/mm_game.gd::_check_round::string_build	1
 game/mm_game.gd::_drop_gun::string_build	1
 game/mm_game.gd::_respawn_the_fallen::duplicate	1
