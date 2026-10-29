@@ -474,6 +474,12 @@ func _draw_door_prompt() -> void:
 		prompt.show_prompt(words, _key(MmBindings.USE))
 
 
+## The prompt of toy [param index], empty when it was freed after it was aimed at.
+static func toy_words(toys: Object, index: int) -> String:
+	var aimed: Variant = toys.call("toy", index) if toys != null else null
+	return (aimed as Object).call("prompt") if is_instance_valid(aimed) else ""
+
+
 ## "Open the pantry door", "Kick the beach ball", or empty while nothing in reach would do
 ## anything. A toy looked at first, as the use key takes it first (`MmGame._advance_use`).
 func _door_words() -> String:
@@ -484,7 +490,7 @@ func _door_words() -> String:
 	var toy := game.toy_aimed(player)
 
 	if toy >= 0:
-		return game.map.toys.toy(toy).prompt()
+		return toy_words(game.map.toys, toy)
 
 	if game.map.doors == null or not game.config.doors_enabled:
 		return ""

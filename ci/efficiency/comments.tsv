@@ -25,7 +25,6 @@ game/mm_controller.gd::long_block	2
 game/mm_doors.gd::banner	3
 game/mm_doors.gd::long_block	3
 game/mm_figure.gd::long_block	1
-game/mm_game.gd::long_block	2
 game/mm_hud.gd::history	1
 game/mm_hud.gd::long_block	1
 game/mm_map.gd::banner	2

@@ -30,7 +30,7 @@ const MmWeapons := preload("../game/mm_weapons.gd")
 
 const SECTIONS := 27
 
-const CHECKS := 180
+const CHECKS := 181
 
 const TICK_RATE := 64
 const TICK := 1.0 / float(TICK_RATE)
@@ -802,9 +802,10 @@ func _test_toys() -> void:
 	_aim(walker, switch.global_position + Vector3(0.0, 0.9, 0.0))
 	await _press(game, walker)
 	_check(lamp.on != was_lit and switch.count == 1, "the switch turns the lamp", "lit %s" % lamp.on)
+	var freed: Dictionary = (load("res://examples/toy_freed_prompt.gd") as GDScript).call("run", toys, switch)
+	_check(bool(freed["ok"]), "the HUD's prompt for a toy freed under it is empty, with no engine error", str(freed))
 
-	# A trampoline: landing on it throws a person up, from inside their movement (so a
-	# predicting client is thrown on the same tick), and counts the bounce for everybody to hear.
+	# A trampoline throws a person up from inside their movement (a predicting client agrees) and counts each bounce.
 	var placements: Array = (game.map_doc["toys"] as Array).duplicate()
 	placements.append({"toy": "trampoline", "at": [19.5, 0.0, 0.0]})
 	placements.append({"toy": "merry_go_round", "at": [16.0, 0.0, 4.5]})
@@ -820,8 +821,7 @@ func _test_toys() -> void:
 	_check(highest > 2.0, "landing on the trampoline throws a person up", "%.2f m at the top (at %s; toy %s %s at %s of %d, built %s)" % [highest, walker.controller.state.position, tramp.index, tramp.kind, tramp.global_position, toys.toys.size(), _rebuilt])
 	_check(tramp.count >= 2, "and every bounce is counted, which is what a client hears", str(tramp.count))
 
-	# A roundabout: a person standing on it a metre from the hub goes round with it, in their
-	# movement (MmController.carrier, dot-props' carry_for), and is still a metre out after.
+	# A roundabout carries a person standing a metre from the hub round with it (MmController.carrier).
 	var hub := deck.global_position
 	walker.place_at(hub + Vector3(1.0, 0.5, 0.0), 0.0)
 	for _i in range(TICK_RATE / 2):
