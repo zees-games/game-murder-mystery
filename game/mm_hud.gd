@@ -474,9 +474,10 @@ func _draw_door_prompt() -> void:
 		prompt.show_prompt(words, _key(MmBindings.USE))
 
 
-## The prompt of toy [param index], empty when it was freed after it was aimed at.
-static func toy_words(toys: Object, index: int) -> String:
-	var aimed: Variant = toys.call("toy", index) if toys != null else null
+## The prompt of toy [param index], empty when it or its box was freed after it was aimed at.
+## Variant, as a typed Object parameter refuses a freed argument before the body runs.
+static func toy_words(toys: Variant, index: int) -> String:
+	var aimed: Variant = (toys as Object).call("toy", index) if is_instance_valid(toys) else null
 	return (aimed as Object).call("prompt") if is_instance_valid(aimed) else ""
 
 

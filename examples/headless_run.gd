@@ -793,7 +793,7 @@ func _test_toys() -> void:
 	await _press(game, walker)
 	_check(lamp.on != was_lit and switch.count == 1, "the switch turns the lamp", "lit %s" % lamp.on)
 	var freed: Dictionary = (load("res://examples/toy_freed_prompt.gd") as GDScript).call("run", toys, switch)
-	_check(bool(freed["ok"]), "the HUD's prompt for a toy freed under it is empty, with no engine error", str(freed))
+	_check(bool(freed["ok"]), "the HUD's prompt for a toy, or its box, freed under it is empty, with no engine error", str(freed))
 
 	# A trampoline throws a person up from inside their movement (a predicting client agrees) and counts each bounce.
 	var placements: Array = (game.map_doc["toys"] as Array).duplicate()

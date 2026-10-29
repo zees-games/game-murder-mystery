@@ -1,5 +1,5 @@
 extends RefCounted
-## The HUD's use prompt for a toy freed after it was aimed at: empty, and the engine reports no error.
+## The HUD's use prompt for a toy, or the box holding it, freed after it was aimed at: empty, and the engine reports no error.
 
 
 class ErrorCatcher extends Logger:
@@ -18,5 +18,9 @@ static func run(toys: Object, toy: Object) -> Dictionary:
 	OS.add_logger(catcher)
 	toy.free()
 	var words: String = hud.call("toy_words", toys, index)
+	var box := Node.new()
+	box.free()
+	var box_words: String = hud.call("toy_words", box, 0)
 	OS.remove_logger(catcher)
-	return {"ok": words == "" and catcher.errors.is_empty(), "words": words, "errors": catcher.errors}
+	return {"ok": words == "" and box_words == "" and catcher.errors.is_empty(),
+		"words": words, "box_words": box_words, "errors": catcher.errors}
