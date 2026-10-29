@@ -1,0 +1,28 @@
+{
+  "defaults": {"spawn": [0.0, 0.05, 40.0], "spawn_yaw": 0.0},
+  "clips": [
+    {"name": "idle", "duration": 3.0, "steps": [{"t": 0.0, "move": [0, 0]}]},
+    {"name": "walk", "duration": 4.0, "steps": [
+      {"t": 0.0, "move": [0, 0]},
+      {"t": 0.5, "move": [0, 1], "buttons": ["walk"]}
+    ]},
+    {"name": "run", "duration": 3.5, "steps": [
+      {"t": 0.0, "move": [0, 0]},
+      {"t": 0.5, "move": [0, 1]}
+    ]},
+    {"name": "sprint", "duration": 3.0, "steps": [
+      {"t": 0.0, "move": [0, 0]},
+      {"t": 0.5, "move": [0, 1], "buttons": ["sprint"]}
+    ]},
+    {"name": "crouch", "duration": 4.0, "steps": [
+      {"t": 0.0, "move": [0, 0], "buttons": ["crouch"]},
+      {"t": 1.0, "move": [0, 1], "buttons": ["crouch"]}
+    ]},
+    {"name": "knife", "duration": 5.0, "armed": "knife", "steps": [
+      {"t": 0.0, "move": [0, 0]},
+      {"t": 1.0, "event": "strike"},
+      {"t": 2.0, "move": [0, 1]},
+      {"t": 3.5, "event": "strike"}
+    ]}
+  ]
+}
