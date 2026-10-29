@@ -8,7 +8,7 @@ examples/dedicated.gd::_test_the_map_vote	119
 examples/headless_maps.gd::_test_map	128
 examples/headless_net.gd	954
 examples/headless_net.gd::_build	94
-examples/headless_run.gd	1451
+examples/headless_run.gd	1303
 examples/headless_run.gd::_test_doors	93
 examples/headless_run.gd::_test_the_client	274
 examples/headless_run.gd::_test_toys	92
