@@ -29,10 +29,7 @@ func add_player(peer_id: int, session_id: int, display_name: String) -> DotResul
 
 
 ## Somebody the world drives itself: a stand-in, or a test's player.
-##
-## [b]The same entity a peer gets, with a peer id of zero.[/b] A bot is replicated, scored
-## and crushed exactly like a person — what it does not have is a socket — and that is the
-## whole of the difference.
+# The same entity a peer gets with a peer id of zero; it only lacks a socket.
 func add_bot(display_name: String, team: int = 0) -> MmPlayer:
 	if net == null or not net.is_server or game == null:
 		return null
@@ -68,10 +65,8 @@ func remove_player(session_id: int) -> void:
 	_peer_of_player.erase(session_id)
 	_ready_peers.erase(peer_id)
 
-	# Released BEFORE the game is told: `game.remove_player` emits `player_removed`, which
-	# `_on_player_removed` answers by releasing the entity and broadcasting the LEAVE.
-	# Releasing first empties `_behaviours`, so that handler finds nothing and this stays
-	# the one place a leaving player is announced.
+	# Released before the game is told: `remove_player` emits `player_removed`, whose handler would otherwise
+	# find `_behaviours` still full and announce the LEAVE a second time.
 	_release_entity(session_id)
 	game.remove_player(player_key(session_id))
 
@@ -87,11 +82,7 @@ func remove_player(session_id: int) -> void:
 
 
 ## Everything in the world, to one peer, once its own copy exists.
-##
-## [b]On READY and not on connect, and the difference is a whole join's worth of
-## messages.[/b] dot-server's signon finishes and THEN the client builds its scene; a server
-## that started talking at connect is one whose JOIN and MAP land on a node that does not
-## exist yet and are lost, one "Node not found" per call.
+# On READY, not connect: signon finishes and then the client builds its scene, so earlier messages hit a node that does not exist.
 func _admit(peer_id: int) -> void:
 	if peer_id <= 0:
 		return
@@ -182,10 +173,6 @@ func _tell_role(session_id: int) -> void:
 
 
 ## Text for one player: a refusal, a rate limit, a command's reply.
-##
-## [b]To the one person who asked, and that is the whole reason this is a method.[/b] "You
-## are talking too fast" and "you are gagged" are the two commonest things a server says,
-## and both are nobody else's business — a broadcast refusal is a punishment announced to
-## everybody.
+# To the one who asked; a broadcast refusal would be a punishment announced to everybody.
 func notice(peer_id: int, text: String) -> void:
 	_tell(peer_id, MmEvents.Kind.NOTICE, MmEvents.write_notice(text))

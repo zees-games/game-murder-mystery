@@ -63,10 +63,8 @@ func _register_toys() -> void:
 	_broadcast(MmEvents.Kind.TOYS, _toys_body)
 
 
-## A toy's behaviour and identity under [param parent] (the toy on the server, a holder of
-## the client's own), registered under [param net_id] (0 allocates one: the server). Null when
-## the registry refused it. The behaviour before the identity, which collects behaviours in
-## its `_ready`.
+## A toy's behaviour and identity under [param parent], registered under [param net_id] (0 allocates one). Null when refused.
+# The behaviour goes before the identity, which collects behaviours in its `_ready`.
 func _toy_entity(toy: DotPropToy, parent: Node, net_id: int) -> MmToyNet:
 	var behaviour := MmToyNet.new()
 	behaviour.name = "Net"
@@ -124,12 +122,8 @@ func _release_toys() -> void:
 	_toy_nets.clear()
 
 
-## Client: TOYS. A mirror for every id at once, under the holder, whether this end has built
-## that map or not. [b]A client must know every entity a snapshot carries[/b]: dot-net stops
-## reading a snapshot at the first one it does not know (a body cannot be skipped without its
-## declarations), so a client whose MAP never arrived (one too large for a browser's socket,
-## or a format behind) had every player listed after the toys frozen. Paired with this end's
-## toys by index as soon as both are here.
+## Client: TOYS. A mirror for every id at once, whether this end has built that map or not.
+# dot-net stops reading a snapshot at the first entity it does not know, so a client without the map would freeze every player listed after the toys.
 func _apply_toys(reader: DotNetReader) -> void:
 	var told := MmEvents.read_toys(reader)
 	if not bool(told["ok"]) or net == null or net.is_server:

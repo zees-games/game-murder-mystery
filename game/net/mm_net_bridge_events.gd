@@ -234,10 +234,8 @@ func _adopt_tick_rate(rate: int) -> void:
 	# The LIVE one, which is built from the config back at `setup()` and is therefore not
 	# updated by writing the config alone.
 	net.clock.tick_rate = game.tick_rate
-	# dot-net API 7 has DotNetClock.adopt_tick_rate(), which also raises the engine's step cap
-	# to a quarter second of ticks, so a slow-frame client still runs as many ticks as the
-	# server. A shell built before it gets the same rule here; remove this branch when the
-	# oldest shell is API 7.
+	# dot-net API 7 has DotNetClock.adopt_tick_rate(), which also raises the engine's step cap.
+	# A shell built before it gets the same rule here; remove this branch when the oldest shell is API 7.
 	if DotAddonApi.build_level("dot_net") >= 7:
 		DotNetClock.adopt_tick_rate(game.tick_rate)
 	else:
@@ -250,10 +248,7 @@ func _adopt_tick_rate(rate: int) -> void:
 
 
 ## The map, which on a client is a document it builds exactly as the server did.
-##
-## [b]Refused with a line, never half built.[/b] A client a format behind the server decodes a
-## document it cannot read; [MmMapDoc] says so, and the honest answer is no map and a WARN
-## rather than a map with holes in it.
+# Refused with a line, never half built: a client a format behind answers no map and a WARN, not a map with holes.
 func _apply_map(reader: DotNetReader) -> void:
 	var told := MmEvents.read_map(reader)
 
@@ -295,10 +290,8 @@ func _apply_join(reader: DotNetReader) -> void:
 		player.sampler = null
 		player.samples_input = false
 
-		# This client's own player is owned by this client: `is_owner` compares against THIS
-		# registry's local peer, JOIN carries none, and mirrors built with owner 0 left
-		# `registry.predicted()` empty, so the player moved only when a snapshot came back.
-		# HELLO precedes every JOIN; [method _apply_hello] still claims a player that got here first.
+		# This client's own player is owned by this client: JOIN carries no owner, and a mirror built with owner 0
+		# left `registry.predicted()` empty. HELLO precedes JOIN; [method _apply_hello] claims a player that got here first.
 		var identity := _build_entity(player, _mirror_owner(session_id))
 		var registered := net.registry.register(
 			identity, int(join["net_id"]), net.clock.tick, net.config
@@ -317,14 +310,8 @@ func _apply_join(reader: DotNetReader) -> void:
 	roster_changed.emit(session_id)
 
 
-## Who owns a mirrored player on this client: this client, if it is this client's own
-## player, and the server's 0 otherwise.
-##
-## [b]Never the local peer for anybody else[/b], or this client would predict a person whose
-## keys it never had. And a client whose local peer is 0 claims nothing: 0 is the server's
-## owner id, and on such a registry dot-net's `is_owner` (owner == local peer) is already true
-## of every owner-0 mirror — which this function cannot undo, and which no client here runs
-## into, because `MmClient` takes its id from the multiplayer API and that never answers 0.
+## Who owns a mirrored player on this client: this client if it is its own player, the server's 0 otherwise.
+# Never the local peer for anybody else, or this client would predict a person whose keys it never had.
 func _mirror_owner(session_id: int) -> int:
 	if net == null or net.local_peer_id <= 0:
 		return 0
@@ -336,11 +323,7 @@ func _mirror_owner(session_id: int) -> int:
 
 
 ## The local player's mirror, claimed if it arrived before HELLO said whose it was.
-##
-## Not the order `_admit` sends in, and that is why it is belt and braces rather than a path
-## this game takes: a JOIN that reached this peer before its HELLO would otherwise leave the
-## local player unpredicted for the rest of the session, with every check still passing —
-## which is the bug [method _apply_join] documents.
+# Belt and braces: a JOIN before HELLO would leave the local player unpredicted for the session ([method _apply_join]).
 func _claim_local_player() -> void:
 	var mine: MmPlayerNet = _behaviours.get(local_player_id)
 

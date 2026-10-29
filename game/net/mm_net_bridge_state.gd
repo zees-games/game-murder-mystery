@@ -65,11 +65,7 @@ signal gun_received(drop_id: int, down: bool, at: Vector3)
 signal door_received(index: int, open: bool, tick: int)
 
 
-## Somebody pressed Enter. Server side, and the only thing this bridge does with chat.
-##
-## [b]The bridge carries chat and decides nothing about it.[/b] Who may say what, on which
-## channel, how often and who hears it are [DotChatRouter]'s, and the router is the services
-## layer's.
+## Somebody pressed Enter. Server side; who may say what and who hears it is DotChatRouter's, not the bridge's.
 signal say_requested(peer_id: int, channel_id: StringName, text: String)
 
 ## A voice frame arrived. Server side; the payload is unparsed and must not be trusted —
@@ -91,13 +87,8 @@ var local_player_id: int = 0
 ## once the round ends; the wire's TEAM for this player is the public side and does not win.
 var local_role: int = 0
 
-## Where the clock learns how long the link is, in milliseconds.
-##
-## dot-net never touches a transport and cannot measure it; dot-server's heartbeat already
-## does ([method DotClientLink.ping_ms]). A client that feeds nothing has a clock that
-## assumes an instant connection and stamps every command for a tick the server has already
-## simulated — and the symptom is every command being discarded as late. Two games in this
-## family shipped without a sample and read a median of an empty set.
+## Where the clock learns the link's ping in milliseconds.
+# dot-net cannot measure a transport; without a sample every command is stamped for a tick already simulated and discarded as late.
 var rtt_source: Callable = Callable()
 
 ## Where a voice frame goes on the server. Assigned by [DotGameModule] to the services
@@ -115,11 +106,7 @@ var _entities: Node = null
 var _behaviours: Dictionary = {}
 
 ## The next session id handed to somebody the world made itself.
-##
-## [b]Well above anything dot-server will issue, and a bot needs one at all because of how a
-## player id is written.[/b] Every id on the wire is `u<session>`, and a player called `bot`
-## parses back to session ZERO — so two bots are one entry in [member _behaviours], and
-## their JOIN carries a player id that is also dot-net's broadcast address.
+# Above anything dot-server issues: a player called `bot` parses back to session 0, dot-net's broadcast address.
 const FIRST_BOT_SESSION := 900000
 
 var _next_bot_session: int = FIRST_BOT_SESSION
@@ -129,10 +116,8 @@ var _peer_of_player: Dictionary = {}
 var _ready_peers: Dictionary = {}
 ## Carries the game's profile runtime over this manager; null when the types would not register.
 var profile_link: DotNetProfileLink = null
-## Server: peers whose READY came before their seat ([method add_player]). A client sends READY
-## when its link says PLAYING, which the link decides itself after sending `loaded` on another
-## channel; over ENet with loss the READY can overtake `loaded`, and a READY dropped here left
-## that client waiting for a world for ever. Admitted when seated.
+## Server: peers whose READY came before their seat ([method add_player]).
+# READY can overtake `loaded` over lossy ENet; a READY dropped here left the client waiting for a world.
 var _ready_unseated: Dictionary = {}
 
 var _tick: int = 0
@@ -184,12 +169,8 @@ func player_for_peer(peer_id: int) -> int:
 
 
 ## How every dot-net message reaches a peer.
-##
-## [b]Routed by DELIVERY, not by kind.[/b] Snapshots are unreliable and go on the snapshot
-## call; everything else is reliable, and which reliable call it is depends on which end is
-## sending — the server has events, the client has requests. Sending them all as events
-## works on a server and silently drops every client request, which is a client that
-## connects, draws, and can never ask for anything.
+# Routed by delivery, not kind: snapshots unreliable, the rest reliable on the call that matches this end,
+# else client requests are silently dropped.
 func _send(peer_id: int, payload: PackedByteArray, delivery: int) -> void:
 	if link == null:
 		return
@@ -203,10 +184,7 @@ func _send(peer_id: int, payload: PackedByteArray, delivery: int) -> void:
 
 
 ## One peer, and never zero.
-##
-## `net.send(msg, 0)` is a BROADCAST in dot-net, so a helper that passed a missing peer id
-## straight through would send one player's private message to everybody. game-hungario
-## shipped exactly that.
+# `net.send(msg, 0)` broadcasts in dot-net; a missing peer id passed through would leak a private message.
 func _tell(peer_id: int, kind: int, body: PackedByteArray) -> void:
 	if peer_id <= 0 or net == null or body.is_empty():
 		return
@@ -215,11 +193,7 @@ func _tell(peer_id: int, kind: int, body: PackedByteArray) -> void:
 
 
 ## To every peer that has said it is ready, and to nobody else.
-##
-## [b]An empty body is dropped rather than sent.[/b] It means an encoder was handed
-## something that had already gone — a player whose entity was released before the LEAVE was
-## written — and a zero-length event decodes on the far end as a valid message about
-## nothing, which is the truncation bug this family has already paid for once.
+# An empty body is dropped: it decodes on the far end as a valid message about nothing.
 func _broadcast(kind: int, body: PackedByteArray) -> void:
 	if net == null or not net.is_server or body.is_empty():
 		return
