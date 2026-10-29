@@ -239,10 +239,9 @@ func _random_survey(map: Node3D, stream: DotRandomStream, points: int, prop_coun
 	return DotBotHiding.survey(candidates, watchers, _los)
 
 
-## What the map means to somebody walking it: [DotNpcAiNavAnnotator] over the baked mesh, seeded
-## with every spawn, the doors left out of its rays (the bake left them out), cached by key under
-## `user://nav`. Returns the job to step, or null when the cache had it (or there is no mesh);
-## [method _finish_annotation] then hands drop and jump-up links to the mesh as ride edges.
+## Annotates the baked mesh for walking (spawn-seeded, doors left out of its rays, cached under
+## `user://nav`). Returns the job to step, or null when the cache had it or there is no mesh;
+## [method _finish_annotation] hands the drop and jump-up links to the mesh.
 func _begin_annotation(map: Node3D, doc: Dictionary) -> DotJob:
 	annotate_cached = false
 	annotate_ms = 0.0

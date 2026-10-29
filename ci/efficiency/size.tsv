@@ -21,7 +21,5 @@ game/mm_module.gd	1039
 game/mm_module.gd::_add_tunables	123
 game/mm_module.gd::_build_vote	120
 game/mm_module.gd::_game_load	82
-game/net/mm_net_bridge.gd	1578
-game/net/mm_net_bridge.gd::_on_event	140
 tools/measure_props.gd::_initialize	128
 tools/shot.gd::_run	197

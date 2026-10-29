@@ -66,10 +66,8 @@ func _refresh_path(state: Dictionary, at: Vector3, goal: Vector3, t: float) -> v
 		return
 
 	path = nav.path(at, goal) if nav.is_ready() else PackedVector3Array()
-	# A path that goes nowhere (it ends where the bot stands, well short of the goal) starts on
-	# an island of the mesh: a stair's landing or a desk top it climbed or hopped onto. Straight
-	# for the goal, which steps it off; following the path kept a bot on a school landing
-	# beside an open door for half a minute (`headless_bots` round 11).
+	# A path that ends where the bot stands starts on a mesh island (a landing or desk top): go
+	# straight for the goal, which steps off it (`headless_bots` round 11).
 	if path.size() < 2 or (path.size() == 2 and Vector2(path[1].x - at.x, path[1].z - at.z).length() < 0.5 \
 			and Vector2(goal.x - at.x, goal.z - at.z).length() > 2.0):
 		path = PackedVector3Array([at, goal])
@@ -177,10 +175,8 @@ func _step_toward(player: MmPlayer, command: DotFpsCommand, state: Dictionary, a
 			command.set_button(DotFpsCommand.BUTTON_CROUCH, true)
 
 
-## The mesh stops a body's radius short of a wall, so a bot pressed into a pocket (a corner
-## between a wall and furniture, which a sidestep can leave it in) has its path start snapped to
-## the nearest mesh, often the far side of that wall, and it pushes at the wall for the rest of the
-## round (`mm_motel` soak, a cabin's corner, 90 s). Walk back to where the last good path began, then on.
+## A bot pressed into a pocket has its path start snapped to the nearest mesh, often past the wall,
+## and pushes at it for the round (`mm_motel` soak). Walks back to where the last good path began.
 func _off_mesh_start(state: Dictionary, at: Vector3, goal: Vector3, path: PackedVector3Array) -> PackedVector3Array:
 	if path.size() < 2:
 		return path
@@ -200,10 +196,9 @@ func _off_mesh_start(state: Dictionary, at: Vector3, goal: Vector3, path: Packed
 	return out
 
 
-## `[door, points]`: two points round the free edge of the open door panel standing between
-## [param at] and [param corner] (one this side of the edge, one past it on the far side), or
-## `[-1, empty]` when no panel is in the way or there is no floor round its edge. A panel is in
-## the way when the next stretch of the walk crosses it.
+## `[door, points]`: two points round the free edge of the open panel between [param at] and
+## [param corner] (this side, then past it), or `[-1, empty]` when none is in the way or there is
+## no floor round its edge.
 func _door_detour(at: Vector3, corner: Vector3, chaser: bool = false) -> Array:
 	var map: Node3D = game.get("map")
 	var doors: Object = map.get("doors") if map != null else null
@@ -265,10 +260,8 @@ func _door_detour(at: Vector3, corner: Vector3, chaser: bool = false) -> Array:
 		var edge := Vector3(e.x, at.y, e.y) + waist
 		if not _los(edge, edge + Vector3(along.x, 0.0, along.y) * (k + MmPlayer.BODY_RADIUS)):
 			return [index, PackedVector3Array()]
-		# A chaser only: the gap between the free edge and a wall or fence on the detour's side
-		# must take a body, or the first waypoint wedges it (hs_village's back door, 0.71 m from a
-		# fence). A fleeing bot keeps the old behaviour: a door-only result there left it
-		# wedged against the panel (hs_camp's boathouse door).
+		# A chaser only: the gap between the free edge and a wall on the detour's side must take a
+		# body, or the first waypoint wedges it. A fleeing bot keeps the door-only result.
 		if chaser:
 			var pinch := edge + Vector3(-along.y, 0.0, along.x) * near * -1.0 * (MmPlayer.BODY_RADIUS * 2.0 + 0.05)
 			if not _los(edge, pinch):
@@ -287,11 +280,9 @@ func _door_detour(at: Vector3, corner: Vector3, chaser: bool = false) -> Array:
 func _next_corner(state: Dictionary, at: Vector3) -> Vector3:
 	var path: PackedVector3Array = state["path"]
 	var corner: int = state["corner"]
-	# Passed when near it flat and on its level: on a switchback stair the corner of the flight
-	# above is right over the bot's head, and skipping it sent bots round in circles.
-	# A sharp turn (a doorway entered from along its wall) is passed only close to: passed at
-	# half a metre, a bot cut the corner into the jamb and stood there (`headless_bots` round 13,
-	# the manor's upstairs library door).
+	# Passed when near it flat and on its level (a switchback stair's flight above is over its
+	# head). A sharp turn is passed only close to, or a bot cuts the corner into the jamb
+	# (`headless_bots` round 13).
 	while corner < path.size() - 1 and Vector2(path[corner].x - at.x, path[corner].z - at.z).length() < _pass_within(path, corner) \
 			and absf(path[corner].y - at.y) < 0.9:
 		# Not until the way to the next one is open to a body: passed early, a bot turning round
@@ -304,11 +295,9 @@ func _next_corner(state: Dictionary, at: Vector3) -> Vector3:
 	return path[mini(corner, path.size() - 1)] if not path.is_empty() else at
 
 
-## Whether a body walking straight from [param at] to [param to] on one level meets no wall or
-## furniture at the height of a rail's bars: three lines, its middle and either side. Not the
-## doors: an open panel across the way is `_door_detour`'s, and counted here a corner beside one
-## was never passed, because a body cannot come within reach of a corner on a panel's edge
-## (`headless_bots` round 23, the school's gym doors).
+## Whether a body walking straight from [param at] to [param to] meets no wall or furniture at a
+## rail's bar height (three lines). Not the doors: that is `_door_detour`'s, and counted here a
+## corner on a panel's edge was never passed (`headless_bots` round 23).
 func _body_clear(at: Vector3, to: Vector3) -> bool:
 	if absf(to.y - at.y) > MmPlayer.BODY_STEP:
 		return true
@@ -331,11 +320,9 @@ func _body_clear(at: Vector3, to: Vector3) -> bool:
 	return true
 
 
-## Hops, then steps aside, then asks for somewhere else, when it has made no headway for
-## [constant STUCK_SECONDS]. The count goes back to nothing only once the bot is
-## [constant STUCK_LEFT] from where it first stuck: with a reset on any 0.35 m of movement, a
-## step aside and back reset it every time, so "somewhere else" never came and a bot stood
-## against an open fire door for the whole hide (`headless_bots` round 38).
+## Hops, steps aside, then asks for somewhere else after [constant STUCK_SECONDS] without headway.
+## The count resets only [constant STUCK_LEFT] from where it first stuck; a reset on any small
+## move let a step aside and back clear it for ever (`headless_bots` round 38).
 func _unstick(player: MmPlayer, command: DotFpsCommand, state: Dictionary) -> void:
 	var mark: Array = state["stuck"]
 	var at := player.controller.state.position
@@ -394,12 +381,9 @@ func _unstick(player: MmPlayer, command: DotFpsCommand, state: Dictionary) -> vo
 	state["stuck"] = [at, t]
 
 
-## Stuck within a metre of an open doorway the walk goes through (the next corner is on its
-## far side): two points, square to the doorway's middle on this side and past it on the far
-## side, as the detour. The path is baked at exactly a body's radius from the frame, so a bot a
-## little off it caught the jamb: a bot climbing a camp cabin's steps stood against one for
-## twelve seconds (`headless_bots` round 12). Only once stuck: steering every path through every
-## doorway's middle sent bots round in circles elsewhere. True when it set one.
+## Stuck within a metre of an open doorway the walk goes through: two points square to its middle,
+## as the detour. The path is baked at a body's radius from the frame, so a bot a little off it
+## catches the jamb (`headless_bots` round 12). Only once stuck. True when it set one.
 func _through_doorway(state: Dictionary, at: Vector3, t: float) -> bool:
 	var map: Node3D = game.get("map")
 	var doors: Object = map.get("doors") if map != null else null

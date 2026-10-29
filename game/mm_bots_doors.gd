@@ -3,10 +3,9 @@ extends "mm_bots_state.gd"
 ## The doors of [code]mm_bots.gd[/code]: shutting, opening from clear of the swing, lingering by one and
 ## giving a goal up. Path-based base, no class_name.
 
-## Remembers the doorway the bot is in, and once it is through and clear of the panel's
-## sweep, decides whether to shut the door behind it: always running from somebody behind it,
-## and going to a place close beyond the door. A shut door is a wall to a bot's eye until it
-## is opened, and opening it costs whoever follows the panel's swing.
+## Remembers the doorway the bot is in and, once through and clear of the sweep, whether to shut
+## the door behind it: when fleeing, or going to a place close beyond. A shut door is a wall to
+## a follower's eye until opened.
 func _note_doorway(player: MmPlayer, state: Dictionary, goal: Vector3) -> void:
 	var map: Node3D = game.get("map")
 	var doors: Object = map.get("doors") if map != null else null
@@ -67,13 +66,9 @@ func _shut_door(player: MmPlayer, command: DotFpsCommand, state: Dictionary) -> 
 	return true
 
 
-## A shut door the walk goes into that would swing into the bot itself (a door pinned to open
-## one way, `away: false`, from the side it opens towards): the game refuses a use while anybody
-## stands where the panel will pass, the opener too, so pressing from there does nothing. A
-## person steps back first. Plans a point out of the swing, square to the door's middle, on the
-## mesh; true when it did, and `_open_from_clear` walks there and opens it. Without it a bot
-## fleeing a park cabin stood at its inward front door for eighteen seconds (`headless_bots`
-## round 10).
+## A shut door that would swing into the bot (pinned to open one way, from the side it opens
+## towards): the game refuses a use while anybody stands in the sweep, so a step back comes first.
+## Plans a point out of the swing; true when it did, and `_open_from_clear` walks there.
 func _plan_open_from_clear(player: MmPlayer, state: Dictionary, dir: Vector3) -> bool:
 	if dir.length() < 0.01 or _before(state, "open_check"):
 		return false
@@ -191,9 +186,7 @@ func _door_fraction(index: int) -> float:
 
 
 ## A door this bot tried to shut and could not, for [constant SHUT_FAILED_FOR]: not tried again
-## from here. Forgotten at every give-up, it was planned again at once, and a bot stood facing a
-## door at the top of a flats stair for fifteen seconds, stepping back to shut it every three
-## (`headless_bots` round 44).
+## from here. Forgotten at every give-up, it was planned again at once (`headless_bots` round 44).
 func _note_shut_failed(state: Dictionary, index: int) -> void:
 	state["shut_failed"] = index
 	state["shut_failed_at"] = now()
@@ -235,11 +228,9 @@ func _open_door_index_near(at: Vector3, reach: float) -> int:
 	return best
 
 
-## Whether a door's panel is on the storey of somebody standing at [param at]: its foot within a
-## step of their feet and its head above a crouched body's. Within a flat
-## 2 m and 2.5 m up, a cabin's door counted for a bot in the crawl space under its floor,
-## which went round a panel in the room over its head for fourteen seconds (`headless_bots`
-## round 30, the camp).
+## Whether a door's panel is on the storey of somebody at [param at]: its foot within a step of
+## their feet and its head above a crouched body's. A flat distance alone counted a door over a
+## bot's head (`headless_bots` round 30).
 static func _door_on_level(spec: Dictionary, at: Vector3) -> bool:
 	var c: Array = spec["at"]
 	var half := float((spec["size"] as Array)[1]) * 0.5
@@ -279,12 +270,9 @@ func _note_lingering(state: Dictionary, at: Vector3, t: float) -> void:
 		longest_stuck_who = state.get("who", &"")
 
 
-## Round and round one spot beside an open door's panel for [constant LINGER_SHUT]: whatever
-## the walk is trying there is not getting it past (a free edge against a bench, a jamb's corner
-## it keeps catching). The panel is the thing in the way, so the bot shuts it, as a person
-## would, and the walk opens it again from its own side; standing where it swings, it steps
-## back out of the way first, or with no floor for that goes somewhere else. Once for each
-## spot. True when it started any of them.
+## Circling one spot beside an open panel for [constant LINGER_SHUT] means the panel is in the way:
+## shut it, then open it from its own side (a step back first if it swings there, else somewhere
+## else). Once for each spot; true when it started any of them.
 func _linger_by_door(player: MmPlayer, state: Dictionary, at: Vector3, t: float) -> bool:
 	var anchor: Vector3 = state.get("linger_at", Vector3.INF)
 	var since := float(state.get("linger_since", t))
