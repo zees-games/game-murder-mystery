@@ -12,8 +12,6 @@ examples/headless_run.gd	1303
 examples/headless_run.gd::_test_doors	93
 examples/headless_run.gd::_test_the_client	274
 examples/headless_run.gd::_test_toys	92
-game/mm_bots.gd	1797
-game/mm_bots.gd::_walk_to	149
 game/mm_catalogue.gd::practice	109
 game/mm_client.gd	1385
 game/mm_game.gd	1451

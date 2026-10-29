@@ -15,8 +15,7 @@ game/mm_audio.gd::long_block	1
 game/mm_avatars.gd::long_block	4
 game/mm_bindings.gd::history	1
 game/mm_bot_chat.gd::long_block	1
-game/mm_bots.gd::banner	12
-game/mm_bots.gd::long_block	17
+game/mm_bots.gd::long_block	2
 game/mm_catalogue.gd::banner	1
 game/mm_catalogue.gd::long_block	3
 game/mm_config.gd::banner	12
