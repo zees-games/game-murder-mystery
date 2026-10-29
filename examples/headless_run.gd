@@ -28,7 +28,7 @@ const MmWeapons := preload("../game/mm_weapons.gd")
 
 const SECTIONS := 27
 
-const CHECKS := 186
+const CHECKS := 191
 
 ## The first chair round the kitchen table in the practice house: where it stands.
 const CHAIR_AT := Vector3(3.6, 0.0, 1.2)
@@ -918,6 +918,15 @@ func _test_the_client() -> void:
 	_check(not MmViewArms.available() or (hands != null and hands.hand_error() >= 0.0 and hands.hand_error() < 0.05),
 		"the hand is on the knife's grip", str(hands.hand_error() if hands != null else -1))
 	_check(client.get("_view_model_of") == String(self_p.weapon_id), "and it is in the hand in first person", str(client.get("_view_model_of")))
+	for wid: StringName in MmWeapons.ids():
+		self_p.weapon_id = wid
+		for i in 6:
+			await get_tree().process_frame
+		_check(not MmViewArms.available() or (hands.holding() and hands.hand_error() >= 0.0 and hands.hand_error() < 0.05),
+			"the hand is within 5 cm of the %s's grip" % wid, str(hands.hand_error()))
+	self_p.weapon_id = MmWeapons.DEFAULT
+	for i in 6:
+		await get_tree().process_frame
 	Input.action_press(MmBindings.HOLSTER)
 	for i in 6:
 		await get_tree().physics_frame

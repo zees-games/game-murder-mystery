@@ -46,7 +46,7 @@ func _present_view_model() -> void:
 			_view_model.name = "ViewModel"
 			camera.add_child(_view_model)
 			if what != "gun":
-				_view_model.rotation = Vector3(-PI / 2.6, 0.15, 0.0)
+				_view_model.rotation = Vector3(-PI / 2.6, 0.15, -0.4 if MmWeapons.length_of(StringName(what)) > MmWeapons.LONG_REACH else 0.0)
 		_hold_in_arms(_view_model, what)
 	var sway := Vector3.ZERO
 	if view_arms != null:

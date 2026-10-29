@@ -31,7 +31,7 @@ func hold(weapon: Node3D, what: String, look: DotHumanoidLook, height: float) ->
 	_what = what
 	_grip = null
 	if weapon != null and what != "":
-		var spec: Dictionary = MmWeapons.GRIPS.get(StringName(what), MmWeapons.GRIPS[&"knife"])
+		var spec := MmWeapons.grip_of(StringName(what))
 		var grip: Vector3 = spec["grip"]
 		_grip = DotViewGrip.two_hand(weapon, grip, spec["support"]) if spec.has("support") else DotViewGrip.one_hand(weapon, grip)
 	arms.set_held(_grip)

@@ -40,15 +40,33 @@ const GUN_PARTS := [
 
 
 ## Where the first-person hands go, in the shape's space: `grip` the firing hand's palm and
-## `support` the other hand (absent: one hand). The gun is under the id "gun".
+## `support` the other hand (absent: one hand). Only the gun is spelled out; a melee weapon's
+## grip is derived from its handle (the first part) by [method grip_of].
 const GRIPS := {
-	&"knife": {"grip": Vector3(0.0, 0.05, 0.0)},
-	&"cleaver": {"grip": Vector3(0.0, 0.05, 0.0)},
-	&"axe": {"grip": Vector3(0.0, 0.1, 0.0)},
-	&"bat": {"grip": Vector3(0.0, 0.1, 0.0)},
-	&"sword": {"grip": Vector3(0.0, 0.05, 0.0)},
 	&"gun": {"grip": Vector3(0.0, -0.07, 0.02), "support": Vector3(-0.02, -0.08, -0.03)},
 }
+
+## Weapons longer than this lean their tip away from the crosshair in first person.
+const LONG_REACH := 0.4
+
+
+## The grip for [param id]: the gun's from the table, a melee weapon's on its handle, a hand's
+## width above the pommel (or the middle of a short handle).
+static func grip_of(id: StringName) -> Dictionary:
+	if GRIPS.has(id):
+		return GRIPS[id]
+	var handle: Array = entry(id)["parts"][0]
+	var size: Vector3 = handle[1]
+	var at: Vector3 = handle[0]
+	return {"grip": Vector3(at.x, at.y - size.y * 0.5 + minf(size.y * 0.5, 0.1), at.z)}
+
+
+## Metres from the shape's origin to its farthest box edge along y.
+static func length_of(id: StringName) -> float:
+	var top := 0.0
+	for part: Array in entry(id)["parts"]:
+		top = maxf(top, (part[0] as Vector3).y + (part[1] as Vector3).y * 0.5)
+	return top
 
 
 static func ids() -> Array[StringName]:
