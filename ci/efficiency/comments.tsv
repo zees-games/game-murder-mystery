@@ -1,14 +1,11 @@
 # comments
 # Baselines only shrink: scripts/<gate> --update lowers or drops entries and refuses to add.
-examples/dedicated.gd::banner	1
-examples/dedicated.gd::history	1
-examples/dedicated.gd::long_block	11
+examples/dedicated.gd::long_block	1
 examples/headless_bots.gd::long_block	1
 examples/headless_config.gd::long_block	1
 examples/headless_mapcfg.gd::long_block	1
 examples/headless_maps.gd::long_block	4
-examples/headless_net.gd::banner	3
-examples/headless_net.gd::long_block	5
+examples/headless_net.gd::long_block	1
 examples/headless_run.gd::banner	3
 examples/headless_run.gd::long_block	2
 game/mm_audio.gd::long_block	1
@@ -32,7 +29,7 @@ game/mm_map.gd::long_block	7
 game/mm_map_doc.gd::banner	1
 game/mm_map_doc.gd::long_block	3
 game/mm_materials.gd::long_block	3
-game/mm_module.gd::long_block	9
+game/mm_module.gd::long_block	3
 game/mm_paths.gd::long_block	2
 game/mm_player.gd::banner	1
 game/mm_progress.gd::banner	5
