@@ -1080,7 +1080,7 @@ func _test_the_client() -> void:
 					break
 			if b == null or not is_instance_valid(b):
 				upright += 1
-				detail_up.append("%d:gone" % s)
+				detail_up.append("%d:gone %s" % [s, _no_body(victim.figure, b, ragdolls)])
 				continue
 			var c: Vector3 = b.centre()
 			var gh := world.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(
@@ -1150,6 +1150,13 @@ func _test_the_client() -> void:
 	client.free()
 	await get_tree().process_frame
 	_finished()
+
+
+## Why a body is not there: never built (the figure's state says why) or freed since.
+func _no_body(figure: Node3D, body: Object, ragdolls: DotPlayerRagdolls) -> String:
+	return "%s intree=%s vis=%s meshes=%d style=%s live=%d" % [
+		"never built" if body == null else "freed", str(figure.is_inside_tree()), str(figure.visible),
+		DotPlayerRagdoll.meshes_of(figure).size(), str(ragdolls.rules.effective_style()), ragdolls.live().size()]
 
 
 ## The family's rule since the first play test: H opens help in every game, nothing else in
