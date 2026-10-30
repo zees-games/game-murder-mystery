@@ -52,23 +52,6 @@ func holding() -> bool:
 	return arms != null and arms.shown and _grip != null and _grip.is_valid()
 
 
-## Metres from each hand's finger bone to where the arms aim it (grip plus palm_offset), or -1 when not holding.
+## Metres from each hand to its grip point plus the arms' palm_offset, or -1 when not holding.
 func hand_error() -> float:
-	if not holding() or not (arms.arms() is DotHumanoidFigure):
-		return -1.0
-	var skeleton := (arms.arms() as DotHumanoidFigure).skeleton()
-	if skeleton == null:
-		return -1.0
-	var worst := 0.0
-	var palm: Vector3 = arms.get("palm_offset") if arms.get("palm_offset") != null else Vector3.ZERO
-	var basis := arms.global_transform.basis
-	var pairs := [["Middle1.R", _grip.grip_world() + basis * palm]]
-	if _grip.is_two_hand():
-		pairs.append(["Middle1.L", _grip.support_world() + basis * Vector3(-palm.x, palm.y, palm.z)])
-	for pair: Array in pairs:
-		var bone := skeleton.find_bone(pair[0])
-		if bone < 0:
-			return -1.0
-		var at := skeleton.global_transform * skeleton.get_bone_global_pose(bone).origin
-		worst = maxf(worst, at.distance_to(pair[1]))
-	return worst
+	return arms.hand_error(_grip) if holding() else -1.0
