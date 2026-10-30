@@ -1,4 +1,4 @@
-extends "dedicated_base.gd"
+extends "dedicated_more.gd"
 
 
 ## maps.yml on the live module: a map outside the active rotation stays installed and is never

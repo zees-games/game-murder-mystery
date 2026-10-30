@@ -1,4 +1,4 @@
-extends "dedicated_more.gd"
+extends "dedicated_tests.gd"
 
 ## The game as a deployed server runs it: a real [DotServer], booted from a config file, with
 ## the module loaded BY PATH the way an operator names it — so the netcode, the services, the

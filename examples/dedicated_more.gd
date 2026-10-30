@@ -1,4 +1,4 @@
-extends "dedicated_tests.gd"
+extends "dedicated_base.gd"
 
 
 ## The players' vote decides the next map: a ballot over the server's maps, one vote cast,
