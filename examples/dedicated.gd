@@ -10,7 +10,7 @@ extends "dedicated_tests.gd"
 ## nothing but the stand-ins the module seats itself.
 
 const SECTIONS := 16
-const CHECKS := 117
+const CHECKS := 119
 
 
 func _ready() -> void:

@@ -42,6 +42,9 @@ var stats: DotStatsTracker = null
 var achievements: DotAchievementTracker = null
 var link: DotAchievementStatsLink = null
 
+## Kills for the head-to-head table, through dot-stats' event feed; ids are player ids.
+var feed: DotStatsEventFeed = null
+
 ## The world's own dictionaries, shared. See [MmSpectate] for why not a reference to it.
 var players: Dictionary = {}
 var sides: Dictionary = {}
@@ -207,6 +210,15 @@ func setup(directory: String, report: bool) -> DotResult:
 	stats.report_to_backbone = report
 	stats.define_on_start = report
 	add_child(stats)
+
+	feed = DotStatsEventFeed.new(stats)
+	feed.key_of = func(id: Variant) -> StringName: return _key(StringName(str(id)))
+	feed.name_of = func(id: Variant) -> String:
+		var body: MmPlayer = players.get(StringName(str(id)))
+		return body.display_name if body != null else ""
+	feed.is_bot = func(id: Variant) -> bool:
+		var body: MmPlayer = players.get(StringName(str(id)))
+		return body != null and body.is_bot
 
 	var counted := stats.start()
 
@@ -407,6 +419,10 @@ func on_killed(player_id: StringName, by: StringName, _how: StringName) -> void:
 		return
 
 	record(by, KILLS)
+
+	if feed != null:
+		var _filed := feed.report_kill(by, player_id, String(_how))
+
 	_round_kills[by] = int(_round_kills.get(by, 0)) + 1
 
 

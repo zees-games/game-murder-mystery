@@ -149,6 +149,15 @@ func _test_the_module_loads() -> void:
 	_check(module != null and module.get("net") != null and module.get("bridge") != null,
 		"with its netcode and the game's bridge")
 
+	_check(game.progress.feed != null and game.progress.feed.tracker == game.progress.stats,
+		"kills go through dot-stats' event feed over the progress tracker")
+	var stats: DotStatsTracker = game.progress.stats
+	var was_reporting := stats.report_to_backbone
+	stats.report_to_backbone = true
+	_check(game.progress.feed.report_kill(&"u91", &"u92", "knife") and not game.progress.feed.report_kill(&"u91", &"u91", "knife"),
+		"the feed files a kill and refuses a suicide")
+	stats.report_to_backbone = was_reporting
+
 	var net: DotNetManager = module.get("net") if module != null else null
 	_check(net != null and net.config.tick_rate == TICK_RATE, "the netcode runs at the configured rate")
 	var freeroam: Object = server.console.find_cvar("mp_freeroam")
