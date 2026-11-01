@@ -4,7 +4,7 @@ under CC0 1.0 Universal (public domain): https://polyhaven.com/license and https
 Each was downloaded at 1K, resized to 512 x 512 and saved as JPEG: <id>.jpg is the diffuse (albedo)
 map and <id>_n.jpg the OpenGL-convention normal map. Where a level or saturation change is noted the
 photograph was darker or duller than a lit room wants; nothing else was altered. The ids are the generic
-material ids of dot-map's tools/bsp/dotbsp/source_textures.tsv, drawn by game/mm_materials.gd.
+material ids of dot-map-convert's dotbsp/source_textures.tsv, drawn by game/mm_materials.gd.
 
 id              source                                              author
 plaster_painted https://polyhaven.com/a/painted_plaster_wall       Amal Kumar
