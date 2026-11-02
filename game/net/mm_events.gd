@@ -297,8 +297,8 @@ static func write_clock(
 	w.write_float_range(clampf(elapsed, 0.0, CLOCK_MAX), 0.0, CLOCK_MAX, CLOCK_BITS)
 	w.write_float_range(clampf(play_elapsed, 0.0, CLOCK_MAX), 0.0, CLOCK_MAX, CLOCK_BITS)
 	w.write_uint(clampi(phase, 0, 7), PHASE_BITS)
-	w.write_uint(clampi(alive, 0, 255), 8)
-	w.write_uint(clampi(murderers_left, 0, 255), 8)
+	w.write_uint(clampi(alive, 0, 4095), 12)
+	w.write_uint(clampi(murderers_left, 0, 4095), 12)
 	w.write_bool(playable)
 	return w.to_bytes()
 
@@ -308,8 +308,8 @@ static func read_clock(r: DotNetReader) -> Dictionary:
 	var elapsed := r.read_float_range(0.0, CLOCK_MAX, CLOCK_BITS)
 	var play_elapsed := r.read_float_range(0.0, CLOCK_MAX, CLOCK_BITS)
 	var phase := r.read_uint(PHASE_BITS)
-	var alive := r.read_uint(8)
-	var murderers_left := r.read_uint(8)
+	var alive := r.read_uint(12)
+	var murderers_left := r.read_uint(12)
 	var playable := r.read_bool()
 	return {
 		"round": round_number,

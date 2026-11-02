@@ -177,7 +177,7 @@ func spawn_rules() -> DotSpawnRules:
 
 @export_group("Bots")
 
-@export_range(0, 24, 1) var minimum_players: int = 6
+@export_range(0, 255, 1) var minimum_players: int = 6
 
 ## Whether the stand-ins talk in chat ("did anyone see that?"). Canned lines; see mm_bot_chat.gd.
 @export var bot_chat: bool = true

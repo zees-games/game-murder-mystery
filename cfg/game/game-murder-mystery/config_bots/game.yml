@@ -2,7 +2,7 @@
 # an operator overrides in cfg/server/game/game-murder-mystery/config_bots/game.yml. Layers: defaults < this < env < argv.
 
 # --- Bots
-#  [0..24]
+#  [0..255]
 # minimum_players: 6
 # Whether the stand-ins talk in chat ("did anyone see that?"). Canned lines; see mm_bot_chat.gd.
 # bot_chat: true
