@@ -12,7 +12,7 @@ func _watched_through_eyes() -> MmPlayer:
 	if mode != DotSpectatorView.Mode.FIRST_PERSON and mode != DotSpectatorView.Mode.FREEZE_CAM:
 		return null
 
-	return game.players.get(game.spectate.watching(player.player_id))
+	return game.players.get(StringName(game.spectate.watching(player.player_id)))
 
 
 ## One frame of the free camera: the mouse turn folded in, then the movement keys. Seeded

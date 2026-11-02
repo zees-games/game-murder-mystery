@@ -207,7 +207,7 @@ func place_one(player: MmPlayer) -> void:
 	player.place_at(spot[0], spot[1])
 
 	if spectate != null:
-		spectate.on_spawned(player.player_id)
+		spectate.spawned(player.player_id)
 
 
 ## The spawn group every map is read into.
@@ -251,7 +251,7 @@ func remove_player(player_id: StringName) -> void:
 	player.queue_free()
 
 	if spectate != null:
-		spectate.on_left(player_id)
+		spectate.left(player_id)
 
 	if progress != null:
 		progress.leave(player_id)
@@ -626,7 +626,7 @@ func build_map(doc: Dictionary) -> DotResult:
 	map_doc = map.doc
 
 	if spectate != null:
-		spectate.set_overviews(map.overview(), map.overview())
+		spectate.set_overviews([map.overview(), map.overview()] as Array[Transform3D])
 
 	world_rebuilt.emit()
 	return built
@@ -652,7 +652,7 @@ func _place_everybody() -> void:
 		player.place_at(spot[0], spot[1])
 
 		if spectate != null:
-			spectate.on_spawned(player.player_id)
+			spectate.spawned(player.player_id)
 
 
 func _heal(player: MmPlayer) -> void:
@@ -1285,7 +1285,7 @@ func _respawn_the_fallen() -> void:
 		player.place_at(spot[0], spot[1])
 
 		if spectate != null:
-			spectate.on_spawned(id)
+			spectate.spawned(id)
 
 
 func delta_for_tick() -> float:

@@ -28,7 +28,7 @@ const MmWeapons := preload("../game/mm_weapons.gd")
 
 const SECTIONS := 28
 
-const CHECKS := 192
+const CHECKS := 194
 
 ## The first chair round the kitchen table in the practice house: where it stands.
 const CHAIR_AT := Vector3(3.6, 0.0, 1.2)
@@ -478,6 +478,10 @@ func _test_free_roam() -> void:
 	var _gone := game.spectate_rules.set_cvar("mp_freeroam", "0")
 	game.spectate.advance(game._tick + 1)
 	_check(not game.spectate.is_roaming(id), "switching mp_freeroam off mid-roam puts the roamer back on a player")
+	_check(game.spectate is DotSpectatorHost and game.spectate.guard_roam, "spectating is dot-spectate's host, roaming guarded")
+	var playing := StringName("nobody-out")
+	_check(not game.spectate.can_roam(playing) and game.spectate.toggle_roam(playing).error.code == DotError.CODE_STATE,
+		"somebody who is playing may not roam, and is told they are playing")
 
 	var restricted := await _world(func(c: MmConfig) -> void:
 		c.spectate_camera = 2)

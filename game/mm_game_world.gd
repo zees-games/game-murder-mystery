@@ -178,12 +178,16 @@ func _build_spectate() -> void:
 	spectate.name = "Spectate"
 	spectate.players = players
 	spectate.sides = sides
-	spectate.phase_fn = func() -> int: return phase
-	add_child(spectate)
-
+	spectate.authoritative = authoritative
+	spectate.tick_rate = tick_rate
+	spectate.death_cam_seconds = config.death_cam_seconds
+	spectate.freeze_cam_seconds = config.freeze_cam_seconds
 	# The config's number is only the starting point: from here `mp_forcecamera` is the rule.
 	spectate_rules.force_camera = clampi(config.spectate_camera, 0, 2)
-	var ready_now := spectate.setup(authoritative, tick_rate, spectate_rules, config.death_cam_seconds, config.freeze_cam_seconds)
+	spectate.rules = spectate_rules
+	add_child(spectate)
+
+	var ready_now := spectate.setup()
 
 	if not ready_now.ok:
 		DotLog.warn(CHANNEL, "spectating is off", {"why": ready_now.error.message})
