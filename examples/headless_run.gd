@@ -1078,7 +1078,8 @@ func _test_the_client() -> void:
 				DotPlayerDeath.seed_of(victim.entity_id, 1000 + s * 37), null, -1.0, &"face_plant")
 			var fwd: Vector3 = -victim.figure.global_basis.z
 			var b := ragdolls.spawn(victim.figure, d, Vector3.ZERO)
-			for i in 240:
+			# Settled, not a fixed 240 frames: a body mid-fall is not yet a lying one. max_sim_time ends it.
+			for i in 900:
 				await get_tree().physics_frame
 				if b == null or not is_instance_valid(b) or b.settled:
 					break
