@@ -78,7 +78,7 @@ var _disc_label: Label = null
 var _as: Label = null
 var _lock: Label = null
 ## The weapon or gun in hand as a sprite over the disc; hidden when it has none.
-var weapon_icon: TextureRect = null
+var weapon_icon: DotWeaponIconPlate = null
 ## The gun's or the weapon's readiness, under the disc's words.
 var _meter_back: ColorRect = null
 var _meter_fill: ColorRect = null
@@ -188,17 +188,14 @@ func _build_status() -> void:
 	_disc_label.add_theme_constant_override("outline_size", 4)
 	_disc.add_child(_disc_label)
 
-	weapon_icon = TextureRect.new()
+	weapon_icon = DotWeaponIconPlate.new()
 	weapon_icon.name = "WeaponIcon"
 	weapon_icon.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
-	weapon_icon.offset_left = 22.0
+	weapon_icon.offset_left = -8.0
 	weapon_icon.offset_right = 142.0
-	weapon_icon.offset_top = -368.0
-	weapon_icon.offset_bottom = -306.0
-	weapon_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	weapon_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	weapon_icon.offset_top = -374.0
+	weapon_icon.offset_bottom = -300.0
 	weapon_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	weapon_icon.visible = false
 	_root.add_child(weapon_icon)
 
 	_as = _label(17)
@@ -366,10 +363,8 @@ func _draw_weapon_icon(role: StringName) -> void:
 			sprite = MmWeaponIcons.shared.texture(MmWeaponIcons.GUN)
 		elif role == &"murderer":
 			sprite = MmWeaponIcons.shared.texture(game.weapon_id())
-	weapon_icon.texture = sprite
-	weapon_icon.visible = sprite != null
+	weapon_icon.show_icon(sprite)
 	weapon_icon.modulate.a = 0.45 if role == &"murderer" and not player.weapon_drawn else 1.0
-	MmWeaponIcons.shared.filter(weapon_icon, true)
 
 
 func _draw_disc(role: StringName) -> void:

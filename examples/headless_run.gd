@@ -951,17 +951,17 @@ func _test_the_client() -> void:
 		"a gunner's arms hold the gun in two hands, both within 5 cm of the grips", str(hands.hand_error()))
 	var icon_script: Script = load("res://game/mm_weapon_icons.gd")
 	var icons: DotWeaponIconStyle = icon_script.get("shared")
-	var icon_rect: TextureRect = hud.get("weapon_icon")
+	var icon_rect: DotWeaponIconPlate = hud.get("weapon_icon")
 	var unmapped := PackedStringArray()
 	for weapon in icon_script.get("TAGS"):
 		if not icons.icon_set().has_icon(weapon):
 			unmapped.append(String(weapon))
 	hud.call("_process", 0.0)
-	_check(unmapped.is_empty() and icon_rect != null and icon_rect.visible and icon_rect.texture != null and icon_rect.texture == icons.texture(&"gun"),
+	_check(unmapped.is_empty() and icon_rect != null and icon_rect.texture != null and icon_rect.texture == icons.texture(&"gun"),
 		"a gunner's HUD draws the gun's sprite, and every mapped weapon has one", ", ".join(unmapped))
 	var _silhouette := icons.set_style(&"silhouette")
 	hud.call("_process", 0.0)
-	_check(icon_rect != null and not icon_rect.visible, "cl_weapon_icons silhouette hides the sprite")
+	_check(icon_rect != null and icon_rect.texture == null, "cl_weapon_icons silhouette hides the sprite")
 	var _pixel := icons.set_style(&"pixel")
 	world.forced_roles = {}
 
