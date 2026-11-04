@@ -90,22 +90,23 @@ func _register_net_vars() -> void:
 		if spec["property"] == &"net_crouch":
 			declaration.range_of(0.0, 1.0)
 
-	replicate(&"net_health", DotNetVar.Type.FLOAT_RANGE).range_of(0.0, 1000.0).bits(12)
-	replicate(&"net_max_health", DotNetVar.Type.FLOAT_RANGE).range_of(0.0, 1000.0).bits(14)
-	replicate(&"net_points", DotNetVar.Type.UINT).bits(16)
-	replicate(&"net_ping", DotNetVar.Type.UINT).bits(10)
-	replicate(&"net_watching", DotNetVar.Type.BOOL)
-	replicate(&"net_armed", DotNetVar.Type.UINT).bits(2)
-	replicate(&"net_blood", DotNetVar.Type.UINT).bits(3)
-	replicate(&"net_shirt", DotNetVar.Type.UINT).bits(4)
-	replicate(&"net_attacks", DotNetVar.Type.UINT).bits(4)
-	var _ready := replicate(&"net_ready_in", DotNetVar.Type.FLOAT_RANGE).range_of(0.0, 30.0).bits(8).to_owner_only()
+	# Only the game (MmGame, MmServices) writes these, never the owner's prediction: server-driven, so a bump is not a misprediction.
+	replicate(&"net_health", DotNetVar.Type.FLOAT_RANGE).range_of(0.0, 1000.0).bits(12).server_driven()
+	replicate(&"net_max_health", DotNetVar.Type.FLOAT_RANGE).range_of(0.0, 1000.0).bits(14).server_driven()
+	replicate(&"net_points", DotNetVar.Type.UINT).bits(16).server_driven()
+	replicate(&"net_ping", DotNetVar.Type.UINT).bits(10).server_driven()
+	replicate(&"net_watching", DotNetVar.Type.BOOL).server_driven()
+	replicate(&"net_armed", DotNetVar.Type.UINT).bits(2).server_driven()
+	replicate(&"net_blood", DotNetVar.Type.UINT).bits(3).server_driven()
+	replicate(&"net_shirt", DotNetVar.Type.UINT).bits(4).server_driven()
+	replicate(&"net_attacks", DotNetVar.Type.UINT).bits(4).server_driven()
+	var _ready := replicate(&"net_ready_in", DotNetVar.Type.FLOAT_RANGE).range_of(0.0, 30.0).bits(8).to_owner_only().server_driven()
 	var _held := replicate(&"net_held", DotNetVar.Type.BOOL).to_owner_only()
 
 	# [b]Per-player state rather than an event[/b]: a client that joins after the admin typed
 	# `beacon`, or a lost snapshot, is corrected by the next one, where an event is missed.
-	replicate(&"net_beacon", DotNetVar.Type.BOOL)
-	replicate(&"net_warp", DotNetVar.Type.UINT).bits(4)
+	replicate(&"net_beacon", DotNetVar.Type.BOOL).server_driven()
+	replicate(&"net_warp", DotNetVar.Type.UINT).bits(4).server_driven()
 
 
 func _net_apply_input(input: DotNetInput, _tick: int) -> void:
