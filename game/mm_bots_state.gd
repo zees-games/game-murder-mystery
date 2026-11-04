@@ -307,6 +307,7 @@ func _finish_annotation(doc: Dictionary) -> DotNpcAiNavAnnotations:
 	# A gap is a running jump the stand-ins do not make.
 	var ride := 0
 	_jump_feet.clear()
+	nav.begin_batch()
 	for link in found.links:
 		var kind := int(link["kind"])
 		if kind == DotNpcAiNavAnnotations.LINK_DROP or kind == DotNpcAiNavAnnotations.LINK_JUMP_UP:
@@ -317,6 +318,7 @@ func _finish_annotation(doc: Dictionary) -> DotNpcAiNavAnnotations:
 			ride += 1
 			if kind == DotNpcAiNavAnnotations.LINK_JUMP_UP:
 				_jump_feet.append(link["from"])
+	nav.end_batch()
 	links_used = ride
 	return found
 
