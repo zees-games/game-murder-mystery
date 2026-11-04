@@ -9,8 +9,8 @@ const MmNetLink := preload("../game/net/mm_net_link.gd")
 const MmPlayer := preload("../game/mm_player.gd")
 
 const SERVER_DIR := "user://mm_dedicated"
-const PORT := 28931
-const QUERY_PORT := 28932
+var PORT := MmTestPorts.free_port(2)
+var QUERY_PORT := PORT + 1
 const TICK_RATE := 60
 
 ## The flag this suite hands the copy of itself it runs. See [method _run_exit_probe].
