@@ -6,8 +6,8 @@ examples/headless_config.gd::long_block	1
 examples/headless_mapcfg.gd::long_block	1
 examples/headless_maps.gd::long_block	4
 examples/headless_net.gd::long_block	1
-examples/headless_run.gd::banner	3
-examples/headless_run.gd::long_block	2
+examples/headless_run.gd::banner	2
+examples/headless_run.gd::long_block	1
 game/mm_audio.gd::long_block	1
 game/mm_avatars.gd::long_block	4
 game/mm_bindings.gd::history	1
@@ -38,9 +38,6 @@ game/mm_rules.gd::long_block	1
 game/mm_server.gd::long_block	3
 game/mm_services.gd::banner	1
 game/mm_services.gd::long_block	9
-game/mm_spectate.gd::banner	5
-game/mm_spectate.gd::history	2
-game/mm_spectate.gd::long_block	12
 game/mm_vote.gd::long_block	7
 game/mm_weapons.gd::long_block	1
 game/net/mm_event.gd::history	1

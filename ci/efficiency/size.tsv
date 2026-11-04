@@ -1,11 +1,10 @@
 # size
 # Baselines only shrink: scripts/<gate> --update lowers or drops entries and refuses to add.
 examples/headless_maps.gd::_test_map	128
-examples/headless_run.gd	1303
+examples/headless_run.gd	845
 examples/headless_run.gd::_test_doors	93
-examples/headless_run.gd::_test_the_client	274
 examples/headless_run.gd::_test_toys	92
-game/mm_game.gd	1451
+game/mm_game.gd	1095
 game/mm_game.gd::_draw_roles	93
 tools/measure_props.gd::_initialize	128
-tools/shot.gd::_run	197
+tools/shot.gd::_run	142

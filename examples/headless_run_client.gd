@@ -228,10 +228,9 @@ func _client_ragdoll(client: Node, world: MmGame) -> void:
 
 ## The same fall again and again at four facings from clear floor.
 func _face_plant_sweep(world: MmGame, ragdolls: DotPlayerRagdolls, victim: MmPlayer, spot: Array) -> void:
-	# The same fall again and again at four facings, nobody pushing, which the pinned seed above
-	# dodged: about one fall in six stays up on its feet with no wall ahead, which is
-	# dot-player-char's to fix (nightly ragdoll-faceplant-upright-1). A body with a wall ahead is
-	# excused. The sweep stands on clear floor, not seat 0, which has a cushion ahead.
+	# Nobody pushing, which the pinned seed above dodged: one fall in six stays upright with no wall
+	# ahead, dot-player-char's to fix (nightly ragdoll-faceplant-upright-1). A wall ahead excuses it.
+	# Stands on clear floor, not seat 0, which has a cushion ahead.
 	var sweep_spot: Vector3 = spot[0]
 	var best_clear := -1.0
 	var sweep_state := world.get_world_3d().direct_space_state
@@ -434,8 +433,6 @@ func _test_gore() -> void:
 	await get_tree().process_frame
 	_finished()
 
-
-# --- Helpers --------------------------------------------------------------------
 
 ## The family's rule since the first play test: M opens the map list, and solo a choice
 ## changes it now. The server's half (the owner's flag, the vote) is in `dedicated` and dot-vote.
