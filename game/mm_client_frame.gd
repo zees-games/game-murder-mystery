@@ -38,10 +38,14 @@ func _ready() -> void:
 	_build_ragdolls()
 	_build_blood()
 
-	_sampler = DotFpsSampler.new(MmPlayer.tunables_for(config))
+	if MmTouch.wanted():
+		_sampler = DotFpsTouchSampler.new(MmPlayer.tunables_for(config))
+	else:
+		_sampler = DotFpsSampler.new(MmPlayer.tunables_for(config))
 	MmPlayer.register_actions(_sampler)
 
 	_build_hud()
+	_build_touch()
 	_build_killcam()
 	_build_chat()
 	_build_audio()
@@ -107,9 +111,9 @@ func is_roaming() -> bool:
 
 func _physics_process(delta: float) -> void:
 	# The use key, held: the game makes the press from the edge, on the server or here.
-	var use := _key_held(MmBindings.USE)
-	var attack := _held(MmBindings.ATTACK) and not is_spectating()
-	var holster := _key_held(MmBindings.HOLSTER)
+	var use := _key_held(MmBindings.USE) or (touch != null and touch.use_held and not _covered())
+	var attack := (_held(MmBindings.ATTACK) or (touch != null and touch.attack_held and not _covered())) and not is_spectating()
+	var holster := _key_held(MmBindings.HOLSTER) or (touch != null and touch.holster_held and not _covered())
 
 	if _offline:
 		if player != null:
