@@ -9,6 +9,10 @@ extends DotGameCheckSuite
 const MmConfig := preload("../game/mm_config.gd")
 const MmGame := preload("../game/mm_game.gd")
 const CHECKS := 34
+const SECTIONS := 5
+
+var _sections_entered := 0
+var _sections_finished := 0
 
 
 func _ready() -> void:
@@ -25,6 +29,7 @@ func _run() -> void:
 		_probe()
 		return
 	print("game-murder-mystery: config binder")
+	_sections_entered += 1
 	var config := MmConfig.new()
 	var binder := MmConfig.make_binder(config)
 	binder.strict = true
@@ -55,11 +60,13 @@ func _run() -> void:
 	_check(not strict.load_layers().ok, "strict: an unknown key is refused")
 	DirAccess.remove_absolute("user://mm_config_bad.json")
 
-	_fall_rules(console)
+	_sections_finished += 1
 
+	_fall_rules(console)
 	_layers()
 	_templates(binder)
 
+	_sections_entered += 1
 	var wb := DotGameWorkbench.new()
 	wb.panel_mode = 1
 	wb.config = {"enabled": false}
@@ -86,18 +93,12 @@ func _run() -> void:
 
 	wb.free()
 	console.free()
-	print("")
-	print("%d passed, %d failed" % [_passed, _failed])
-	for line in _failures:
-		print("  FAIL  %s" % line)
-	if _passed + _failed != CHECKS:
-		print("ERROR: %d checks ran, %d expected." % [_passed + _failed, CHECKS])
-		get_tree().quit(1)
-		return
-	get_tree().quit(1 if _failed > 0 else 0)
+	_sections_finished += 1
+	_report_sections(_sections_entered, _sections_finished, SECTIONS, CHECKS)
 
 
 func _fall_rules(console: DotConsole) -> void:
+	_sections_entered += 1
 	var fall := MmGame.make_fall_rules()
 	var _made := fall.bind_cvars(console.cvar, DotConVar.FLAG_NOTIFY)
 	_check(console.get_int("sv_falldamage") == 1 and fall.enabled, "fall damage is on in this game")
@@ -105,6 +106,7 @@ func _fall_rules(console: DotConsole) -> void:
 	_check(console.get_int("sv_falldamage_lethal") == 40 and fall.damage_for(45.0) > 1000.0, "only a very high speed kills outright")
 	console.set_cvar("sv_falldamage", "0")
 	_check(not fall.enabled and fall.damage_for(60.0) == 0.0, "the cvar turns it off")
+	_sections_finished += 1
 
 
 ## Child process: loads the layers strictly over the test root and prints what the live config holds.
@@ -142,6 +144,7 @@ func _child() -> String:
 
 ## A value set in a cfg file, the environment and argv each reaches the live config, and later layers win.
 func _layers() -> void:
+	_sections_entered += 1
 	_write("game/%s/config_round/game.yml" % GAME, "round_seconds: 222.0\nplayers_per_murderer: 3.0\nmax_murderers: 4\n")
 	_write("game/%s/config_weapons/game.yml" % GAME, "gun_cooldown: 2.5\nblood_stages: 3\ngun_range: 77.0\n")
 	OS.set_environment("MM_GUN_COOLDOWN", "1.75")
@@ -157,10 +160,12 @@ func _layers() -> void:
 	_check(_child().contains("PROBE ok=false"), "strict: a key in the wrong file is refused")
 	for f in ["config_round", "config_weapons"]:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(ROOT.path_join("game/%s/%s/game.yml" % [GAME, f])))
+	_sections_finished += 1
 
 
 ## The shipped cfg files hold every key, in step with MmConfig, and change nothing as they are.
 func _templates(binder: DotGameConfigBinder) -> void:
+	_sections_entered += 1
 	var files := binder.template_files()
 	_check(files.size() == 6, "six shipped cfg files", str(files.size()))
 	var stale := PackedStringArray()
@@ -168,3 +173,4 @@ func _templates(binder: DotGameConfigBinder) -> void:
 		if not FileAccess.file_exists("res://" + path) or FileAccess.get_file_as_string("res://" + path) != files[path]:
 			stale.append(path)
 	_check(stale.is_empty(), "the shipped files match the config (run addons/dot_game/qa/dot_game_cfg_templates.gd)", ",".join(stale))
+	_sections_finished += 1

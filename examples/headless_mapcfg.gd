@@ -11,6 +11,10 @@ const MmMapConfig := preload("../game/mm_map_config.gd")
 ## The file is written to the server tier into user://, so the check does not depend on what ships.
 
 const CHECKS := 8
+const SECTIONS := 1
+
+var _sections_entered := 0
+var _sections_finished := 0
 
 
 func _ready() -> void:
@@ -24,6 +28,7 @@ func _run() -> void:
 		print("SKIPPED: dot-map is not linked at addons/dot_map")
 		get_tree().quit(0)
 		return
+	_sections_entered += 1
 	var console := DotConsole.new()
 	add_child(console)
 	console.cvar("mm_round_seconds", "300", "", DotConVar.FLAG_ARCHIVE)
@@ -58,4 +63,5 @@ func _run() -> void:
 		up = up.get_base_dir()
 	_check(not FileAccess.file_exists(path), "the test file is removed")
 
-	_report(CHECKS)
+	_sections_finished += 1
+	_report_sections(_sections_entered, _sections_finished, SECTIONS, CHECKS)
