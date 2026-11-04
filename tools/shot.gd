@@ -90,41 +90,7 @@ func _run() -> void:
 	if gate != null and not gate.is_open():
 		print("the load gate is still closed, held by %s" % [gate.reasons()])
 
-	# The person at this keyboard in the role the view is about, and the stand-ins drawn round
-	# them, one of them the murderer when this one is not. Through a fresh draw, so the HUD
-	# hears its role the way a round tells it.
-	var roles := {}
-	var mine := &"bystander"
-	if _view in ["murderer", "stab", "end", "killcam"]:
-		mine = &"murderer"
-	elif _view in ["gunner", "shot"]:
-		mine = &"gunner"
-	roles[local.player_id] = mine
-	if mine != &"murderer":
-		for id: StringName in game.players:
-			if id != local.player_id:
-				roles[id] = &"murderer"
-				break
-	game.forced_roles = roles
-	var was := game.round_number
-	game._decide(0, "the shot draws again")
-	for _i in range(900):
-		if game.round_number > was and game.phase != MmGame.Phase.IDLE:
-			break
-		await get_tree().process_frame
-	game._place_everybody()
-	if _view != "grace":
-		game._set_phase(MmGame.Phase.PLAY)
-	# _place_everybody empties every hand, so the gunner is handed the gun after it.
-	if mine == &"gunner":
-		local.has_gun = true
-
-	if _doors != "" and game.map.doors != null:
-		for index in range(game.map.doors.count()):
-			game.map.doors.apply(index, _doors == "open", false, -1)
-
-	if _third:
-		_client.call("toggle_view")
+	await _stage_round(game, local)
 
 	match _view:
 		"overview":
@@ -151,45 +117,9 @@ func _run() -> void:
 			var _drawn := game.set_weapon_drawn(local.player_id, true)
 			await _seconds_of(_seconds)
 		"action":
-			await _until_uncovered()
-			# A stand-in playing an avatar action, from the front, early in the clip.
-			var actor := _somebody_else(game, local)
-			await _seconds_of(0.4)
-			var spot := local.controller.state.position
-			var ahead := Vector3(-sin(deg_to_rad(local.controller.state.yaw)), 0.0, -cos(deg_to_rad(local.controller.state.yaw)))
-			actor.place_at(spot + ahead * 2.5, local.controller.state.yaw + 180.0)
-			await _seconds_of(0.3)
-			await _settle(actor)
-			var parts := _action.split(":")
-			var entry: Dictionary = DotAvatarActions.defaults().find(StringName(parts[0]), parts[1])
-			var ok: bool = actor.figure.body_node().play_action(StringName(parts[1]), bool(entry.get("loop", false)), 0.0)
-			print("action %s: played=%s" % [_action, ok])
-			var at_feet: Vector3 = actor.controller.state.position
-			_free_camera().look_at_from_position(at_feet + ahead * -2.5 + Vector3(0.0, 1.5, 0.0), at_feet + Vector3(0.0, 1.0, 0.0))
-			await _pin_for(actor, 0.4)
-			await _save_extra("_a")
-			await _pin_for(actor, maxf(_seconds - 0.4, 0.1))
+			await _view_action(game, local)
 		"stab":
-			# A stand-in a step in front, the weapon out, the stab, and [member _seconds] of the fall.
-			var victim := _somebody_else(game, local)
-			await _seconds_of(0.4)
-			var feet := local.controller.state.position
-			var ahead := Vector3(-sin(deg_to_rad(local.controller.state.yaw)), 0.0, -cos(deg_to_rad(local.controller.state.yaw)))
-			victim.place_at(feet + ahead * 1.3, local.controller.state.yaw + 180.0)
-			var _drawn := game.set_weapon_drawn(local.player_id, true)
-			await _seconds_of(game.config.draw_seconds + 0.3)
-			local.controller.state.pitch = -12.0
-			var struck := game.attack_now(local.player_id)
-			print("stab: %s, %s %s" % [struck, victim.display_name, "dead" if not victim.is_alive() else "alive"])
-			await _seconds_of(_seconds)
-			if _at != Vector3.INF:
-				var spot := game.body_position(victim)
-				var splat: Node3D = _client.get("blood").decals.get_child(0).get_child(0) if _client.get("blood").decals.get_child(0).get_child_count() > 0 else null
-				print("stab: splat ", splat.global_position if splat != null else "none", " victim ", spot)
-				if splat != null:
-					spot = splat.global_position
-				_free_camera().look_at_from_position(spot + _at, spot + Vector3(0.0, 0.2, 0.0))
-				await _frames(4)
+			await _view_stab(game, local)
 		"shot":
 			# The gun fired past a stand-in at the wall: the tracer, a moment after.
 			await _seconds_of(0.6)
@@ -285,6 +215,86 @@ func _run() -> void:
 	print("saved %s (%s): %s" % [_out, _view, error_string(saved)])
 	await DotShotSeq.new().record(get_tree(), path)
 	get_tree().quit(0 if saved == OK else 1)
+
+
+## The person at this keyboard in the role the view is about, and the stand-ins drawn round them, one a murderer when this one is not, through a fresh draw so the HUD hears its role as a round tells it.
+func _stage_round(game: MmGame, local: MmPlayer) -> void:
+	var roles := {}
+	var mine := &"bystander"
+	if _view in ["murderer", "stab", "end", "killcam"]:
+		mine = &"murderer"
+	elif _view in ["gunner", "shot"]:
+		mine = &"gunner"
+	roles[local.player_id] = mine
+	if mine != &"murderer":
+		for id: StringName in game.players:
+			if id != local.player_id:
+				roles[id] = &"murderer"
+				break
+	game.forced_roles = roles
+	var was := game.round_number
+	game._decide(0, "the shot draws again")
+	for _i in range(900):
+		if game.round_number > was and game.phase != MmGame.Phase.IDLE:
+			break
+		await get_tree().process_frame
+	game._place_everybody()
+	if _view != "grace":
+		game._set_phase(MmGame.Phase.PLAY)
+	# _place_everybody empties every hand, so the gunner is handed the gun after it.
+	if mine == &"gunner":
+		local.has_gun = true
+
+	if _doors != "" and game.map.doors != null:
+		for index in range(game.map.doors.count()):
+			game.map.doors.apply(index, _doors == "open", false, -1)
+
+	if _third:
+		_client.call("toggle_view")
+
+
+func _view_action(game: MmGame, local: MmPlayer) -> void:
+	await _until_uncovered()
+	# A stand-in playing an avatar action, from the front, early in the clip.
+	var actor := _somebody_else(game, local)
+	await _seconds_of(0.4)
+	var spot := local.controller.state.position
+	var ahead := Vector3(-sin(deg_to_rad(local.controller.state.yaw)), 0.0, -cos(deg_to_rad(local.controller.state.yaw)))
+	actor.place_at(spot + ahead * 2.5, local.controller.state.yaw + 180.0)
+	await _seconds_of(0.3)
+	await _settle(actor)
+	var parts := _action.split(":")
+	var entry: Dictionary = DotAvatarActions.defaults().find(StringName(parts[0]), parts[1])
+	var ok: bool = actor.figure.body_node().play_action(StringName(parts[1]), bool(entry.get("loop", false)), 0.0)
+	print("action %s: played=%s" % [_action, ok])
+	var at_feet: Vector3 = actor.controller.state.position
+	_free_camera().look_at_from_position(at_feet + ahead * -2.5 + Vector3(0.0, 1.5, 0.0), at_feet + Vector3(0.0, 1.0, 0.0))
+	await _pin_for(actor, 0.4)
+	await _save_extra("_a")
+	await _pin_for(actor, maxf(_seconds - 0.4, 0.1))
+
+
+## A stand-in a step in front, the weapon out, the stab, and [member _seconds] of the fall.
+func _view_stab(game: MmGame, local: MmPlayer) -> void:
+	var victim := _somebody_else(game, local)
+	await _seconds_of(0.4)
+	var feet := local.controller.state.position
+	var ahead := Vector3(-sin(deg_to_rad(local.controller.state.yaw)), 0.0, -cos(deg_to_rad(local.controller.state.yaw)))
+	victim.place_at(feet + ahead * 1.3, local.controller.state.yaw + 180.0)
+	var _drawn := game.set_weapon_drawn(local.player_id, true)
+	await _seconds_of(game.config.draw_seconds + 0.3)
+	local.controller.state.pitch = -12.0
+	var struck := game.attack_now(local.player_id)
+	print("stab: %s, %s %s" % [struck, victim.display_name, "dead" if not victim.is_alive() else "alive"])
+	await _seconds_of(_seconds)
+	if _at != Vector3.INF:
+		var spot := game.body_position(victim)
+		var splat: Node3D = _client.get("blood").decals.get_child(0).get_child(0) if _client.get("blood").decals.get_child(0).get_child_count() > 0 else null
+		print("stab: splat ", splat.global_position if splat != null else "none", " victim ", spot)
+		if splat != null:
+			spot = splat.global_position
+		_free_camera().look_at_from_position(spot + _at, spot + Vector3(0.0, 0.2, 0.0))
+		await _frames(4)
 
 
 ## The first living stand-in that is not [param local], made the suite's to place: no bot
