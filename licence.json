@@ -1,0 +1,4 @@
+[
+  {"paths": [""], "licence": "MIT", "author": "TMC", "url": "https://github.com/zees-games/game-murder-mystery", "title": "game-murder-mystery (original content)"},
+  {"paths": ["assets"], "licence": "CC0-1.0", "author": "Kenney; Poly Haven; ambientCG", "url": "https://kenney.nl", "title": "Vendored CC0 art; each assets/ folder carries its own licence file"}
+]
