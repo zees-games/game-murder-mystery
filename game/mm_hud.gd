@@ -232,6 +232,12 @@ func _build_status() -> void:
 	_meter_label.offset_top = -241.0
 	_meter_label.offset_bottom = -219.0
 
+	if MmTouch.wanted():
+		# Drop the role block below the shout band: on a phone it would sit under the shout's left end.
+		for control: Control in [_disc, weapon_icon, _as, _lock, _meter_back, _meter_fill, _meter_label]:
+			control.offset_top += MmTouch.ROLE_DROP
+			control.offset_bottom += MmTouch.ROLE_DROP
+
 
 func _build_crosshair() -> void:
 	# A dot, as before: no arms, no outline, no spread.
