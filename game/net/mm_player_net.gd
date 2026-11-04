@@ -148,7 +148,10 @@ func pull() -> void:
 		net_max_health = player.health.max_health
 
 	net_points = clampi(player.points, 0, 65535)
-	net_ping = clampi(player.ping_ms, 0, 1023)
+	# Server-owned: a predicted client's local player only knows its own guess.
+	var server_owned := identity == null or identity.is_authoritative
+	if server_owned:
+		net_ping = clampi(player.ping_ms, 0, 1023)
 	net_watching = player.watching
 	net_armed = clampi(player.armed(), 0, 3)
 	net_blood = clampi(player.blood, 0, 7)
@@ -157,7 +160,8 @@ func pull() -> void:
 	net_ready_in = clampf(player.ready_in, 0.0, 30.0)
 	net_held = player.controller.has_modifier(MmController.HOLD) if player.controller != null else false
 	net_beacon = player.beacon
-	net_warp = player.warps & 0xF
+	if server_owned:
+		net_warp = player.warps & 0xF
 
 
 ## The server's answer, adopted wholesale. On the owner it is the rewind half of
