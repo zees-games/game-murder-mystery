@@ -1,0 +1,15 @@
+{
+	"format": 1,
+	"mirrors": [],
+	"origin": "https://dev.dotgames.org/content",
+	"packs": [
+		{
+			"id": "gamemann/game-murder-mystery",
+			"into": "",
+			"kind": "pack",
+			"manifest_sha256": "2dfb6ed8f058de0d5f4242f45f031187c5710b6db3159dc1814c0c7696c58b50",
+			"optional": false,
+			"version": "1.0.0"
+		}
+	]
+}
