@@ -219,6 +219,45 @@ func describe_lines(in_rotation_fn: Callable = Callable()) -> PackedStringArray:
 ## wall between the rooms is at x 0 with a 1.8 m door at z -1..0.8; everybody starts spread
 ## over both rooms; the garden is x 10..22, with its toys.
 static func practice() -> Dictionary:
+	var source := {
+		"format": MmMapDoc.FORMAT,
+		"kind": MmMapDoc.KIND,
+		"id": String(PRACTICE),
+		"name": "Practice House",
+		"author": "game-murder-mystery",
+		"blurb": "Two rooms and a garden. Small enough that nobody gets far.",
+		"boxes": _practice_boxes(),
+		"props": _practice_props(),
+		"toys": _practice_toys(),
+		"lights": [
+			{"at": [-5.0, 2.8, 0.0], "range": 9.0, "energy": 0.9},
+			{"at": [5.0, 2.8, 0.0], "range": 9.0, "energy": 0.9},
+		],
+		# The door between the rooms stands open and the garden door is shut: the one a bot
+		# has to open to get out.
+		"doors": [
+			{"at": [0.0, 1.1, -0.1], "size": [1.77, 2.18, 0.06], "yaw": 90.0, "hinge": "right",
+				"angle": 100.0, "open": true, "name": "kitchen door"},
+			{"at": [10.1, 1.1, 0.0], "size": [2.37, 2.18, 0.06], "yaw": 90.0, "hinge": "right",
+				"angle": 100.0, "name": "garden door", "tint": [0.3, 0.42, 0.32]},
+		],
+		"spawns": {
+			"players": [
+				{"at": [-5.0, 0.1, 0.0], "yaw": 90.0}, {"at": [-6.0, 0.1, 2.0], "yaw": 90.0},
+				{"at": [-4.0, 0.1, -2.0], "yaw": 90.0}, {"at": [-6.0, 0.1, 4.0], "yaw": 90.0},
+				{"at": [-4.0, 0.1, 2.0], "yaw": 90.0}, {"at": [-6.0, 0.1, -2.0], "yaw": 90.0},
+				{"at": [7.0, 0.1, 0.0], "yaw": -90.0}, {"at": [7.0, 0.1, -2.0], "yaw": -90.0},
+				{"at": [7.0, 0.1, 2.0], "yaw": -90.0}, {"at": [5.0, 0.1, 5.0], "yaw": 180.0},
+				{"at": [16.0, 0.1, -2.0], "yaw": -90.0}, {"at": [16.0, 0.1, 2.0], "yaw": -90.0},
+			],
+		},
+	}
+
+	var normalised := MmMapDoc.validate(source)
+	return normalised.value if normalised.ok else {}
+
+
+static func _practice_boxes() -> Array:
 	var boxes: Array = []
 	var height := 3.2
 
@@ -243,8 +282,11 @@ static func practice() -> Dictionary:
 	boxes.append({"at": [22.1, 1.0, 0.0], "size": [0.2, 2.0, 16.4], "mat": "wood"})
 	boxes.append({"at": [16.0, 1.0, -8.1], "size": [12.0, 2.0, 0.2], "mat": "wood"})
 	boxes.append({"at": [16.0, 1.0, 8.1], "size": [12.0, 2.0, 0.2], "mat": "wood"})
+	return boxes
 
-	var props: Array = [
+
+static func _practice_props() -> Array:
+	return [
 		# West room: a living room.
 		{"id": "furniture_lounge_sofa", "at": [-7.0, 0.0, -6.8], "yaw": 0.0},
 		{"id": "furniture_table_coffee", "at": [-7.0, 0.0, -4.6]},
@@ -280,10 +322,11 @@ static func practice() -> Dictionary:
 		{"id": "nature_flower_red_a", "at": [12.0, 0.0, -7.0]},
 	]
 
-	# Toys in the garden (dot-props'): balls to kick about, a tyre, and a lamp on a switch by the
-	# door. The suites lean on these too: headless_net pushes the beach ball and presses the
-	# switch, and checks a client sees both.
-	var toys: Array = [
+
+## Toys in the garden (dot-props'): balls to kick about, a tyre, and a lamp on a switch by the
+## door. headless_net pushes the beach ball and presses the switch, and checks a client sees both.
+static func _practice_toys() -> Array:
+	return [
 		{"toy": "beach_ball", "at": [16.5, 0.0, -2.5]},
 		{"toy": "football", "at": [14.0, 0.0, 3.0]},
 		{"toy": "tyre", "at": [18.5, 0.0, 4.5], "yaw": 30.0},
@@ -291,39 +334,4 @@ static func practice() -> Dictionary:
 		{"toy": "light_switch", "at": [12.0, 0.0, -3.0], "links": [3]},
 	]
 
-	var source := {
-		"format": MmMapDoc.FORMAT,
-		"kind": MmMapDoc.KIND,
-		"id": String(PRACTICE),
-		"name": "Practice House",
-		"author": "game-murder-mystery",
-		"blurb": "Two rooms and a garden. Small enough that nobody gets far.",
-		"boxes": boxes,
-		"props": props,
-		"toys": toys,
-		"lights": [
-			{"at": [-5.0, 2.8, 0.0], "range": 9.0, "energy": 0.9},
-			{"at": [5.0, 2.8, 0.0], "range": 9.0, "energy": 0.9},
-		],
-		# The door between the rooms stands open and the garden door is shut: the one a bot
-		# has to open to get out.
-		"doors": [
-			{"at": [0.0, 1.1, -0.1], "size": [1.77, 2.18, 0.06], "yaw": 90.0, "hinge": "right",
-				"angle": 100.0, "open": true, "name": "kitchen door"},
-			{"at": [10.1, 1.1, 0.0], "size": [2.37, 2.18, 0.06], "yaw": 90.0, "hinge": "right",
-				"angle": 100.0, "name": "garden door", "tint": [0.3, 0.42, 0.32]},
-		],
-		"spawns": {
-			"players": [
-				{"at": [-5.0, 0.1, 0.0], "yaw": 90.0}, {"at": [-6.0, 0.1, 2.0], "yaw": 90.0},
-				{"at": [-4.0, 0.1, -2.0], "yaw": 90.0}, {"at": [-6.0, 0.1, 4.0], "yaw": 90.0},
-				{"at": [-4.0, 0.1, 2.0], "yaw": 90.0}, {"at": [-6.0, 0.1, -2.0], "yaw": 90.0},
-				{"at": [7.0, 0.1, 0.0], "yaw": -90.0}, {"at": [7.0, 0.1, -2.0], "yaw": -90.0},
-				{"at": [7.0, 0.1, 2.0], "yaw": -90.0}, {"at": [5.0, 0.1, 5.0], "yaw": 180.0},
-				{"at": [16.0, 0.1, -2.0], "yaw": -90.0}, {"at": [16.0, 0.1, 2.0], "yaw": -90.0},
-			],
-		},
-	}
 
-	var normalised := MmMapDoc.validate(source)
-	return normalised.value if normalised.ok else {}

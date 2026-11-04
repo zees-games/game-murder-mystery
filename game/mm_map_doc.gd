@@ -250,15 +250,31 @@ static func validate(source: Dictionary) -> DotResult:
 				return _refuse("%s '%s' is not one of %s" % [key, bed, ", ".join(AMBIENCE_BEDS)], source)
 			doc[key] = bed
 
+	var problem := _fill_lists(source, doc)
+	if problem != "":
+		return _refuse(problem, source)
+
+	if source.has("imported_from"):
+		doc["imported_from"] = str(source["imported_from"])
+
+	problem = _fill_spawns(source, doc)
+	if problem != "":
+		return _refuse(problem, source)
+
+	return DotResult.success(doc)
+
+
+## Fills the boxes, terrain, props, lights and doors of [param doc]; the refusal, or "".
+static func _fill_lists(source: Dictionary, doc: Dictionary) -> String:
 	var boxes: Array = []
 	for raw: Variant in source.get("boxes", []):
 		var box := _box(raw)
 		if box.is_empty():
-			return _refuse("box %d is not {at, size, mat}" % boxes.size(), source)
+			return "box %d is not {at, size, mat}" % boxes.size()
 		boxes.append(box)
 
 	if boxes.size() > MAX_BOXES:
-		return _refuse("%d boxes; the most is %d" % [boxes.size(), MAX_BOXES], source)
+		return "%d boxes; the most is %d" % [boxes.size(), MAX_BOXES]
 
 	doc["boxes"] = boxes
 
@@ -266,10 +282,10 @@ static func validate(source: Dictionary) -> DotResult:
 	# stepped field stops a walker at the first hill. `tint` is the colour it is drawn in.
 	if source.has("terrain"):
 		if not (source["terrain"] is Dictionary):
-			return _refuse("terrain is not a dictionary", source)
+			return "terrain is not a dictionary"
 		var ground := DotMapTerrain.from_dict(source["terrain"])
 		if not ground.ok:
-			return _refuse("terrain: %s" % str(ground), source)
+			return "terrain: %s" % str(ground)
 		var raw_ground: Dictionary = (source["terrain"] as Dictionary).duplicate()
 		raw_ground["tint"] = _floats(raw_ground.get("tint", [1.0, 1.0, 1.0]), 3)
 		doc["terrain"] = raw_ground
@@ -278,18 +294,18 @@ static func validate(source: Dictionary) -> DotResult:
 	for raw: Variant in source.get("props", []):
 		var prop := _prop(raw)
 		if prop.is_empty():
-			return _refuse("prop %d is not {id, at}" % props.size(), source)
+			return "prop %d is not {id, at}" % props.size()
 		props.append(prop)
 
 	if props.size() > MAX_PROPS:
-		return _refuse("%d props; the most is %d" % [props.size(), MAX_PROPS], source)
+		return "%d props; the most is %d" % [props.size(), MAX_PROPS]
 
 	doc["props"] = props
 
 	var lights: Array = []
 	for raw: Variant in source.get("lights", []):
 		if not (raw is Dictionary) or not (raw as Dictionary).has("at"):
-			return _refuse("light %d has no 'at'" % lights.size(), source)
+			return "light %d has no 'at'" % lights.size()
 		var light := raw as Dictionary
 		lights.append({
 			"at": _floats(light["at"], 3),
@@ -299,7 +315,7 @@ static func validate(source: Dictionary) -> DotResult:
 		})
 
 	if lights.size() > MAX_LIGHTS:
-		return _refuse("%d lights; the most is %d" % [lights.size(), MAX_LIGHTS], source)
+		return "%d lights; the most is %d" % [lights.size(), MAX_LIGHTS]
 
 	doc["lights"] = lights
 
@@ -307,14 +323,19 @@ static func validate(source: Dictionary) -> DotResult:
 	for raw: Variant in source.get("doors", []):
 		var door := _door(raw)
 		if door.is_empty():
-			return _refuse("door %d is not {at, size} with a known motion" % doors.size(), source)
+			return "door %d is not {at, size} with a known motion" % doors.size()
 		doors.append(door)
 
 	if doors.size() > MAX_DOORS:
-		return _refuse("%d doors; the most is %d" % [doors.size(), MAX_DOORS], source)
+		return "%d doors; the most is %d" % [doors.size(), MAX_DOORS]
 
 	doc["doors"] = doors
 
+	return _fill_toys(source, doc)
+
+
+## Fills the toys of [param doc]; the refusal, or "".
+static func _fill_toys(source: Dictionary, doc: Dictionary) -> String:
 	# Toys: dot-props' DotPropToyBox placements, `{toy, at, yaw, links?, on?}`. Which ids exist
 	# is the catalogue's to say when the map is built (an unknown one is left out and listed),
 	# so a map with a toy a newer dot-props has still plays on an older server.
@@ -322,41 +343,42 @@ static func validate(source: Dictionary) -> DotResult:
 	for raw: Variant in source.get("toys", []):
 		var toy := DotPropToyBox.normal_placement(raw)
 		if toy.is_empty():
-			return _refuse("toy %d is not {toy, at}" % toys.size(), source)
+			return "toy %d is not {toy, at}" % toys.size()
 		toys.append(toy)
 
 	if toys.size() > MAX_TOYS:
-		return _refuse("%d toys; the most is %d" % [toys.size(), MAX_TOYS], source)
+		return "%d toys; the most is %d" % [toys.size(), MAX_TOYS]
 
 	for toy: Dictionary in toys:
 		for link: int in toy.get("links", []):
 			if link < 0 or link >= toys.size():
-				return _refuse("a %s links to toy %d, and there are %d" % [toy["toy"], link, toys.size()], source)
+				return "a %s links to toy %d, and there are %d" % [toy["toy"], link, toys.size()]
 
 	doc["toys"] = toys
+	return ""
 
-	if source.has("imported_from"):
-		doc["imported_from"] = str(source["imported_from"])
 
+## Fills the spawns of [param doc]; the refusal, or "".
+static func _fill_spawns(source: Dictionary, doc: Dictionary) -> String:
 	var spawns: Variant = source.get("spawns", {})
 	if not (spawns is Dictionary):
-		return _refuse("'spawns' is not {players}", source)
+		return "'spawns' is not {players}"
 
 	var out_spawns := {}
 	for side in ["players"]:
 		var list: Array = []
 		for raw: Variant in (spawns as Dictionary).get(side, []):
 			if not (raw is Dictionary) or not (raw as Dictionary).has("at"):
-				return _refuse("a %s spawn has no 'at'" % side, source)
+				return "a %s spawn has no 'at'" % side
 			list.append({"at": _floats((raw as Dictionary)["at"], 3), "yaw": _r(float((raw as Dictionary).get("yaw", 0.0)))})
 		if list.is_empty():
-			return _refuse("no spawns for the %s" % side, source)
+			return "no spawns for the %s" % side
 		if list.size() > MAX_SPAWNS:
-			return _refuse("%d %s spawns; the most is %d" % [list.size(), side, MAX_SPAWNS], source)
+			return "%d %s spawns; the most is %d" % [list.size(), side, MAX_SPAWNS]
 		out_spawns[side] = list
 
 	doc["spawns"] = out_spawns
-	return DotResult.success(doc)
+	return ""
 
 
 static func _box(raw: Variant) -> Dictionary:

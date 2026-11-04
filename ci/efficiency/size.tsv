@@ -5,9 +5,7 @@ examples/headless_run.gd	1303
 examples/headless_run.gd::_test_doors	93
 examples/headless_run.gd::_test_the_client	274
 examples/headless_run.gd::_test_toys	92
-game/mm_catalogue.gd::practice	109
 game/mm_game.gd	1451
 game/mm_game.gd::_draw_roles	93
-game/mm_map_doc.gd::validate	168
 tools/measure_props.gd::_initialize	128
 tools/shot.gd::_run	197
