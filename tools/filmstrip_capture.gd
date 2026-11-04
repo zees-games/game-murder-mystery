@@ -113,12 +113,27 @@ func _process(_delta: float) -> bool:
 		feet = _before.lerp(feet, alpha)
 	_player.present_body(false, feet, Color(0.3, 0.5, 0.85))
 	if _skeleton == null:
-		_skeleton = _player.figure.find_children("*", "Skeleton3D", true, false).front() as Skeleton3D
+		_find_skeleton()
 	_cam.global_position = feet + Vector3(2.6, 1.2, 0.0)
 	_cam.look_at(feet + Vector3(0.0, 0.9, 0.0))
 	if time >= 0.0 and _player.figure != null:
 		_sample(time - (1.0 - alpha) / float(TICK_RATE), feet)
 	return false
+
+
+## Once, on the first frame: the figure only exists after present_body, which needs the controller.
+func _find_skeleton() -> void:
+	_skeleton = _skeleton_in(_player.figure)
+
+
+func _skeleton_in(node: Node) -> Skeleton3D:
+	if node is Skeleton3D:
+		return node
+	for child in node.get_children():
+		var found := _skeleton_in(child)
+		if found != null:
+			return found
+	return null
 
 
 func _speed() -> float:
