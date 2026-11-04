@@ -19,7 +19,9 @@ var _tick := 0
 var _prev_time := 0.0
 var _before := Vector3.INF
 var _metrics := DotClipMetrics.new()
-var _log: Array[String] = []
+var _rows: Array = []
+var _skeleton: Skeleton3D = null
+var _done := false
 var _armed := false
 
 
@@ -64,6 +66,8 @@ func _initialize() -> void:
 	if _clip.fields.get("armed", "") != "":
 		_player.weapon_id = StringName(_clip.fields["armed"])
 		_player.weapon_drawn = true
+	_player.present_body(false, Vector3.ZERO, Color(0.3, 0.5, 0.85))
+	_skeleton = _player.figure.find_children("*", "Skeleton3D", true, false).front() as Skeleton3D
 	_cam = Camera3D.new()
 	_cam.fov = 50.0
 	_cam.current = true
@@ -103,7 +107,7 @@ func _physics_process(_delta: float) -> bool:
 func _process(_delta: float) -> bool:
 	var time := _clip_time()
 	if time >= _clip.duration:
-		_report()
+		_done = true
 		return true
 	var alpha := clampf(Engine.get_physics_interpolation_fraction(), 0.0, 1.0)
 	var feet := _player.controller.state.position
@@ -123,22 +127,32 @@ func _speed() -> float:
 
 
 func _sample(time: float, feet: Vector3) -> void:
-	var skeleton := _player.figure.find_children("*", "Skeleton3D", true, false).front() as Skeleton3D
-	var sample := _metrics.pose_sample(time, skeleton, feet, _player.controller.state.is_grounded())
-	var row := "%.2f pos=(%.1f,%.1f) root_v=%.2f clip=%s" % [time, feet.x, feet.z, _speed(), _player.figure.clip]
-	for foot: Vector3 in sample.get("feet", []):
-		row += "  h=%.3f" % (foot.y - feet.y)
-	_log.append(row)
-	var points: Array[Vector2] = []
-	for spot in [feet, feet + Vector3(0.0, 1.7, 0.0)]:
-		points.append(Vector2(-1.0, -1.0) if _cam.is_position_behind(spot) else _cam.unproject_position(spot) / Vector2(VIEW))
-	sample["points"] = points
+	var sample := _metrics.pose_sample(time, _skeleton, feet, _player.controller.state.is_grounded())
+	_rows.append([time, feet, _speed(), _player.figure.clip, sample.get("feet", [])])
+	sample["points"] = [_screen(feet), _screen(feet + Vector3(0.0, 1.7, 0.0))]
 	sample["blocked"] = false
 	_metrics.add(sample)
+
+
+func _screen(spot: Vector3) -> Vector2:
+	return Vector2(-1.0, -1.0) if _cam.is_position_behind(spot) else _cam.unproject_position(spot) / Vector2(VIEW)
+
+
+## Formats after the loop ends (the SceneTree calls this on quit), so no text is built per frame.
+func _finalize() -> void:
+	if _done:
+		_report()
 
 
 func _report() -> void:
 	var limits := DotClipMetrics.limits_for("res://tools/filmstrip_thresholds.json", _clip.name)
 	var text := DotClipMetrics.table(_clip.name, _metrics.evaluate(limits))
 	print(text)
-	DotClipMetrics.write_report("res://screenshots/filmstrip/%s_report.txt" % _clip.name, text, _log)
+	var log: Array[String] = []
+	for r: Array in _rows:
+		var feet: Vector3 = r[1]
+		var row := "%.2f pos=(%.1f,%.1f) root_v=%.2f clip=%s" % [r[0], feet.x, feet.z, r[2], r[3]]
+		for foot: Vector3 in r[4]:
+			row += "  h=%.3f" % (foot.y - feet.y)
+		log.append(row)
+	DotClipMetrics.write_report("res://screenshots/filmstrip/%s_report.txt" % _clip.name, text, log)
