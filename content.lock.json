@@ -1,7 +1,7 @@
 {
 	"format": 1,
 	"mirrors": [],
-	"origin": "https://dev.dotgames.org/content",
+	"origin": "https://dotgames.org/content",
 	"packs": [
 		{
 			"id": "gamemann/game-murder-mystery",
