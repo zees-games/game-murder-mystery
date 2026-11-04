@@ -139,6 +139,14 @@ func _build() -> void:
 	_shout.offset_right = 600.0
 	_shout.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_shout.add_theme_color_override("font_color", Color(0.99, 0.86, 0.40))
+	if MmTouch.wanted():
+		# The desktop band sits across the DRAW button on a phone; this one ends above the highest button.
+		_shout.add_theme_font_size_override("font_size", MmTouch.SHOUT_FONT)
+		_shout.offset_top = MmTouch.SHOUT_TOP
+		_shout.offset_bottom = MmTouch.SHOUT_BOTTOM
+		_shout.offset_left = -MmTouch.SHOUT_HALF_WIDTH
+		_shout.offset_right = MmTouch.SHOUT_HALF_WIDTH
+		_shout.clip_text = true
 
 	_build_status()
 

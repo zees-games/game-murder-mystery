@@ -5,7 +5,7 @@ const MmTouch := preload("../game/mm_touch.gd")
 ## The touch layout: the buttons fit a phone at three sizes without overlapping, and each DotTouchButtons is freed.
 ## Run: `godot --headless --path . res://examples/headless_touch.tscn`
 
-const CHECKS := 8
+const CHECKS := 11
 
 
 func _ready() -> void:
@@ -36,6 +36,8 @@ func _run() -> void:
 					if gap < 4.0:
 						clash = "%s and %s" % [ids[i], ids[j]]
 			_check(clash == "", "%s: no two buttons overlap at %dx%d" % [label, size.x, size.y], clash)
+			var shout := Rect2(size.x * 0.5 - MmTouch.SHOUT_HALF_WIDTH, MmTouch.SHOUT_TOP, MmTouch.SHOUT_HALF_WIDTH * 2.0, MmTouch.SHOUT_BOTTOM - MmTouch.SHOUT_TOP)
+			_check(not shout.intersects(buttons.footprint()), "%s: the shout clears every button at %dx%d" % [label, size.x, size.y], str(shout))
 			buttons.free()
 	DotPlatform.touch_override = 0
 	var off := DotTouchButtons.new()
