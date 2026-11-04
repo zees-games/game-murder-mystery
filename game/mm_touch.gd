@@ -13,6 +13,9 @@ const SHOUT_BOTTOM := 117.0
 const SHOUT_HALF_WIDTH := 320.0
 const SHOUT_FONT := 18
 
+## How far the role block (disc, weapon, cooldown) moves down so the shout's left end clears it.
+const ROLE_DROP := 130.0
+
 ## Held now, read by the client each tick beside the keys.
 var attack_held: bool = false
 var use_held: bool = false
