@@ -39,6 +39,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 
+	if touch != null and (event is InputEventScreenTouch or event is InputEventScreenDrag):
+		if _offline and player != null and player.sampler != null:
+			player.sampler.handle_event(event)
+		elif _sampler != null:
+			_sampler.handle_event(event)
+		return
+
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
 

@@ -31,6 +31,21 @@ func _build_hud() -> void:
 	add_child(hud)
 
 
+## The phone's buttons, on a layer of their own under the menu's. The sampler is the touch one
+## [method _ready] made, so a finger on a button is not also a finger on the stick or the look.
+func _build_touch() -> void:
+	if not (_sampler is DotFpsTouchSampler):
+		return
+	var layer := CanvasLayer.new()
+	layer.name = "TouchLayer"
+	layer.layer = hud.layer + 1
+	add_child(layer)
+	touch = MmTouch.new()
+	touch.name = "Touch"
+	touch.build(_sampler as DotFpsTouchSampler)
+	layer.add_child(touch)
+
+
 ## dot-game's chat box and microphone, with this game's channels and voice format.
 func _build_chat() -> void:
 	chat = DotGameChatClient.new()
