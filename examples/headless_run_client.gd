@@ -345,6 +345,55 @@ func _no_body(figure: Node3D, body: Object, ragdolls: DotPlayerRagdolls) -> Stri
 
 ## The family's rule since the first play test: H opens help in every game, nothing else in
 ## the table is on H, and the Escape menu has Help & commands and Leave.
+func _test_spectate_tap() -> void:
+	_section("out, one tap or left click steps once, whether or not the engine emulates the mouse")
+	var game := await _round(FOUR)
+	var m := _p(game, &"u1m")
+	var b := _p(game, &"u3b")
+	var id := b.player_id
+	game._kill(b, m, MmGame.DIED_STABBED)
+	game.spectate.manager.set_mode(String(id), DotSpectatorView.Mode.CHASE)
+	var client: Node = (load("res://game/mm_client.gd") as GDScript).new()
+	client.set(&"game", game)
+	client.set(&"player", b)
+	_check(client.is_spectating(), "the client is out and spectating")
+
+	# Two live targets besides the first, so a double step lands somewhere a single step does not.
+	var start: Variant = game.spectate.watching(id)
+	var touch := InputEventScreenTouch.new()
+	touch.pressed = true
+	client._unhandled_input(touch)
+	var after_touch: Variant = game.spectate.watching(id)
+	_check(after_touch != start, "a real touch steps to the next target")
+
+	var emulated := InputEventMouseButton.new()
+	emulated.button_index = MOUSE_BUTTON_LEFT
+	emulated.pressed = true
+	emulated.device = InputEvent.DEVICE_ID_EMULATION
+	client._unhandled_input(emulated)
+	_check(game.spectate.watching(id) == after_touch, "the mouse press the engine emulates from it steps nothing more")
+
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	client._unhandled_input(click)
+	var after_click: Variant = game.spectate.watching(id)
+	_check(after_click != after_touch and after_click != start, "a real left click steps once")
+
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	client._unhandled_input(release)
+	_check(game.spectate.watching(id) == after_click, "and a release steps nothing")
+
+	var right := InputEventMouseButton.new()
+	right.button_index = MOUSE_BUTTON_RIGHT
+	right.pressed = true
+	client._unhandled_input(right)
+	_check(game.spectate.watching(id) == after_touch, "the right button still steps back")
+	client.free()
+	_finished()
+
+
 func _test_help_and_menu() -> void:
 	_section("H opens help, and the Escape menu has Help and Leave")
 	var settings := MmSettings.new()
