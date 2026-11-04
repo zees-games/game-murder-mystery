@@ -1,13 +1,10 @@
 # frame-hazards
 # Baselines only shrink: scripts/<gate> --update lowers or drops entries and refuses to add.
 game/mm_game.gd::_check_round::string_build	1
-game/mm_game.gd::_drop_gun::string_build	1
 game/mm_game.gd::_respawn_the_fallen::duplicate	1
 game/mm_game.gd::players_on::alloc_array	1
 game/mm_game.gd::round_sentence::string_build	1
-game/mm_game.gd::set_weapon_drawn::string_build	1
 game/mm_game.gd::use_door::string_build	1
-game/mm_game.gd::weapon_name::string_build	1
 game/mm_hud.gd::_door_words::string_build	2
 game/mm_hud.gd::_draw_disc::string_build	4
 game/mm_hud.gd::_draw_hints::string_build	3
