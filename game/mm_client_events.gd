@@ -17,7 +17,8 @@ func _on_phase(phase: int) -> void:
 			if game.effects != null:
 				var _flashed := game.effects.flash(&"go")
 			if is_murderer():
-				hud.shout("%s to draw your %s. Nobody may see." % [_key(MmBindings.HOLSTER), game.weapon_name().to_lower()], 3.0)
+				var draw := "Draw" if MmTouch.wanted() else "%s to draw" % _key(MmBindings.HOLSTER)
+				hud.shout("%s your %s. Nobody may see." % [draw, game.weapon_name().to_lower()], 3.0)
 			else:
 				hud.shout("THE MURDERER IS ARMED" if not player.has_gun else "YOU HAVE THE GUN", 2.4)
 
