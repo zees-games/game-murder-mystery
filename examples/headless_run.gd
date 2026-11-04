@@ -8,9 +8,9 @@ const MmProps := preload("../game/mm_props.gd")
 ## is decided, falls, joiners, stats, bot chat, doors, toys, the offline client. Counts sections AND checks (a script error
 ## aborts a function after its section counter is satisfied). Map numbers are the practice house's ([method MmCatalogue.practice]).
 
-const SECTIONS := 29
+const SECTIONS := 30
 
-const CHECKS := 207
+const CHECKS := 213
 
 ## The first chair round the kitchen table in the practice house: where it stands.
 const CHAIR_AT := Vector3(3.6, 0.0, 1.2)
@@ -39,6 +39,7 @@ func _run() -> void:
 	await _test_blood()
 	await _test_free_roam()
 	await _test_the_flashlight()
+	await _test_spectate_tap()
 	await _test_the_round()
 	await _test_falls()
 	await _test_fall_damage()
