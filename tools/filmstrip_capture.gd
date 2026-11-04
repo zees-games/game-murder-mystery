@@ -66,8 +66,6 @@ func _initialize() -> void:
 	if _clip.fields.get("armed", "") != "":
 		_player.weapon_id = StringName(_clip.fields["armed"])
 		_player.weapon_drawn = true
-	_player.present_body(false, Vector3.ZERO, Color(0.3, 0.5, 0.85))
-	_skeleton = _player.figure.find_children("*", "Skeleton3D", true, false).front() as Skeleton3D
 	_cam = Camera3D.new()
 	_cam.fov = 50.0
 	_cam.current = true
@@ -114,6 +112,8 @@ func _process(_delta: float) -> bool:
 	if _before.is_finite():
 		feet = _before.lerp(feet, alpha)
 	_player.present_body(false, feet, Color(0.3, 0.5, 0.85))
+	if _skeleton == null:
+		_skeleton = _player.figure.find_children("*", "Skeleton3D", true, false).front() as Skeleton3D
 	_cam.global_position = feet + Vector3(2.6, 1.2, 0.0)
 	_cam.look_at(feet + Vector3(0.0, 0.9, 0.0))
 	if time >= 0.0 and _player.figure != null:
