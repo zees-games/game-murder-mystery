@@ -3,7 +3,12 @@ extends DotGameCheckSuite
 
 const MmConfig := preload("../game/mm_config.gd")
 const MmGame := preload("../game/mm_game.gd")
+const MmMapDoc := preload("../game/mm_map_doc.gd")
+const MmWeapons := preload("../game/mm_weapons.gd")
 const MmPlayer := preload("../game/mm_player.gd")
+
+## The roles most sections play: one murderer, one gunner, two bystanders.
+const FOUR := {&"u1m": &"murderer", &"u2g": &"gunner", &"u3b": &"bystander", &"u4b": &"bystander"}
 
 const TICK_RATE := 64
 const TICK := 1.0 / float(TICK_RATE)
@@ -12,6 +17,8 @@ const TICK := 1.0 / float(TICK_RATE)
 const PARK := Vector3(18.0, 0.05, 5.0)
 
 var _worlds: Array[MmGame] = []
+var _sections_entered := 0
+var _sections_finished := 0
 
 
 ## A world on the practice house, stepped by hand. The previous one is freed first: every
@@ -150,3 +157,12 @@ func _prop_near(game: MmGame, at: Vector3) -> int:
 		if ((game.map.props[index] as Dictionary)["transform"] as Transform3D).origin.distance_to(at) < 0.05:
 			return index
 	return -1
+
+
+func _section(name: String) -> void:
+	_sections_entered += 1
+	print(name)
+
+
+func _finished() -> void:
+	_sections_finished += 1
