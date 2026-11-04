@@ -4,6 +4,7 @@ const MmGame := preload("mm_game.gd")
 const MmPlayer := preload("mm_player.gd")
 const MmBindings := preload("mm_bindings.gd")
 const MmController := preload("mm_controller.gd")
+const MmTouch := preload("mm_touch.gd")
 
 ## What a player needs on screen: the clock, how many are alive, this player's own role (roles
 ## are secret, so only `game.team_of(player)`, the ROLE sent to this player alone), what they
@@ -412,7 +413,8 @@ func _draw_disc(role: StringName) -> void:
 
 
 func _draw_hints(role: StringName) -> void:
-	if player == null or not player.is_alive() or player.watching or role == &"":
+	# Keyboard hints name keys a touch player does not have, and sit under the Menu button.
+	if MmTouch.wanted() or player == null or not player.is_alive() or player.watching or role == &"":
 		_hints.text = ""
 		return
 
