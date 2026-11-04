@@ -7,6 +7,12 @@ const MmPlayer := preload("mm_player.gd")
 
 const EDGE_MARGIN := 24.0
 
+## The shout band on a phone: below the clock, above the highest button (JUMP, top at y 121 at 667x375).
+const SHOUT_TOP := 92.0
+const SHOUT_BOTTOM := 117.0
+const SHOUT_HALF_WIDTH := 320.0
+const SHOUT_FONT := 18
+
 ## Held now, read by the client each tick beside the keys.
 var attack_held: bool = false
 var use_held: bool = false
