@@ -18,6 +18,7 @@
 #   tools/shot.sh --view=ragdoll --seconds=0.6                    # a stand-in slain, its body 0.6 s into the fall
 #   tools/shot.sh --view=spots --mm-map-ids=hs_manor              # where the stand-ins wander, from above
 #   tools/shot.sh --view=door                                     # at a door: the use-key prompt
+#   tools/shot.sh --view=bystander --touch                        # the phone layout at 844x390, buttons fitted as the client does
 #   tools/shot.sh --view=bystander --board                        # with the Tab scoreboard open
 #   tools/shot.sh --view=room --doors=open --at=... --look=...    # every door open (or shut)
 #   tools/shot.sh --view=overview --out=res://screenshots/x.png   # any --mm-* is the game's config
@@ -35,6 +36,7 @@ out=""
 config=("--mm-warmup-seconds=0" "--mm-grace-seconds=3" "--mm-intermission-seconds=0")
 extra=()
 engine=()
+size="1280x720"
 
 for arg in "$@"; do
     case "$arg" in
@@ -43,6 +45,7 @@ for arg in "$@"; do
         --out=*)     out="${arg#*=}" ;;
         --renderer=*) engine=(--rendering-method "${arg#*=}") ;;
         --mm-*)      config+=("$arg") ;;
+        --touch)     extra+=("$arg"); size="844x390" ;;
         --at=*|--look=*|--third|--board|--name=*|--doors=*|--pick=*|--place=*|--action=*) extra+=("$arg") ;;
         *)           echo "unknown argument: $arg" >&2; exit 2 ;;
     esac
@@ -54,5 +57,5 @@ for e in "${extra[@]}"; do
 done
 [ -n "$out" ] || out="res://screenshots/${name}.png"
 
-exec xvfb-run -a -s "-screen 0 1280x720x24" "${GODOT:-godot}" --path . "${engine[@]}" --resolution 1280x720 \
+exec xvfb-run -a -s "-screen 0 ${size}x24" "${GODOT:-godot}" --path . "${engine[@]}" --resolution "$size" \
     res://tools/shot.tscn -- "--seconds=$seconds" "--view=$view" "--out=$out" "${extra[@]}" "${config[@]}"
