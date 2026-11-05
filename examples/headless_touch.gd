@@ -6,7 +6,7 @@ const MmHud := preload("../game/mm_hud.gd")
 ## The touch layout: the buttons fit a phone at three sizes without overlapping, and each DotTouchButtons is freed.
 ## Run: `godot --headless --path . res://examples/headless_touch.tscn`
 
-const CHECKS := 13
+const CHECKS := 14
 
 
 func _ready() -> void:
@@ -16,13 +16,14 @@ func _ready() -> void:
 
 func _run() -> void:
 	print("game-murder-mystery: touch buttons")
-	var sets: Dictionary = {"mm": MmTouch.layout()}
+	var sets: Dictionary = {"mm": MmTouch.touch_layout().buttons()}
 	for label: String in sets:
 		var layout: Array[Dictionary] = sets[label]
 		var ids: Array[StringName] = []
 		for b: Dictionary in layout:
 			ids.append(b["id"])
 		_check(ids.size() >= 4, "%s: the layout has its buttons" % label)
+		_check(ids.has(MmTouch.HOLSTER) and ids.has(DotGameTouchLayout.FIRE) and ids.has(DotGameTouchLayout.USE) and ids.has(DotGameTouchLayout.JUMP) and ids.has(DotGameTouchLayout.CROUCH), "%s: fire, use, holster, jump and crouch are laid out" % label, str(ids))
 		for size: Vector2 in [Vector2(844, 390), Vector2(667, 375), Vector2(932, 430)]:
 			var buttons := DotTouchButtons.new()
 			buttons.margin = MmTouch.EDGE_MARGIN

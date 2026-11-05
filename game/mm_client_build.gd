@@ -42,10 +42,8 @@ func _build_touch() -> void:
 	add_child(layer)
 	touch = MmTouch.new()
 	touch.name = "Touch"
-	touch.build(_sampler as DotFpsTouchSampler)
+	touch.build(_sampler as DotFpsTouchSampler, platform)
 	layer.add_child(touch)
-	if platform != null:
-		platform.fit_touch_buttons(touch.buttons, MmTouch.layout())
 
 
 ## dot-game's chat box and microphone, with this game's channels and voice format.
