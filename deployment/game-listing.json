@@ -1,0 +1,15 @@
+{
+  "format": "tmc-game-listing",
+  "version": 1,
+  "listing": {
+    "name": "Murder Mystery",
+    "description": "Everybody looks the same, and one or two of them are murderers. Bystanders, some of them armed with a single-shot gun, must find out who it is before they get to them, by shooting the murderer or outlasting the clock.",
+    "tags": ["3D", "Multiplayer"],
+    "platforms": ["PLATFORM_WEB"],
+    "graphicsType": "THREE_D",
+    "tmcKind": "GAME"
+  },
+  "pack": {
+    "id": "gamemann/game-murder-mystery"
+  }
+}
