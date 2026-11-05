@@ -59,6 +59,8 @@ func _build_chat() -> void:
 	chat.max_length = MmServices.chat_rules().max_length
 	# No team key: this game has no team channel, because a team is a secret (mm_services.gd).
 	chat.window_settings = {"team_action": &""}
+	if MmTouch.wanted():
+		chat.window_settings["max_lines"] = MmTouch.CHAT_LINES
 	chat.voice_config = MmServices.voice_format()
 	add_child(chat)
 
