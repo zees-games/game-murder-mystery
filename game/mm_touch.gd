@@ -14,7 +14,10 @@ const SHOUT_HALF_WIDTH := 320.0
 const SHOUT_FONT := 18
 
 ## How far the role block (disc, weapon, cooldown) moves down so the shout's left end clears it.
-const ROLE_DROP := 130.0
+const ROLE_DROP := 104.0
+
+## Chat lines kept on a phone: the log is bottom left under the role block, and a tall one climbs into it.
+const CHAT_LINES := 3
 
 ## Held now, read by the client each tick beside the keys.
 var attack_held: bool = false
