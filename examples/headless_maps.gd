@@ -9,7 +9,7 @@ const MmMapDoc := preload("../game/mm_map_doc.gd")
 ## floating, nothing to hide behind, a blocked door, a document too big to send. Our own maps get
 ## [constant CHECKS_PER_MAP] checks each, the foreign ones [constant CHECKS_PER_FOREIGN].
 
-const MAPS := ["mm_practice", "mm_mansion", "mm_motel", "mm_silence_hollow", "mm_factory_winter", "mm_open_yard", "mm_office_murder"]
+const MAPS := ["mm_practice", "mm_mansion", "mm_motel", "mm_silence_hollow", "mm_factory_winter", "mm_open_yard", "mm_office_murder", "mm_deco_mansion", "functionalist_night"]
 const CHECKS_PER_MAP := 15
 const CHECKS_PER_FOREIGN := 5
 
