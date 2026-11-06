@@ -423,6 +423,33 @@ func _draw_roles() -> void:
 
 	keys.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
 
+	var murderers := _draw_murderers(keys)
+
+	DotTeamRotation.note(murderer_history, keys, murderers, round_number)
+
+	var rest: Array[StringName] = []
+
+	for id in keys:
+		if not murderers.has(id):
+			rest.append(id)
+
+	var stream := random.stream(&"roles")
+	var gunners := _draw_gunners(keys.size(), rest, stream)
+	var palette := _shirt_palette(stream)
+	var weapon := weapon_id()
+
+	for index in range(keys.size()):
+		var id := keys[index]
+		var player: MmPlayer = players[id]
+		player.shirt = palette[index % palette.size()]
+		player.weapon_id = weapon
+		_set_side(id, MURDERERS if murderers.has(id) else BYSTANDERS)
+		player.has_gun = gunners.has(id)
+		player.retune()
+
+
+## The murderers of this round out of the sorted `keys`: the rotation's draw, or `forced_roles`.
+func _draw_murderers(keys: Array[StringName]) -> Array[StringName]:
 	var want := config.murderers_for(keys.size())
 	# Seats behind a loading cover are not drawn while enough others can be: a murderer that
 	# cannot see would sit out the round. If too few are loaded, everybody is a candidate.
@@ -452,15 +479,11 @@ func _draw_roles() -> void:
 				if not forced_roles.has(id):
 					murderers.append(id)
 
-	DotTeamRotation.note(murderer_history, keys, murderers, round_number)
+	return murderers
 
-	var rest: Array[StringName] = []
 
-	for id in keys:
-		if not murderers.has(id):
-			rest.append(id)
-
-	var stream := random.stream(&"roles")
+## The gunners out of the people who are not murderers (`rest`), at random from `stream`.
+func _draw_gunners(count: int, rest: Array[StringName], stream: DotRandomStream) -> Array[StringName]:
 	var gunners: Array[StringName] = []
 	var pool := rest.duplicate()
 	var loaded_pool: Array[StringName] = []
@@ -469,7 +492,7 @@ func _draw_roles() -> void:
 		if can_be_harmed(id):
 			loaded_pool.append(id)
 
-	if loaded_pool.size() >= config.gunners_for(keys.size(), rest.size()):
+	if loaded_pool.size() >= config.gunners_for(count, rest.size()):
 		pool = loaded_pool
 
 	if not forced_roles.is_empty():
@@ -480,13 +503,16 @@ func _draw_roles() -> void:
 			elif forced_roles.has(id):
 				pool.erase(id)
 
-	for _i in range(maxi(config.gunners_for(keys.size(), rest.size()) - gunners.size(), 0)):
+	for _i in range(maxi(config.gunners_for(count, rest.size()) - gunners.size(), 0)):
 		if pool.is_empty() or not forced_roles.is_empty():
 			break
 		gunners.append(pool.pop_at(stream.next_range_i(0, pool.size() - 1)))
 
-	# The shirts: a shuffled palette, so no two share one until there are more people than
-	# colours.
+	return gunners
+
+
+## A shuffled palette of shirts, so no two share one until there are more people than colours.
+func _shirt_palette(stream: DotRandomStream) -> Array[int]:
 	var palette: Array[int] = []
 
 	for i in range(SHIRTS.size()):
@@ -498,16 +524,7 @@ func _draw_roles() -> void:
 		palette[i] = palette[j]
 		palette[j] = swap
 
-	var weapon := weapon_id()
-
-	for index in range(keys.size()):
-		var id := keys[index]
-		var player: MmPlayer = players[id]
-		player.shirt = palette[index % palette.size()]
-		player.weapon_id = weapon
-		_set_side(id, MURDERERS if murderers.has(id) else BYSTANDERS)
-		player.has_gun = gunners.has(id)
-		player.retune()
+	return palette
 
 
 func _set_side(id: StringName, side: int) -> void:
