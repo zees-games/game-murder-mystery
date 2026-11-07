@@ -44,6 +44,12 @@ const GUN_PARTS := [
 ## grip is derived from its handle (the first part) by [method grip_of].
 const GRIPS := {
 	&"gun": {"grip": Vector3(0.0, -0.07, 0.02), "support": Vector3(-0.02, -0.08, -0.03)},
+	# Rendered with tools/shot.sh: one hand low on every handle. A support hand on the bat or axe
+	# was tried and dropped: the second sleeve crosses the view and fills the lower third.
+	&"cleaver": {"grip": Vector3(0.0, 0.04, 0.0)},
+	&"sword": {"grip": Vector3(0.0, 0.04, 0.0)},
+	&"axe": {"grip": Vector3(0.0, 0.07, 0.0)},
+	&"bat": {"grip": Vector3(0.0, 0.09, 0.0)},
 }
 
 ## Weapons longer than this lean their tip away from the crosshair in first person.
