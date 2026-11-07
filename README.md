@@ -49,6 +49,7 @@ Every Hide & Seek, Prop Hunt and Playground map is playable too: the game reads 
 | **Q** | Draw or put away the weapon (murderer) |
 | **E** | Open or shut a door; kick, push or press the toy you are looking at |
 | **V** | Talk (voice, heard by the people near you) |
+| **F** | Flashlight, for everybody still in the round (off on a lit map; on at start where the map is dark). A lit beam is seen by everyone who can see you, a hiding murderer included |
 | **F5** | First or third person |
 | **Tab** | Scoreboard (hold) |
 | **H** | Help: the goal, the rules and every key as you have it bound |

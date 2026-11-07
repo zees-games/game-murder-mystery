@@ -42,6 +42,9 @@ var net_armed: int = 0
 ## How much blood shows on them, 0..7 (`MmPlayer.blood`). Everybody's: it is the tell.
 var net_blood: int = 0
 
+## `MmPlayer.flashlight`. Everybody's: the beam is drawn for the others, and it is no role tell.
+var net_flashlight: bool = false
+
 ## Their shirt this round, an index into `MmGame.SHIRTS`.
 var net_shirt: int = 0
 
@@ -97,6 +100,7 @@ func _register_net_vars() -> void:
 	replicate(&"net_watching", DotNetVar.Type.BOOL)
 	replicate(&"net_armed", DotNetVar.Type.UINT).bits(2)
 	replicate(&"net_blood", DotNetVar.Type.UINT).bits(3)
+	replicate(&"net_flashlight", DotNetVar.Type.BOOL)
 	replicate(&"net_shirt", DotNetVar.Type.UINT).bits(4)
 	replicate(&"net_attacks", DotNetVar.Type.UINT).bits(4)
 	var _ready := replicate(&"net_ready_in", DotNetVar.Type.FLOAT_RANGE).range_of(0.0, 30.0).bits(8).to_owner_only()
@@ -152,6 +156,7 @@ func pull() -> void:
 	net_watching = player.watching
 	net_armed = clampi(player.armed(), 0, 3)
 	net_blood = clampi(player.blood, 0, 7)
+	net_flashlight = player.flashlight
 	net_shirt = clampi(player.shirt, 0, 15)
 	net_attacks = player.attacks & 0xF
 	net_ready_in = clampf(player.ready_in, 0.0, 30.0)
@@ -223,6 +228,7 @@ func _adopt() -> void:
 	player.held_until = 1.0 if net_held else -1.0
 	player.beacon = net_beacon
 	player.blood = net_blood
+	player.flashlight = net_flashlight
 	player.shirt = net_shirt
 	player.ready_in = net_ready_in
 	# What the mirror knows of a hand is what shows: the gun, or a drawn weapon.

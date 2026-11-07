@@ -230,6 +230,23 @@ func _test_free_roam_crosses() -> void:
 	_finished()
 
 
+func _test_the_flashlight_crosses() -> void:
+	_section("the flashlight is asked for, and the server's state comes back to everybody")
+	await _into_play({_me(): &"murderer", _stand_in.player_id: &"bystander", _second.player_id: &"gunner"})
+	var server_me := _server_me()
+	var was := server_me.flashlight
+	_client_bridge.ask_flashlight()
+	await _steps(8)
+	_check(server_me.flashlight != was, "the server switched it")
+	_check(_mine().flashlight == server_me.flashlight, "and the owner is told")
+	var theirs: MmPlayer = _client_game.players[_second.player_id]
+	_check(theirs.flashlight == _second.flashlight, "and the others' flag is the server's")
+	_client_bridge.ask_flashlight()
+	await _steps(8)
+	_check(server_me.flashlight == was and _mine().flashlight == was, "the next ask switches it back")
+	_finished()
+
+
 ## A shot is everybody's to see: the tracer, the gun falling on a miss, and who picks it up.
 func _test_a_shot_crosses() -> void:
 	_section("a shot, a dropped gun and a pickup cross")

@@ -91,6 +91,10 @@ var gun_banned: bool = false
 ## kill. On the wire for everybody.
 var blood: int = 0
 
+## The flashlight is on (server-owned, replicated); `flashlight_ready` is cleared on a new map so the next tick sets its start state.
+var flashlight: bool = false
+var flashlight_ready: bool = false
+
 ## Which shirt colour they wear this round, an index into [constant MmGame.SHIRTS]. Drawn
 ## per round so a shirt cannot be learned.
 var shirt: int = 0
@@ -412,6 +416,7 @@ func describe() -> Dictionary:
 		"armed": armed(),
 		"gun": has_gun,
 		"blood": blood,
+		"flashlight": flashlight,
 		"kills": kills,
 		"blinded": blinded,
 		"beacon": beacon,

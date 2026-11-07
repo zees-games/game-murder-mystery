@@ -21,6 +21,11 @@ func _key_pressed(event: InputEvent) -> bool:
 	if player == null or not player.is_alive() or is_spectating():
 		return false
 
+	if event.is_action_pressed(MmBindings.FLASHLIGHT):
+		if flash != null:
+			var _asked := flash.toggle()
+		return true
+
 	return false
 
 

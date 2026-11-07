@@ -3,6 +3,47 @@ extends "mm_game_world.gd"
 ## Doors, toys and the position trail of [code]mm_game.gd[/code]: what the use key and lag
 ## compensation read. Path-based base, no class_name.
 
+## The flashlight config, made on first use.
+func flashlight_conf() -> DotFlashlightConfig:
+	if flashlight_config == null:
+		flashlight_config = MmFlashlight.make_config()
+		flashlight_binder = MmFlashlight.make_binder(flashlight_config)
+		DotLog.result(CHANNEL, "flashlight config", flashlight_binder.load_layers())
+	return flashlight_config
+
+
+## A new map sets everybody's light by the map (dark ones start lit). Server side.
+func _advance_flashlights() -> void:
+	if not authoritative:
+		return
+
+	var cfg := flashlight_conf()
+	var map_id := str(map_doc.get("id", ""))
+
+	if map_id != _flashlight_map:
+		_flashlight_map = map_id
+		for p: MmPlayer in players.values():
+			p.flashlight_ready = false
+
+	for player: MmPlayer in players.values():
+		if not player.flashlight_ready:
+			player.flashlight_ready = true
+			player.flashlight = MmFlashlight.starts_on(cfg, map_id, map_doc)
+
+
+## A living player in the round switches their light, whatever they are (murderer, gunner or bystander). Refused for the dead and the benched, and where the map or the config disallows it. Server side.
+func toggle_flashlight(id: StringName) -> bool:
+	var player: MmPlayer = players.get(id)
+	var cfg := flashlight_conf()
+
+	if player == null or not player.is_alive() or player.watching \
+			or not DotFlashlightRules.allowed_on(cfg, str(map_doc.get("id", ""))):
+		return false
+
+	player.flashlight = not player.flashlight
+	return true
+
+
 ## Everybody's hand on the doors: a use is the use key going down in front of one, then every
 ## door is posed for this tick. The edge is made here from the held state, as for the weapons.
 func _advance_doors() -> void:

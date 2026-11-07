@@ -6,6 +6,7 @@ extends Node3D
 const MmAmbience := preload("mm_ambience.gd")
 const MmCatalogue := preload("mm_catalogue.gd")
 const MmConfig := preload("mm_config.gd")
+const MmFlashlight := preload("mm_flashlight.gd")
 const MmMap := preload("mm_map.gd")
 const MmMapDoc := preload("mm_map_doc.gd")
 const MmPaths := preload("mm_paths.gd")
@@ -174,6 +175,11 @@ var body_rules: DotPlayerBodyRules = DotPlayerBodyRules.new()
 var fall_rules: DotFallDamageRules = make_fall_rules()
 ## The ambience cvars (`mm_ambient*`): bound by the module (REPLICATED), followed by a client through its link.
 var ambient_rules: DotAmbienceRules = MmAmbience.make_rules()
+
+## The flashlight's config and binder, made on first use so a suite that builds a game by hand still has one; the map id the lights were last set for.
+var flashlight_config: DotFlashlightConfig = null
+var flashlight_binder: DotGameConfigBinder = null
+var _flashlight_map: String = ""
 
 ## Binds [member config] to cvars, the cfg/ yml layers and the workbench; made by whoever builds the config.
 var config_binder: DotGameConfigBinder = null

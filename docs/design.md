@@ -45,6 +45,10 @@ What decides it: a client that drew every field it was sent would still not know
 
 `_advance_blood` per tick: none until `blood_seconds` before the buzzer, then rising in `blood_stages` steps to the whole of it at the buzzer, and one stage more for each kill with `blood_per_kill`. It is drawn by `MmFigure` as dark patches on the shirt and hands, 0..7 on the wire. Blood is the clock's way of breaking a stalemate: a murderer who waited too long is marked.
 
+## The flashlight
+
+dot-flashlight's, on F, for everybody who is alive and in the round: the murderer, the gunner and every other bystander alike (the dead and the benched may not). The server owns on and off (`MmGame.toggle_flashlight`, asked by `MmEvents.Ask.FLASHLIGHT`) and replicates one flag per player (`net_flashlight`); a map whose `environment.ambient_energy` is under the config's floor starts everybody lit, any other starts dark. The flag is not a role tell, so it is public on the wire like blood. The design trade: a lit beam is visible to everyone who can see the player, so a lit beam reveals a hidden murderer (one waiting in the dark gives themselves away by lighting it), and a bystander who lights up is easy to find. Config: `mm_flashlight_*` cvars, `cfg/game/game-murder-mystery/flashlight/game.yml`, a workbench set.
+
 ## Falls and joiners
 
 - A fall off the map respawns the person at a spawn point, gun kept: it is never a death, since a death nobody caused would be read as a murder.
