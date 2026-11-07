@@ -38,7 +38,6 @@ game/mm_rules.gd::long_block	1
 game/mm_server.gd::long_block	3
 game/mm_services.gd::banner	1
 game/mm_services.gd::long_block	9
-game/mm_vote.gd::long_block	7
 game/mm_weapons.gd::long_block	1
 game/net/mm_event.gd::history	1
 game/net/mm_event.gd::long_block	2
