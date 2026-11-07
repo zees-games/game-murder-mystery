@@ -1,4 +1,4 @@
-extends Node
+extends DotGameNetIo
 
 ## The state of [code]mm_net_bridge.gd[/code]: constants, signals and variables, with the lookups and sends
 ## every other part uses. Path-based base, no class_name.
@@ -77,8 +77,6 @@ signal chat_received(wire: Dictionary)
 signal voice_arrived(payload: PackedByteArray)
 
 var game: MmGame = null
-var net: DotNetManager = null
-var link: MmNetLink = null
 
 ## Which session this process is. Zero on a server.
 var local_player_id: int = 0
@@ -89,7 +87,6 @@ var local_role: int = 0
 
 ## Where the clock learns the link's ping in milliseconds.
 # dot-net cannot measure a transport; without a sample every command is stamped for a tick already simulated and discarded as late.
-var rtt_source: Callable = Callable()
 
 ## Where a voice frame goes on the server. Assigned by [DotGameModule] to the services
 ## layer's `relay_voice`, because the bridge is the only thing that names both ends.
@@ -171,18 +168,6 @@ func player_for_peer(peer_id: int) -> int:
 ## How every dot-net message reaches a peer.
 # Routed by delivery, not kind: snapshots unreliable, the rest reliable on the call that matches this end,
 # else client requests are silently dropped.
-func _send(peer_id: int, payload: PackedByteArray, delivery: int) -> void:
-	if link == null:
-		return
-
-	if delivery == DotNetMessage.Delivery.UNRELIABLE:
-		link.send_snapshot(peer_id, payload)
-	elif net.is_server:
-		link.send_event(peer_id, payload)
-	else:
-		link.send_request(payload)
-
-
 ## One peer, and never zero.
 # `net.send(msg, 0)` broadcasts in dot-net; a missing peer id passed through would leak a private message.
 func _tell(peer_id: int, kind: int, body: PackedByteArray) -> void:
