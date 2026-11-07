@@ -96,6 +96,7 @@ func _present_guns() -> void:
 
 
 func _present_effects(delta: float) -> void:
+	_present_flashlights(delta)
 	if audio != null:
 		audio.listen_from(camera.global_position)
 		if platform != null and platform.slide_sounds != null and audio.steps != null:

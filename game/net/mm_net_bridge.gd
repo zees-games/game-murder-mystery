@@ -499,6 +499,8 @@ func _on_request(message: DotNetMessage) -> void:
 				_spectate_step(peer_id, int(step["direction"]))
 		MmEvents.Ask.ROAM:
 			_spectate_roam(peer_id)
+		MmEvents.Ask.FLASHLIGHT:
+			var _switched := game.toggle_flashlight(player_key(player_for_peer(peer_id)))
 
 
 ## Somebody who is out asked to look at somebody else. The server's list, the server's rule.
@@ -575,6 +577,11 @@ func ask_spectate(direction: int) -> void:
 
 func ask_roam() -> void:
 	_ask(MmEvents.Ask.ROAM, MmEvents.write_ask_roam())
+
+
+## Switch the flashlight. The server owns on/off and answers in the player's replicated state.
+func ask_flashlight() -> void:
+	_ask(MmEvents.Ask.FLASHLIGHT, PackedByteArray([0]))
 
 
 func send_voice(payload: PackedByteArray) -> void:

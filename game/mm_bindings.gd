@@ -11,6 +11,8 @@ const SCOREBOARD := &"mm_scoreboard"
 const USE := &"mm_use"
 ## The spectator's free camera, on and off (`mp_freeroam`). Its flying keys are the movement keys.
 const ROAM := &"mm_roam"
+## The flashlight, on and off, for everybody still in the round.
+const FLASHLIGHT := &"mm_flashlight"
 ## dot-ui's chat window's actions, which dot-game's chat client leaves at their defaults.
 const CHAT := &"chat_open"
 
@@ -23,6 +25,7 @@ static func make() -> DotMenuBindings:
 	keys.add(&"dot_fps_sprint", &"bind_sprint", "Sprint", "Shift", "Movement")
 	keys.add(&"dot_fps_walk", &"bind_walk", "Walk quietly", "Alt", "Movement")
 	keys.add(USE, &"bind_use", "Open or shut a door", "E", "General")
+	keys.add(FLASHLIGHT, &"bind_flashlight", "Flashlight", "F", "General")
 	keys.add(ATTACK, &"bind_attack", "Stab or shoot", "Mouse 1", "Weapons")
 	keys.add(HOLSTER, &"bind_holster", "Draw or put away the weapon (murderer)", "Q", "Weapons")
 	keys.add(CHAT, &"bind_chat", "Chat", "Y", "Communication")

@@ -1,4 +1,4 @@
-extends "headless_run_base.gd"
+extends "headless_run_flashlight.gd"
 
 const MmBindings := preload("../game/mm_bindings.gd")
 const MmBlood := preload("../game/mm_blood.gd")
@@ -34,7 +34,7 @@ func _test_the_client() -> void:
 	_check(covered and platform.is_shown() and not platform.is_input_blocked() and platform.console != null,
 		"the loading cover is up at the start and lifts once the player is in, with the console built",
 		str(platform.describe()) if platform != null else "no platform")
-	_check(InputMap.has_action(MmBindings.ATTACK) and InputMap.has_action(MmBindings.HOLSTER),
+	_check(InputMap.has_action(MmBindings.ATTACK) and InputMap.has_action(MmBindings.HOLSTER) and InputMap.has_action(MmBindings.FLASHLIGHT),
 		"the game's keys are actions, from the bindings table")
 	_check(client.get("player") != null and client.get("hud") != null and (client.get("hud") as Node).get("game") != null,
 		"a player and a HUD bound to the world")

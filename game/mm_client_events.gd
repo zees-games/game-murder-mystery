@@ -84,6 +84,9 @@ func _toy_sound(id: StringName, at: Vector3, strength: float) -> void:
 
 
 func _on_map(map_id: StringName) -> void:
+	if flash != null:
+		flash.allowed = DotFlashlightRules.allowed_on(game.flashlight_conf(), str(map_id))
+
 	if ragdolls != null:
 		# A body on the old map would hang in the new one's air.
 		ragdolls.clear()

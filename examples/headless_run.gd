@@ -19,9 +19,9 @@ const MmProps := preload("../game/mm_props.gd")
 ## ([method MmCatalogue.practice]): the wall between the rooms at x 0 with its door at
 ## z -1..0.8, the kitchen east of it, the living room west, the garden past x 10.
 
-const SECTIONS := 28
+const SECTIONS := 29
 
-const CHECKS := 194
+const CHECKS := 203
 
 ## The first chair round the kitchen table in the practice house: where it stands.
 const CHAIR_AT := Vector3(3.6, 0.0, 1.2)
@@ -54,6 +54,7 @@ func _run() -> void:
 	await _test_an_innocent()
 	await _test_blood()
 	await _test_free_roam()
+	await _test_the_flashlight()
 	await _test_the_round()
 	await _test_falls()
 	await _test_fall_damage()

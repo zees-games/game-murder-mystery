@@ -886,7 +886,7 @@ func _step(delta: float) -> void:
 		_record_trail()
 
 	_advance_toys(delta)
-
+	_advance_flashlights()
 	_watch_world()
 	_advance_weapons()
 

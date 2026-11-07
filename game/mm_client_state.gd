@@ -37,6 +37,12 @@ var game: MmGame = null
 var player: MmPlayer = null
 var camera: Camera3D = null
 
+## The flashlight on the eye and the others' beams (dot-flashlight); the server owns on/off.
+var flash: DotFlashlight = null
+var flash_crowd: DotFlashlightCrowd = null
+var _flash_msec := -100000
+var _flash_retain := 0.0
+
 ## Keeps the screen covered, and the local body and the input still, until the level, the
 ## player and the camera are all in. It is [member DotGameClient.gate].
 var gate: DotLoadGate = null

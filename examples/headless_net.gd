@@ -16,8 +16,8 @@ const WorkbenchSection := preload("headless_net_workbench.gd")
 ##
 ## Sections and checks are both counted; mg-smash-copter's notes say why the second matters.
 
-const SECTIONS := 17
-const CHECKS := 114
+const SECTIONS := 18
+const CHECKS := 118
 
 
 func _ready() -> void:
@@ -39,6 +39,7 @@ func _run() -> void:
 		await _test_a_door_crosses()
 		await _test_a_stab_crosses()
 		await _test_free_roam_crosses()
+		await _test_the_flashlight_crosses()
 		await _test_a_shot_crosses()
 		await _test_the_round_ends()
 		await _test_a_shot_is_rewound()
