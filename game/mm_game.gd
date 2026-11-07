@@ -1,4 +1,4 @@
-extends "mm_game_gun.gd"
+extends "mm_game_draw.gd"
 
 ## The simulation: headless, authoritative, and the only thing that decides anything. The state
 ## is in mm_game_state.gd; this is the round, the draw, the weapon and the gun.
@@ -407,10 +407,6 @@ func _on_round_ended(number: int, winner: int, _outcome: int) -> void:
 	DotLog.info(CHANNEL, "round over", {"number": number, "winner": _winner_name})
 
 
-## player id -> &"murderer", &"gunner" or &"bystander": roles the next draws hand out instead
-## of drawing them. Empty in play. With any entry, gunners are only the ones named.
-var forced_roles: Dictionary = {}
-
 
 ## Who is the murderer and who has the gun this round, and everybody's shirt.
 ## Murderers by [DotTeamRotation] over a history, gunners at random from the rest;
@@ -423,34 +419,7 @@ func _draw_roles() -> void:
 
 	keys.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
 
-	var want := config.murderers_for(keys.size())
-	# Seats behind a loading cover are not drawn while enough others can be: a murderer that
-	# cannot see would sit out the round. If too few are loaded, everybody is a candidate.
-	var loaded: Array[StringName] = []
-
-	for id in keys:
-		if can_be_harmed(id):
-			loaded.append(id)
-
-	var candidates := loaded if loaded.size() >= want else keys
-	var picked: Dictionary = DotTeamRotation.pick(
-		candidates, want, DotTeamRotation.Mode.RANDOM, murderer_history, _round_seed, {}
-	)
-	var murderers: Array[StringName] = []
-
-	for id: StringName in picked["picked"]:
-		murderers.append(id)
-
-	if not forced_roles.is_empty():
-		murderers.clear()
-		for id: StringName in keys:
-			if forced_roles.get(id, &"") == &"murderer":
-				murderers.append(id)
-		# Nobody forced to be one: the draw's, less anybody forced to be something else.
-		if murderers.is_empty():
-			for id: StringName in picked["picked"]:
-				if not forced_roles.has(id):
-					murderers.append(id)
+	var murderers := _draw_murderers(keys)
 
 	DotTeamRotation.note(murderer_history, keys, murderers, round_number)
 
@@ -461,43 +430,8 @@ func _draw_roles() -> void:
 			rest.append(id)
 
 	var stream := random.stream(&"roles")
-	var gunners: Array[StringName] = []
-	var pool := rest.duplicate()
-	var loaded_pool: Array[StringName] = []
-
-	for id in pool:
-		if can_be_harmed(id):
-			loaded_pool.append(id)
-
-	if loaded_pool.size() >= config.gunners_for(keys.size(), rest.size()):
-		pool = loaded_pool
-
-	if not forced_roles.is_empty():
-		for id in rest:
-			if forced_roles.get(id, &"") == &"gunner":
-				gunners.append(id)
-				pool.erase(id)
-			elif forced_roles.has(id):
-				pool.erase(id)
-
-	for _i in range(maxi(config.gunners_for(keys.size(), rest.size()) - gunners.size(), 0)):
-		if pool.is_empty() or not forced_roles.is_empty():
-			break
-		gunners.append(pool.pop_at(stream.next_range_i(0, pool.size() - 1)))
-
-	# The shirts: a shuffled palette, so no two share one until there are more people than
-	# colours.
-	var palette: Array[int] = []
-
-	for i in range(SHIRTS.size()):
-		palette.append(i)
-
-	for i in range(palette.size() - 1, 0, -1):
-		var j := stream.next_range_i(0, i)
-		var swap := palette[i]
-		palette[i] = palette[j]
-		palette[j] = swap
-
+	var gunners := _draw_gunners(keys.size(), rest, stream)
+	var palette := _shirt_palette(stream)
 	var weapon := weapon_id()
 
 	for index in range(keys.size()):
