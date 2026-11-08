@@ -1,5 +1,7 @@
 extends "mm_client_view.gd"
 
+const MmKillPovView := preload("mm_kill_pov_view.gd")
+
 ## What the client does with the game's events: phase, role, shot, map, round and death. Path-based base of [code]mm_client.gd[/code], no class_name.
 
 
@@ -159,6 +161,7 @@ func _build_killcam() -> void:
 	killcam.seconds_fn = func() -> float: return game.config.killcam_seconds if game != null else 0.0
 	killcam.weapon_name_fn = func(id: String) -> String: return str(MmWeapons.entry(StringName(id))["name"])
 	killcam.weapon_icon_fn = func(id: String) -> Texture2D: return MmWeaponIcons.shared.menu_texture(StringName(id))
+	var _mounted := MmKillPovView.mount(self, killcam)
 	add_child(killcam)
 
 
