@@ -8,6 +8,9 @@ const MmPlayer := preload("mm_player.gd")
 
 const CHANNEL := "mm.progress"
 
+## The published skill figure the site orders by (dot-stats' DotStatsRank).
+const RANK_SCORE := &"rank_score"
+
 # --- The numbers -------------------------------------------------------------
 
 ## Rounds a player was in from the start to the end, and won.
@@ -41,6 +44,9 @@ signal earned(player_id: StringName, title: String, points: int)
 var stats: DotStatsTracker = null
 var achievements: DotAchievementTracker = null
 var link: DotAchievementStatsLink = null
+
+## The skill rank (dot-stats' DotStatsRank): weighted lifetime figures, filed as rank_score.
+var rank: DotStatsRank = null
 
 ## Kills for the head-to-head table, through dot-stats' event feed; ids are player ids.
 var feed: DotStatsEventFeed = null
@@ -92,6 +98,7 @@ static func schema() -> DotStatsSchema:
 	_add(out, PICKUPS, DotStatsDef.Kind.COUNTER, "Guns picked up", "guns", false)
 	_add(out, FALLS, DotStatsDef.Kind.COUNTER, "Falls", "falls", false)
 	_add(out, DOORS, DotStatsDef.Kind.COUNTER, "Doors opened or shut", "doors", false)
+	var _rank := DotStatsRank.declare(out, RANK_SCORE, "Rank score")
 	return out
 
 
@@ -220,6 +227,20 @@ func setup(directory: String, report: bool) -> DotResult:
 		var body: MmPlayer = players.get(StringName(str(id)))
 		return body != null and body.is_bot
 
+	rank = DotStatsRank.new()
+	rank.stat_id = RANK_SCORE
+	rank.terms = [
+		{"stat": String(ROUNDS_WON), "weight": 3.0},
+		{"stat": String(MURDERER_WINS), "weight": 2.0},
+		{"stat": String(SURVIVED), "weight": 1.0},
+		{"stat": String(KILLS), "weight": 1.0},
+		{"stat": String(HEROICS), "weight": 3.0},
+		{"stat": String(INNOCENTS), "weight": -3.0},
+		{"stat": String(DEATHS), "weight": -0.5},
+	]
+	rank.record_fn = func(who: Variant, stat: StringName, value: float) -> void: record(StringName(str(who)), stat, value)
+	rank.key_fn = func(who: Variant) -> StringName: return _key(StringName(str(who)))
+
 	var counted := stats.start()
 
 	if not counted.ok:
@@ -279,10 +300,14 @@ func record(player_id: StringName, stat: StringName, value: float = 1.0) -> void
 	var key := _key(player_id)
 
 	if not stats.has_player(key):
+		_load_baseline(player_id)
 		stats.begin(key, body.display_name)
 		_begin(key)
 
 	var filed := stats.record(key, stat, value)
+
+	if filed.ok and stat != RANK_SCORE and rank != null and rank.terms.any(func(t: Dictionary) -> bool: return str(t["stat"]) == String(stat)):
+		var _s := rank.publish_lifetime(player_id, stats.session_values(key), stats.schema)
 
 	if not filed.ok:
 		# WARN: a number a player earned that nobody will ever see. It is a schema or a key
@@ -290,6 +315,12 @@ func record(player_id: StringName, stat: StringName, value: float = 1.0) -> void
 		DotLog.warn(CHANNEL, "a reading was refused", {
 			"player": String(player_id), "stat": String(stat), "why": filed.error.message,
 		})
+
+
+## Reads the player's stored lifetime totals before this session's figures are flushed into the store (reading later would count them twice).
+func _load_baseline(player_id: StringName) -> void:
+	if rank != null and stats.store != null:
+		rank.load_baseline(stats.store, player_id)
 
 
 ## The key a player's numbers are filed under. Asked of [member durable_key_fn] once, then
@@ -347,6 +378,8 @@ func leave(player_id: StringName) -> void:
 		return
 
 	var _values := stats.end(key)
+	if rank != null:
+		rank.forget(player_id)
 	link.forget(String(key))
 	_end(key)
 
