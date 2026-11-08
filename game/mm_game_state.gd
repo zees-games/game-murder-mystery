@@ -173,6 +173,10 @@ var body_rules: DotPlayerBodyRules = DotPlayerBodyRules.new()
 ## `sv_falldamage*`: landing hard hurts. On in this game (dot-combat's default is off); the
 ## server applies it through [member combat], a client never does.
 var fall_rules: DotFallDamageRules = make_fall_rules()
+## `sv_stomp*`: landing on a head hurts. Off by default (dot-combat's); the server applies it through [member combat].
+var stomp: DotStomp = DotStomp.new()
+## Each player's vertical speed going into this tick's movement, for [method _resolve_stomps].
+var _pre_vy: Dictionary = {}
 ## The ambience cvars (`mm_ambient*`): bound by the module (REPLICATED), followed by a client through its link.
 var ambient_rules: DotAmbienceRules = MmAmbience.make_rules()
 
