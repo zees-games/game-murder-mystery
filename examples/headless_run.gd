@@ -3,6 +3,7 @@ extends "headless_run_client.gd"
 const MmBotChat := preload("../game/mm_bot_chat.gd")
 const MmCatalogue := preload("../game/mm_catalogue.gd")
 const MmProgress := preload("../game/mm_progress.gd")
+const MmKillPov := preload("../game/mm_kill_pov.gd")
 const MmProps := preload("../game/mm_props.gd")
 
 ## The simulation, headless: the prop catalogue and the map documents, the draw of the roles,
@@ -21,7 +22,7 @@ const MmProps := preload("../game/mm_props.gd")
 
 const SECTIONS := 29
 
-const CHECKS := 203
+const CHECKS := 205
 
 ## The first chair round the kitchen table in the practice house: where it stands.
 const CHAIR_AT := Vector3(3.6, 0.0, 1.2)
@@ -109,6 +110,12 @@ func _test_weapons_table() -> void:
 	var held := MmWeapons.build(MmWeapons.entry(&"axe")["parts"])
 	_check(held.get_child_count() == 2, "a shape builds as its boxes")
 	held.free()
+	var gunner := Node.new()
+	gunner.set_script(null)
+	_check(MmKillPov.weapon_name(MmKillPov.hash_of(&"gun")) != "" and MmKillPov.weapon_name(MmKillPov.hash_of(&"axe")) == String(MmWeapons.entry(&"axe")["name"]),
+		"the killer's screen names the gun and a blade from the recorded hash")
+	_check(MmKillPov.aux_of(gunner) == [0.0] and MmKillPov.weapon_name(0.0) == "", "nothing out records nothing")
+	gunner.free()
 	_finished()
 
 

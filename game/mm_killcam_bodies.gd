@@ -4,6 +4,7 @@ extends RefCounted
 
 const MmFigure := preload("mm_figure.gd")
 const MmPlayer := preload("mm_player.gd")
+const MmKillPov := preload("mm_kill_pov.gd")
 
 const SKIP_ACTIONS: PackedStringArray = ["dot_fps_jump", "mm_attack", "ui_cancel"]
 
@@ -18,7 +19,7 @@ static func configure(host: DotKillcamHost) -> void:
 	host.restore_body_fn = restore_body
 
 
-# [feet, yaw, pitch, alive, eye height]: where the body was drawn, not where the tick put it.
+# [feet, yaw, pitch, alive, eye height, then aux (MmKillPov)]: where the body was drawn, not where the tick put it.
 static func state_of(p: MmPlayer) -> Array:
 	if p.controller == null:
 		return []
@@ -26,7 +27,9 @@ static func state_of(p: MmPlayer) -> Array:
 	var feet := p.global_position
 	if p.figure != null and p.figure.visible:
 		feet = p.figure.global_position
-	return [feet, st.yaw, st.pitch, p.is_alive() and not p.watching, p.eye_position().y - st.position.y]
+	var row: Array = [feet, st.yaw, st.pitch, p.is_alive() and not p.watching, p.eye_position().y - st.position.y]
+	row.append_array(MmKillPov.aux_of(p))
+	return row
 
 
 static func restore_body(p: MmPlayer, saved: Array) -> void:
