@@ -22,7 +22,7 @@ const MmProps := preload("../game/mm_props.gd")
 
 const SECTIONS := 29
 
-const CHECKS := 205
+const CHECKS := 207
 
 ## The first chair round the kitchen table in the practice house: where it stands.
 const CHAIR_AT := Vector3(3.6, 0.0, 1.2)
