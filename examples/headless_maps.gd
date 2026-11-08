@@ -282,7 +282,7 @@ func _bad_spawns(game: MmGame, seats: int) -> Array:
 	return bad
 
 
-func _toy_hits(game: MmGame, toy: DotPropToy, own: Array[RID]) -> String:
+func _toy_hits(game: MmGame, toy: DotPropBody, own: Array[RID]) -> String:
 	var space := game.get_world_3d().direct_space_state
 	for part: CollisionObject3D in [toy.fixed, toy.body]:
 		if part == null:

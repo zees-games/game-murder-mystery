@@ -336,12 +336,12 @@ static func _fill_lists(source: Dictionary, doc: Dictionary) -> String:
 
 ## Fills the toys of [param doc]; the refusal, or "".
 static func _fill_toys(source: Dictionary, doc: Dictionary) -> String:
-	# Toys: dot-props' DotPropToyBox placements, `{toy, at, yaw, links?, on?}`. Which ids exist
+	# Toys: dot-props' DotPropBodyBox placements, `{toy, at, yaw, links?, on?}`. Which ids exist
 	# is the catalogue's to say when the map is built (an unknown one is left out and listed),
 	# so a map with a toy a newer dot-props has still plays on an older server.
 	var toys: Array = []
 	for raw: Variant in source.get("toys", []):
-		var toy := DotPropToyBox.normal_placement(raw)
+		var toy := DotPropBodyBox.normal_placement(raw)
 		if toy.is_empty():
 			return "toy %d is not {toy, at}" % toys.size()
 		toys.append(toy)

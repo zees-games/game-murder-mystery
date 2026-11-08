@@ -1,11 +1,11 @@
 extends DotNetBehaviour
 
-## One of the map's toys on the wire (dot-props' [DotPropToy]): its pose, whether it is on, and
+## One of the map's toys on the wire (dot-props' [DotPropBody]): its pose, whether it is on, and
 ## a use count. The server's physics is never predicted; the client's toy is frozen and posed.
 ## Toys pair by index in map order, and a count (8 bits, wraps) rather than an event means a
 ## lost packet costs only a late sound.
 
-var toy: DotPropToy = null
+var toy: DotPropBody = null
 
 var net_position: Vector3 = Vector3.ZERO
 var net_rotation: Quaternion = Quaternion.IDENTITY
