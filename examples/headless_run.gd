@@ -21,7 +21,7 @@ const MmProps := preload("../game/mm_props.gd")
 
 const SECTIONS := 29
 
-const CHECKS := 203
+const CHECKS := 205
 
 ## The first chair round the kitchen table in the practice house: where it stands.
 const CHAIR_AT := Vector3(3.6, 0.0, 1.2)
@@ -602,6 +602,15 @@ func _test_progress() -> void:
 	_check(of.call(g.player_id, MmProgress.MISSES) == 1.0, "a miss is counted")
 	_check(of.call(b.player_id, MmProgress.PICKUPS) == 1.0 and of.call(b.player_id, MmProgress.HEROICS) == 1.0,
 		"and the gun picked up and the murderer shot", "%s %s (hit %s, murderer alive %s, gun %s, phase %s)" % [of.call(b.player_id, MmProgress.PICKUPS), of.call(b.player_id, MmProgress.HEROICS), _hit, m.is_alive(), b.has_gun, game.phase])
+
+	var _held := DotStatsValues.new()
+	_held.values = {String(MmProgress.KILLS): 10.0}
+	game.progress.rank.seed_baseline(&"rank-probe", _held)
+	var _life: float = game.progress.rank.publish_lifetime(&"rank-probe", DotStatsValues.new(), game.progress.stats.schema)
+	_check(game.progress.stats.schema.has(MmProgress.RANK_SCORE) and _life == 10.0,
+		"rank_score is declared and ranks on a stored lifetime baseline", "%.1f" % _life)
+	game.progress.rank.forget(&"rank-probe")
+	_check(of.call(m.player_id, MmProgress.RANK_SCORE) == 1.0, "a kill files a rank_score of 1", str(of.call(m.player_id, MmProgress.RANK_SCORE)))
 
 	var declared := MmProgress.ids()
 	var unread: Array = []
