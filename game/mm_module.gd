@@ -181,6 +181,7 @@ func _bind_rule_cvars(world: MmGame) -> void:
 	# sv_falldamage and its tunables: dot-combat's, on by default in this game. Server-side
 	# only, so no REPLICATED: the damage is the server's and arrives as health.
 	var _fall := world.fall_rules.bind_cvars(add_cvar, DotConVar.FLAG_NOTIFY)
+	var _stomp := world.stomp.rules.bind_cvars(add_cvar, DotConVar.FLAG_NOTIFY)
 
 	# mp_forceview and mp_solidplayers, REPLICATED: the client places its own camera under the
 	# first and predicts its own player under the second.
