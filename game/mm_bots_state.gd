@@ -161,8 +161,8 @@ func _prepare() -> void:
 		# a bot never paths across one. The loose toys are not in it; a bot walks through a
 		# ball and pushes it, as anybody does.
 		var toys: Variant = map.get("toys")
-		if toys is DotPropToyBox:
-			still.append_array((toys as DotPropToyBox).nav_bodies())
+		if toys is DotPropBodyBox:
+			still.append_array((toys as DotPropBodyBox).nav_bodies())
 		var baked := nav.bake(map, {"radius": MmPlayer.BODY_RADIUS, "height": MmPlayer.BODY_CROUCH, "climb": MmPlayer.BODY_STEP}, 0, still)
 		if not baked.ok:
 			_surveyed = key

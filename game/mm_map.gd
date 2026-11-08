@@ -45,12 +45,12 @@ var doors: MmDoors = null
 ## The tick rate a door's seconds are counted in. Set by the game before it builds.
 var tick_rate: int = 64
 
-## The map's toys (dot-props' [DotPropToyBox]): balls, swings, see-saws, switches. Simulated
+## The map's toys (dot-props' [DotPropBodyBox]): balls, swings, see-saws, switches. Simulated
 ## where [member authoritative], posed from snapshots elsewhere; under the game's `sv_toys*`
 ## [member toy_rules]. Set by the game before it builds.
-var toys: DotPropToyBox = null
+var toys: DotPropBodyBox = null
 var authoritative: bool = true
-var toy_rules: DotPropToyRules = null
+var toy_rules: DotPropBodyRules = null
 var gravity: float = 20.0
 
 ## The converted map's displacement ground (the document's `terrain`), or null.
@@ -152,7 +152,7 @@ func clear() -> void:
 ## wall to a person like a table; and their footprints on `footprint`, which nothing collides
 ## with and a bot's walkable mesh is baked round.
 func _build_toys() -> void:
-	toys = DotPropToyBox.new()
+	toys = DotPropBodyBox.new()
 	toys.name = "Toys"
 	toys.authoritative = authoritative
 	toys.draw = draw_world

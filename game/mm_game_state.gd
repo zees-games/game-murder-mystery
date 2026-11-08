@@ -152,7 +152,7 @@ var physics: DotPhysicsLayout = null
 var ragdoll_rules: DotPlayerRagdollRules = DotPlayerRagdollRules.new()
 
 ## The playground toys' rules, when a Playground map is played: dot-props'.
-var toy_rules: DotPropToyRules = DotPropToyRules.new()
+var toy_rules: DotPropBodyRules = DotPropBodyRules.new()
 
 ## A person's weight on a toy, in kilograms.
 const PERSON_MASS := 70.0
