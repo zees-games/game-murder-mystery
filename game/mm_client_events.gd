@@ -157,6 +157,8 @@ func _build_killcam() -> void:
 	killcam.id_of_fn = func(p: MmPlayer) -> int: return _session(p.player_id)
 	killcam.no_id = 0
 	killcam.seconds_fn = func() -> float: return game.config.killcam_seconds if game != null else 0.0
+	killcam.weapon_name_fn = func(id: String) -> String: return str(MmWeapons.entry(StringName(id))["name"])
+	killcam.weapon_icon_fn = func(id: String) -> Texture2D: return MmWeaponIcons.shared.menu_texture(StringName(id))
 	add_child(killcam)
 
 
@@ -188,9 +190,17 @@ func _fall(who: MmPlayer) -> void:
 		held.visible = false
 
 
+## The weapon id the killcam banner shows: the gun for a shot, else the killer's blade.
+func _kill_weapon(by: int, why: StringName) -> StringName:
+	if why == MmGame.DIED_SHOT:
+		return MmWeaponIcons.GUN
+	var killer := _player_of(by)
+	return killer.weapon_id if killer != null else &"knife"
+
+
 func _on_death(session_id: int, by: int, why: StringName) -> void:
 	if killcam != null and why != MmGame.DIED_FELL:
-		killcam.note_kill(by, session_id, String(why))
+		killcam.note_kill(by, session_id, String(_kill_weapon(by, why)))
 	var who := _player_of(session_id)
 	_fall(who)
 
