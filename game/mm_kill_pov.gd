@@ -16,9 +16,9 @@ static var _names: Dictionary = {}
 static func aux_of(p: Object) -> Array:
 	var id := &""
 	if p != null:
-		if bool(p.get(&"has_gun")):
+		if p.get(&"has_gun") == true:
 			id = MmWeaponIcons.GUN
-		elif bool(p.get(&"weapon_drawn")):
+		elif p.get(&"weapon_drawn") == true:
 			id = StringName(p.get(&"weapon_id"))
 	return [hash_of(id)]
 
