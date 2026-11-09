@@ -213,9 +213,16 @@ func _round(map_id: String, index: int, difficulty: String) -> Dictionary:
 
 	var limit := int((config.grace_seconds + config.round_seconds + 10.0) * TICK_RATE)
 	var spread_taken := false
+	var y_lo := INF
+	var y_hi := -INF
 	for tick in range(limit):
 		game.simulate(TICK)
 		await get_tree().physics_frame
+		if tick % TICK_RATE == 0:
+			for q: MmPlayer in game.players.values():
+				var qy: float = q.controller.state.position.y
+				y_lo = minf(y_lo, qy)
+				y_hi = maxf(y_hi, qy)
 		if not spread_taken and game.phase == MmGame.Phase.PLAY:
 			spread_taken = true
 			result["spread"] = _spread(game)
@@ -223,6 +230,8 @@ func _round(map_id: String, index: int, difficulty: String) -> Dictionary:
 			break
 
 	result["seconds"] = game.play_elapsed
+	if trace:
+		print("    height range of every player: %.2f to %.2f m (rise %.2f)" % [y_lo, y_hi, y_hi - y_lo])
 	var counts: Dictionary = game.bots.counts
 	for key: String in ["draws", "stabs", "shots", "fetched", "lines"]:
 		result[key] = int(counts.get(key, 0))
