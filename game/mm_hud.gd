@@ -36,10 +36,9 @@ static func piece_theme() -> Theme:
 	return t
 
 
-## The Escape menu, whose theme this HUD follows (dot-menu's `follow_hud`): the menu sets the
-## theme on the HUD's root now and at every theme change, and applies the player's HUD size.
-## A play test asked for a darker HUD a player can restyle in
-## the menu. Duck-typed and called by name, for a client shell older than dot-menu 7.
+## The Escape menu, whose theme this HUD follows (dot-menu's `follow_hud`): the menu sets the theme on the HUD's
+## root now and at every theme change, and applies the player's HUD size. A play test asked for a darker HUD a
+## player can restyle in the menu. Duck-typed and called by name, for a client shell older than dot-menu 7.
 var _menu: Object = null
 
 

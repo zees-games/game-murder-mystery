@@ -129,10 +129,9 @@ func _net_apply_input(input: DotNetInput, _tick: int) -> void:
 		last_view_lag = command.view_lag_ticks()
 
 
-## On the authority the whole game ticks as one — every player moves, then the catches, the
-## attacks and the round are decided — so the first behaviour through drives the whole world and
-## the rest find it done. On a predicting client there is one predicted player, and simulating
-## it is the whole of what a client may compute.
+## On the authority the whole game ticks as one — every player moves, then the catches, the attacks and the
+## round are decided — so the first behaviour through drives the whole world and the rest find it done. On a
+## predicting client there is one predicted player, and simulating it is the whole of what a client may compute.
 func _net_simulate(tick: int, delta: float) -> void:
 	if player == null:
 		return
