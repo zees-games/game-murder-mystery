@@ -23,6 +23,12 @@ var maps: Dictionary = {}
 ## Files that were refused, with why. What `mm_maps` prints, so a mapper can see it.
 var refused: Dictionary = {}
 
+## Mounted-pack files whose id this game already has its own map for: the own map wins and the
+## other game's copy is set aside. Not a fault (the packs share maps), so not in [member refused].
+var shadowed: Dictionary = {}
+
+var _mounted: bool = false
+
 var _order: Array[StringName] = []
 var _next: int = 0
 
@@ -32,6 +38,7 @@ var _next: int = 0
 func load_from(directory: String) -> int:
 	maps.clear()
 	refused.clear()
+	shadowed.clear()
 
 	_add(practice(), "built-in")
 
@@ -66,8 +73,12 @@ func add_extra_directories(directory: String) -> int:
 	subdirs.sort()
 	var loaded := 0
 
+	_mounted = true
+
 	for sub in subdirs:
 		loaded += _read_directory(root.path_join(sub))
+
+	_mounted = false
 
 	_rebuild_order()
 	DotLog.info(CHANNEL, "other games' maps added", {"from": root, "read": loaded, "maps": maps.size()})
@@ -116,6 +127,10 @@ func _add(doc: Dictionary, origin: String) -> bool:
 	var id := StringName(str(doc["id"]))
 
 	if maps.has(id) and origin != "built-in" and id != PRACTICE:
+		if _mounted:
+			shadowed[origin] = "this game's own map with id %s is used" % id
+			return false
+
 		refused[origin] = "a second map with id %s" % id
 		return false
 
