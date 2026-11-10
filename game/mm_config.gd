@@ -8,7 +8,7 @@ extends DotConfig
 ## murderers, one or more bystanders handed the gun, and everybody else unarmed. Who is what is
 ## the server's secret; see docs/design.md "Roles are secret".
 
-# --- The round -------------------------------------------------------------
+# The round
 
 @export_group("The round")
 
@@ -23,7 +23,7 @@ extends DotConfig
 @export_range(0.0, 60.0, 1.0) var intermission_seconds: float = 8.0
 @export_range(0.0, 300.0, 1.0) var warmup_seconds: float = 8.0
 
-# --- The sides -------------------------------------------------------------
+# The sides
 
 @export_group("The sides")
 
@@ -37,7 +37,7 @@ extends DotConfig
 @export_range(1, 8, 1) var min_gunners: int = 1
 @export_range(1, 8, 1) var max_gunners: int = 2
 
-# --- The murderer's weapon -------------------------------------------------
+# The murderer's weapon
 
 @export_group("The murderer's weapon")
 
@@ -59,7 +59,7 @@ extends DotConfig
 ## which somebody who saw it can run.
 @export_range(0.0, 3.0, 0.05) var draw_seconds: float = 0.35
 
-# --- The gun ---------------------------------------------------------------
+# The gun
 
 @export_group("The gun")
 
@@ -87,7 +87,7 @@ extends DotConfig
 ## How close, in metres, somebody has to walk to a dropped gun to pick it up.
 @export_range(0.3, 3.0, 0.05) var pickup_range: float = 1.1
 
-# --- Blood -----------------------------------------------------------------
+# Blood
 
 @export_group("Blood")
 
@@ -99,7 +99,7 @@ extends DotConfig
 
 @export var blood_per_kill: bool = true
 
-# --- Points ----------------------------------------------------------------
+# Points
 
 @export_group("Points")
 
@@ -113,7 +113,7 @@ extends DotConfig
 ## Metres from the eye at which a toy can be aimed at and used.
 @export_range(0.5, 10.0, 0.1) var toy_reach: float = 2.3
 
-# --- The players -----------------------------------------------------------
+# The players
 
 @export_group("The players")
 
@@ -129,7 +129,7 @@ extends DotConfig
 @export var auto_bunny_hop: bool = false
 @export_range(0.0, 200.0, 1.0) var air_accelerate: float = 20.0
 
-# --- The maps --------------------------------------------------------------
+# The maps
 
 @export_group("The maps")
 
@@ -151,7 +151,7 @@ extends DotConfig
 
 @export var seed_value: int = 20261018
 
-# --- Spawning --------------------------------------------------------------
+# Spawning
 
 @export_group("Spawning")
 
@@ -173,7 +173,7 @@ func spawn_rules() -> DotSpawnRules:
 	return rules
 
 
-# --- Bots ------------------------------------------------------------------
+# Bots
 
 @export_group("Bots")
 
@@ -200,7 +200,7 @@ func spawn_rules() -> DotSpawnRules:
 ## Seconds a bot avoids a spot it got stuck at.
 @export_range(0.0, 300.0, 1.0) var bot_shun_seconds: float = 30.0
 
-# --- Watching --------------------------------------------------------------
+# Watching
 
 @export_group("Watching")
 
@@ -213,7 +213,7 @@ func spawn_rules() -> DotSpawnRules:
 ## Seconds of the final killcam replayed after the reveal; 0 is off. On, the last killer is sent at round end.
 @export_range(0.0, 10.0, 0.1) var killcam_seconds: float = 0.0
 
-# --- Progress --------------------------------------------------------------
+# Progress
 
 @export_group("Progress")
 

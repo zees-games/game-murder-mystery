@@ -346,10 +346,9 @@ func _keep_the_round_full() -> void:
 	if world == null or bridge == null or _quota == null:
 		return
 
-	# People only. A stand-in is not one, and neither is a bot somebody put in by hand through
-	# the bridge (a test, an admin): those are never in `_bot_ids` either, so they are left
-	# alone and outside the count. A leaver is gone from `players` the moment the bridge
-	# removes them, so nobody half-disconnected is counted.
+	# People only. A stand-in is not one, and neither is a bot somebody put in by hand through the bridge (a
+	# test, an admin): those are never in `_bot_ids` either, so they are left alone and outside the count. A
+	# leaver is gone from `players` the moment the bridge removes them, so nobody half-disconnected is counted.
 	var humans := 0
 
 	for id: StringName in world.players:

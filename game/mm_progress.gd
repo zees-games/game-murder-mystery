@@ -11,7 +11,7 @@ const CHANNEL := "mm.progress"
 ## The published skill figure the site orders by (dot-stats' DotStatsRank).
 const RANK_SCORE := &"rank_score"
 
-# --- The numbers -------------------------------------------------------------
+# The numbers
 
 ## Rounds a player was in from the start to the end, and won.
 const ROUNDS_PLAYED := &"mm.rounds_played"
@@ -71,7 +71,7 @@ var _keys: Dictionary = {}
 var _ids: Dictionary = {}
 
 
-# --- The documents -----------------------------------------------------------
+# The documents
 
 static func ids() -> Array[StringName]:
 	return [
@@ -171,7 +171,7 @@ static func _sum(
 	return out
 
 
-# --- Building ---------------------------------------------------------------
+# Building
 
 const REPORT_INTERVAL := 60.0
 
@@ -279,7 +279,7 @@ func setup(directory: String, report: bool) -> DotResult:
 	return link.start().wrap("murder's stats-to-achievements link")
 
 
-# --- Counting ---------------------------------------------------------------
+# Counting
 
 ## Files one reading for one person, and starts counting for them the first time.
 ##
@@ -394,7 +394,7 @@ func filed_under(player_id: StringName) -> StringName:
 	return _keys.get(player_id, player_id)
 
 
-# --- What the world reports -------------------------------------------------
+# What the world reports
 
 func on_round_began() -> void:
 	_in_round.clear()

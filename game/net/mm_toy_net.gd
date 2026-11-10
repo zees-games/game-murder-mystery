@@ -1,9 +1,8 @@
 extends DotNetBehaviour
 
-## One of the map's toys on the wire (dot-props' [DotPropBody]): its pose, whether it is on, and
-## a use count. The server's physics is never predicted; the client's toy is frozen and posed.
-## Toys pair by index in map order, and a count (8 bits, wraps) rather than an event means a
-## lost packet costs only a late sound.
+## One of the map's toys on the wire (dot-props' [DotPropBody]): its pose, whether it is on, and a use count.
+## The server's physics is never predicted; the client's toy is frozen and posed. Toys pair by index in map
+## order, and a count (8 bits, wraps) rather than an event means a lost packet costs only a late sound.
 
 var toy: DotPropBody = null
 

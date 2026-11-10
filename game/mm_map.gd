@@ -183,7 +183,7 @@ func _put_on(body: CollisionObject3D, layer: StringName) -> void:
 		DotLog.warn(CHANNEL, "a map body could not be put on its layer", {"layer": String(layer)})
 
 
-# --- Building --------------------------------------------------------------
+# Building
 
 ## The displacement ground: one triangle shape in the world body, and a mesh when drawing.
 func _build_terrain() -> void:
@@ -289,10 +289,9 @@ static func _add_box(tool: SurfaceTool, frame: Transform3D, size: Vector3) -> vo
 		var c: Vector3 = frame * (face[3] as Vector3)
 		var d: Vector3 = frame * (face[4] as Vector3)
 
-		# Godot's front face winds so that (b - a) x (c - a) points AGAINST the normal (measured
-		# against BoxMesh's own arrays). The corners above go round the other way, so each
-		# triangle is emitted reversed; the other order is a map drawn inside out, every wall
-		# invisible from the room it bounds.
+		# Godot's front face winds so that (b - a) x (c - a) points AGAINST the normal (measured against BoxMesh's
+		# own arrays). The corners above go round the other way, so each triangle is emitted reversed; the other
+		# order is a map drawn inside out, every wall invisible from the room it bounds.
 		for v: Vector3 in [a, c, b, a, d, c]:
 			tool.set_normal(normal)
 			tool.add_vertex(v)
@@ -446,8 +445,8 @@ func _build_environment() -> void:
 			var sky := (node as WorldEnvironment).environment.sky
 			if sky != null and sky.sky_material is ProceduralSkyMaterial:
 				# The map's blue at the zenith (the rig draws it in the ambient colour, a grey
-				# chosen for the shade) and again under the horizon, where an overview used to
-				# see a dark void round the map.
+				# chosen for the shade) and again under the horizon, where an overview would
+				# otherwise see a dark void round the map.
 				var material := sky.sky_material as ProceduralSkyMaterial
 				material.sky_top_color = MmMapDoc.colour(env_doc["sky_top"])
 				material.ground_bottom_color = material.sky_top_color
@@ -533,7 +532,7 @@ static func _box_basis(box: Dictionary) -> Basis:
 	return Basis(Vector3.UP, deg_to_rad(float(box.get("yaw", 0.0))))
 
 
-# --- Asking ----------------------------------------------------------------
+# Asking
 
 ## Where seat [param seat] in spawn group [param side] (`"players"`) starts:
 ## `[position, yaw]`. More people than spawns stand in rings round them, a metre and a bit

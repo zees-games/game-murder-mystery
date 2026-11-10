@@ -25,7 +25,7 @@ var net_timers: int = 0
 ## Hit points, and the one field with a hard cap on the wire.
 ##
 ## [b]Sent against 0..1000 rather than against the player's own maximum.[/b] A server that
-## raised `player_health` mid-round would otherwise change what every previously sent number
+## raised `player_health` mid-round would otherwise change what every number sent earlier
 ## MEANT, which is the quantisation version of the map-size bug: the value does not get less
 ## precise, it becomes a different value.
 var net_health: float = 100.0

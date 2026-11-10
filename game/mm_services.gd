@@ -177,7 +177,7 @@ func _player_of(peer_id: int) -> MmPlayer:
 	return (game as MmGame).players.get(MmNetBridge.player_key(session_id))
 
 
-# --- dot-moderation's live tools ---------------------------------------------
+# dot-moderation's live tools
 
 ## What the admin set means here, one callable per ability. See `DotGameServices`.
 ##

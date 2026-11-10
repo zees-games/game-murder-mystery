@@ -142,10 +142,9 @@ func _views(game: MmGame) -> void:
 	_client.call("toggle_view")
 	await _seconds(0.3)
 
-	# The play test's face at the lens: a stand-in on the player's eye, where walking through
-	# them put it. Before: nothing hides it. After: the fade does (and solid bodies keep it
-	# from getting there at all, which the check above measures). Re-placed every frame,
-	# because its own brain moves it on.
+	# The play test's face at the lens: a stand-in on the player's eye, where walking through them put it.
+	# Before: nothing hides it. After: the fade does (and solid bodies keep it from getting there at all, which
+	# the check above measures). Re-placed every frame, because its own brain moves it on.
 	var fade: DotCameraFade = _client.get("_fade")
 	var camera: Camera3D = _client.get("camera")
 	var bot: MmPlayer = null

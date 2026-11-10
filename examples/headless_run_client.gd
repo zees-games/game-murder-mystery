@@ -1,4 +1,4 @@
-extends "headless_run_flashlight.gd"
+extends "headless_run_numbers.gd"
 
 const MmBindings := preload("../game/mm_bindings.gd")
 const MmBlood := preload("../game/mm_blood.gd")

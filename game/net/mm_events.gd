@@ -120,7 +120,7 @@ static func _w() -> DotNetWriter:
 	return DotNetWriter.new()
 
 
-# --- Hello -----------------------------------------------------------------
+# Hello
 
 static func write_hello(
 	player_id: int,
@@ -162,7 +162,7 @@ static func read_hello(r: DotNetReader) -> Dictionary:
 	}
 
 
-# --- The map -----------------------------------------------------------------
+# The map
 
 ## The map: [MmMapDoc.encode]'s bytes, as they are.
 ##
@@ -180,7 +180,7 @@ static func read_map(r: DotNetReader) -> Dictionary:
 	return {"encoded": encoded, "ok": r.ok() and not encoded.is_empty()}
 
 
-# --- Players ---------------------------------------------------------------
+# Players
 
 ## A join, or a change to who somebody is: their name, their side, their avatar.
 ##
@@ -278,7 +278,7 @@ static func read_death(r: DotNetReader) -> Dictionary:
 	return out
 
 
-# --- The round -------------------------------------------------------------
+# The round
 
 ## The clock, and the numbers a client cannot count for itself.
 ##
@@ -357,12 +357,12 @@ static func read_phase(r: DotNetReader) -> Dictionary:
 	return {"phase": phase, "ok": r.ok()}
 
 
-# --- Watching --------------------------------------------------------------
+# Watching
 
 ## A view dot-spectate decided, for the one player it belongs to.
 ##
-## [b]The death position travels.[/b] `DotSpectatorView.to_wire` did not carry it until
-## 2026-09-25, and a mirror without it puts every death camera at the world origin, which on
+## [b]The death position travels.[/b] `DotSpectatorView.to_wire` did not carry it at first,
+## and a mirror without it puts every death camera at the world origin, which on
 ## most maps is under the floor. This event stays the game's own: bit-packed and keyed
 ## by session, where dot-spectate's is a dictionary keyed by string. Everything else a mirror needs to
 ## draw the camera it already has: the players are in its world.
@@ -409,7 +409,7 @@ static func write_ask_roam() -> PackedByteArray:
 	return PackedByteArray([0])
 
 
-# --- Roles, shots and the gun ----------------------------------------------
+# Roles, shots and the gun
 
 ## Your role: [param side] (1 bystander, 2 murderer), whether you hold the gun, and the
 ## murderer's weapon id (sent to everybody's own ROLE, so a client can draw the knife it sees).
@@ -519,7 +519,7 @@ static func read_toys(r: DotNetReader) -> Dictionary:
 	return {"map_id": map_id, "ids": ids, "ok": r.ok()}
 
 
-# --- Chat ------------------------------------------------------------------
+# Chat
 
 ## A chat line's own field widths. Wider than the rules allow, so a rule can be raised
 ## without the wire silently truncating what it lets through.

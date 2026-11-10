@@ -165,11 +165,9 @@ func player_for_peer(peer_id: int) -> int:
 	return int(_player_of_peer.get(peer_id, 0))
 
 
-## How every dot-net message reaches a peer.
-# Routed by delivery, not kind: snapshots unreliable, the rest reliable on the call that matches this end,
-# else client requests are silently dropped.
-## One peer, and never zero.
-# `net.send(msg, 0)` broadcasts in dot-net; a missing peer id passed through would leak a private message.
+## How every dot-net message reaches a peer, routed by delivery, not kind: snapshots unreliable, the
+## rest reliable on the call that matches this end, else client requests are dropped. One peer, never
+## zero: `net.send(msg, 0)` broadcasts in dot-net, so a missing id would leak a private message.
 func _tell(peer_id: int, kind: int, body: PackedByteArray) -> void:
 	if peer_id <= 0 or net == null or body.is_empty():
 		return

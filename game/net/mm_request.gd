@@ -18,7 +18,7 @@ var body: PackedByteArray = PackedByteArray()
 
 
 ## [b]Built with [code]new(kind, body)[/code], and this file does not preload itself.[/b]
-## It used to, for a typed [code]static func of() -> MmRequest[/code] factory. A script that
+## It did, for a typed [code]static func of() -> MmRequest[/code] factory. A script that
 ## [code]extends DotNetMessage[/code] and preloads ITSELF, first loaded from a module a
 ## running [DotServer] loads at runtime — which is how every deployed server loads this
 ## game — leaks the whole script graph at exit on Godot 4.7.2. Measured in
