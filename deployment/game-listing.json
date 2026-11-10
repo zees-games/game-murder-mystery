@@ -1,0 +1,15 @@
+{
+  "format": "tmc-game-listing",
+  "version": 1,
+  "listing": {
+    "name": "Murder Mystery",
+    "description": "Everybody looks the same, and one or two of them are murderers. Everybody else is a bystander, and one or two bystanders also have a gun with a single shot.",
+    "tags": ["3D", "Multiplayer"],
+    "platforms": ["PLATFORM_WEB"],
+    "graphicsType": "THREE_D",
+    "tmcKind": "GAME"
+  },
+  "pack": {
+    "id": "gamemann/game-murder-mystery"
+  }
+}
