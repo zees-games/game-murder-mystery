@@ -21,7 +21,7 @@ static func make() -> DotMenuBindings:
 	var keys := DotMenuBindings.new()
 	keys.add_movement("Movement", "Ctrl", "Crouch")
 	# dot-player-controller's own sprint and walk actions, as rows so the Controls page and the
-	# help screen have them; until 2026-10-11 they were only the sampler's defaults.
+	# help screen have them.
 	keys.add(&"dot_fps_sprint", &"bind_sprint", "Sprint", "Shift", "Movement")
 	keys.add(&"dot_fps_walk", &"bind_walk", "Walk quietly", "Alt", "Movement")
 	keys.add(USE, &"bind_use", "Open or shut a door", "E", "General")

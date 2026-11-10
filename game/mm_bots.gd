@@ -469,10 +469,9 @@ func _murder(player: MmPlayer, command: DotFpsCommand, state: Dictionary, player
 	var chest := target.controller.state.position + Vector3(0.0, 1.1, 0.0)
 	var distance := Vector2(chest.x - at.x, chest.z - at.z).length()
 	var witnesses := _witnesses(player, target, players)
-	# Desperate means it stops waiting for a clean moment (header, "Late in the round"). On an
-	# open map the bystanders keep together in plain sight of one another, so a count of
-	# witnesses never falls to one and a murderer that still waited for it watched them until
-	# the clock ran out.
+	# Desperate means it stops waiting for a clean moment (header, "Late in the round"). On an open map the
+	# bystanders keep together in plain sight of one another, so a count of witnesses never falls to one and a
+	# murderer that still waited for it watched them until the clock ran out.
 	var clean := witnesses == 0 or desperate
 	var reach := float(game.call("melee_reach"))
 

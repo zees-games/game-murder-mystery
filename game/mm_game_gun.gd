@@ -1,4 +1,4 @@
-extends "mm_game_use.gd"
+extends "mm_game_stomp.gd"
 
 ## The weapon and the gun of [code]mm_game.gd[/code]: the keys, the stab, the shot, the drops and who may pick them up. Path-based base, no class_name.
 

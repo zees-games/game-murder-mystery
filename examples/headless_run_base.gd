@@ -16,6 +16,11 @@ const TICK := 1.0 / float(TICK_RATE)
 ## Out of everybody's way, in the garden: where a test parks whoever it is not about.
 const PARK := Vector3(18.0, 0.05, 5.0)
 
+## An open stretch of the kitchen floor, and a spot in the living room, either side of the wall.
+const KITCHEN_A := Vector3(3.0, 0.05, -3.0)
+const KITCHEN_B := Vector3(8.0, 0.05, -3.0)
+const LIVING := Vector3(-3.0, 0.05, -3.0)
+
 var _worlds: Array[MmGame] = []
 var _sections_entered := 0
 var _sections_finished := 0

@@ -537,7 +537,7 @@ static func digest(doc: Dictionary) -> String:
 	return JSON.stringify(doc, "", true).sha256_text().substr(0, 12)
 
 
-# --- Small readers ----------------------------------------------------------
+# Small readers
 
 static func v3(value: Variant) -> Vector3:
 	if value is Vector3:

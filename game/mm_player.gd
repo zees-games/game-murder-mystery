@@ -328,7 +328,7 @@ func is_alive() -> bool:
 	return health == null or health.alive
 
 
-# --- Drawing (client side) --------------------------------------------------
+# Drawing (client side)
 
 ## Draws an administrator's beacon at [param at]. Returns whether it pinged.
 func present_beacon(delta: float, at: Vector3, local_view: bool, period: float) -> bool:

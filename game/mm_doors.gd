@@ -107,7 +107,7 @@ func _draw(body: StaticBody3D, spec: Dictionary, size: Vector3) -> void:
 		body.add_child(handle)
 
 
-# --- State ------------------------------------------------------------------
+# State
 
 ## Every door back to how the map has it. The top of every round.
 func reset() -> void:
@@ -188,7 +188,7 @@ func flips_for(index: int, user: Vector3) -> bool:
 	return their_side != 0.0 and goes == their_side
 
 
-# --- Poses ------------------------------------------------------------------
+# Poses
 
 ## Where door [param index]'s panel is at [param f] of the way open, as a world transform.
 ## [param flip] -1 means "as the door is now".
@@ -249,7 +249,7 @@ static func _place(body: Node3D, at: Transform3D) -> void:
 		)
 
 
-# --- Asking -----------------------------------------------------------------
+# Asking
 
 ## Which door somebody at [param eyes] looking along [param aim] would use: the nearest whose
 ## panel, where it was last posed, is within reach and in front of them. -1 for none.

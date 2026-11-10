@@ -224,7 +224,7 @@ func describe_lines(in_rotation_fn: Callable = Callable()) -> PackedStringArray:
 	return lines
 
 
-# --- The one built in -------------------------------------------------------
+# The one built in
 
 ## A two-room house with a garden: enough furniture to lose somebody behind and a door between the rooms.
 ##

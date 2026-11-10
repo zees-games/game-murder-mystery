@@ -44,7 +44,6 @@ func _ready() -> void:
 		"round": config.round_seconds,
 	})
 
-	# [b]Not started here.[/b] `start()` builds the map and puts everybody on it, and nothing
-	# is listening yet: the module builds the bridge that answers `world_rebuilt`, so a map
-	# built now is one no client is ever sent. The module
-	# starts it, on the last line of its own load.
+	# [b]Not started here.[/b] `start()` builds the map and puts everybody on it, and nothing is listening yet:
+	# the module builds the bridge that answers `world_rebuilt`, so a map built now is one no client is ever
+	# sent. The module starts it, on the last line of its own load.
