@@ -16,7 +16,6 @@ game/mm_config.gd::long_block	2
 game/mm_controller.gd::long_block	2
 game/mm_doors.gd::long_block	3
 game/mm_figure.gd::long_block	1
-game/mm_hud.gd::long_block	1
 game/mm_map.gd::long_block	6
 game/mm_map_doc.gd::long_block	3
 game/mm_materials.gd::long_block	3
@@ -24,16 +23,16 @@ game/mm_module.gd::long_block	2
 game/mm_paths.gd::long_block	2
 game/mm_progress.gd::long_block	2
 game/mm_rules.gd::long_block	1
-game/mm_server.gd::long_block	2
+game/mm_server.gd::long_block	1
 game/mm_services.gd::long_block	9
 game/mm_weapons.gd::long_block	1
 game/net/mm_event.gd::long_block	2
 game/net/mm_events.gd::long_block	9
-game/net/mm_net_bridge.gd::long_block	12
+game/net/mm_net_bridge.gd::long_block	11
 game/net/mm_net_command.gd::long_block	2
 game/net/mm_net_link.gd::history	1
 game/net/mm_net_link.gd::long_block	6
-game/net/mm_player_net.gd::long_block	3
+game/net/mm_player_net.gd::long_block	2
 game/net/mm_request.gd::long_block	2
 tools/camera_check.gd::long_block	2
 tools/cover_server.gd::long_block	1

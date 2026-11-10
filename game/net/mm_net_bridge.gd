@@ -429,11 +429,9 @@ func receive_voice(peer_id: int, payload: PackedByteArray) -> DotResult:
 				DotError.CODE_FORBIDDEN, "That peer has nobody in the world."
 			)
 
-		# [b]One path or the other, never both.[/b] [DotGameModule] assigns
-		# `voice_relay_fn` to the services layer's `relay_voice`; a game that ALSO connected
-		# `voice_requested` to the same router would relay every frame twice — a doubled
-		# talk spurt, a doubled rate limit, and a sequence number the jitter buffer sees go
-		# backwards.
+		# [b]One path or the other, never both.[/b] [DotGameModule] assigns `voice_relay_fn` to the services layer's
+		# `relay_voice`; a game that ALSO connected `voice_requested` to the same router would relay every frame twice
+		# — a doubled talk spurt, a doubled rate limit, and a sequence number the jitter buffer sees go backwards.
 		if voice_relay_fn.is_valid():
 			voice_relay_fn.call(peer_id, payload)
 		else:

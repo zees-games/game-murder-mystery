@@ -31,10 +31,9 @@ func _ready() -> void:
 	game.config_binder = binder
 	game.name = "World"
 	game.config = config
-	# [b]The engine's rate, which the server has already set from `sv_tickrate`.[/b] Read
-	# rather than chosen: this scene is loaded after the server has booted and executed its
-	# config, so the number is already decided — and a game that picked its own would be a
-	# simulation running at one rate inside a process ticking at another.
+	# [b]The engine's rate, which the server has already set from `sv_tickrate`.[/b] Read rather than chosen: this
+	# scene is loaded after the server has booted and executed its config, so the number is already decided — and a
+	# game that picked its own would be a simulation running at one rate inside a process ticking at another.
 	game.tick_rate = Engine.physics_ticks_per_second
 	add_child(game)
 
