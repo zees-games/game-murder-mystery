@@ -1,4 +1,5 @@
 extends DotGameCheckSuite
+const MmTestPorts := preload("test_ports.gd")
 
 const MmConfig := preload("../game/mm_config.gd")
 const MmEvents := preload("../game/net/mm_events.gd")
