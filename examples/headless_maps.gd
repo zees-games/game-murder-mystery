@@ -150,40 +150,9 @@ func _test_map(id: StringName) -> void:
 
 	_check(bad_spawns.is_empty(), "every spawn stands on a floor with room for a person", "; ".join(bad_spawns))
 
-	var least := INF
-	var rules: DotSpawnRules = game.config.spawn_rules()
+	_check_spread(game, id, spawns_n)
 
-	for offset in range(0, 64, 9):
-		var spots: Array = game.map.spawn_batch(MmGame.SPAWN_GROUP, SPREAD_PLAYERS, rules, offset)
-
-		for i in range(spots.size()):
-			for j in range(i + 1, spots.size()):
-				least = minf(least, (spots[i][0] as Vector3).distance_to(spots[j][0]))
-
-	# The practice house is one small room's worth of points, two metres apart by design.
-	var floor_m := 2.0 if id == &"mm_practice" else SPREAD_MIN
-	_check(least >= floor_m, "%d players start at least %.0f m apart" % [SPREAD_PLAYERS, floor_m], "closest pair %.1f m" % least)
-
-	var buried: Array = []
-	var floating: Array = []
-
-	for index in range(game.map.props.size()):
-		var prop: Dictionary = game.map.props[index]
-		var frame: Transform3D = prop["transform"]
-		var size: Vector3 = prop["size"]
-		var centre := frame * Vector3(0.0, size.y * 0.5, 0.0)
-
-		if _inside_world(game, centre):
-			buried.append("%s at %s" % [prop["id"], frame.origin])
-
-		# Hung from a ceiling, or floating on water (which is not solid), by design.
-		var hangs := String(prop["id"]).contains("ceiling") or String(prop["id"]).contains("lily")
-
-		if not hangs and not _rests_on_something(game, frame, size):
-			floating.append("%s at %s" % [prop["id"], frame.origin])
-
-	_check(buried.is_empty(), "no prop is sunk into a wall or a floor", "; ".join(buried.slice(0, 6)))
-	_check(floating.is_empty(), "every prop stands on something", "%d: %s" % [floating.size(), "; ".join(floating.slice(0, 6))])
+	_check_placement(game)
 
 	var doors := game.map.doors
 	var swung_into: Array = []
@@ -208,9 +177,58 @@ func _test_map(id: StringName) -> void:
 		doors.apply(index, bool(spec["open"]), false, -1)
 		doors.pose_at(0)
 
-	# The toys (dot-props'): all built, none standing in a wall, a prop or another toy, and two
-	# seconds of physics later every loose one still where the map put it, not through a floor
-	# or flung off by an overlap the solver pushed apart.
+	await _check_toys(game, doc)
+
+	_check(swung_into.is_empty(), "every door swings into free space", "%d doors; %s" % [doors.count(), "; ".join(swung_into.slice(0, 40))])
+	_check(blocked.is_empty(), "every doorway is clear to walk through once its door is open", "; ".join(blocked.slice(0, 6)))
+	await _dispose(game)
+	_finished()
+
+
+## The spawn batches keep their people apart.
+func _check_spread(game: MmGame, id: StringName, spawns_n: int) -> void:
+	var least := INF
+	var rules: DotSpawnRules = game.config.spawn_rules()
+
+	for offset in range(0, 64, 9):
+		var spots: Array = game.map.spawn_batch(MmGame.SPAWN_GROUP, SPREAD_PLAYERS, rules, offset)
+
+		for i in range(spots.size()):
+			for j in range(i + 1, spots.size()):
+				least = minf(least, (spots[i][0] as Vector3).distance_to(spots[j][0]))
+
+	# The practice house is one small room's worth of points, two metres apart by design.
+	var floor_m := 2.0 if id == &"mm_practice" else SPREAD_MIN
+	_check(least >= floor_m, "%d players start at least %.0f m apart" % [SPREAD_PLAYERS, floor_m], "closest pair %.1f m" % least)
+
+
+## No prop is sunk into the world, and each stands on something.
+func _check_placement(game: MmGame) -> void:
+	var buried: Array = []
+	var floating: Array = []
+
+	for index in range(game.map.props.size()):
+		var prop: Dictionary = game.map.props[index]
+		var frame: Transform3D = prop["transform"]
+		var size: Vector3 = prop["size"]
+		var centre := frame * Vector3(0.0, size.y * 0.5, 0.0)
+
+		if _inside_world(game, centre):
+			buried.append("%s at %s" % [prop["id"], frame.origin])
+
+		# Hung from a ceiling, or floating on water (which is not solid), by design.
+		var hangs := String(prop["id"]).contains("ceiling") or String(prop["id"]).contains("lily")
+
+		if not hangs and not _rests_on_something(game, frame, size):
+			floating.append("%s at %s" % [prop["id"], frame.origin])
+
+	_check(buried.is_empty(), "no prop is sunk into a wall or a floor", "; ".join(buried.slice(0, 6)))
+	_check(floating.is_empty(), "every prop stands on something", "%d: %s" % [floating.size(), "; ".join(floating.slice(0, 6))])
+
+
+## The toys (dot-props'): all built, none standing in a wall, a prop or another toy, and two
+## seconds of physics later every loose one still where the map put it.
+func _check_toys(game: MmGame, doc: Dictionary) -> void:
 	var box := game.map.toys
 	var placed := (doc.get("toys", []) as Array).size()
 	var stuck: Array = []
@@ -233,11 +251,6 @@ func _test_map(id: StringName) -> void:
 		if toy.body != null and toy.body.global_position.distance_to(toy.rest.origin) > 0.6:
 			strayed.append("%s %d: %s to %s" % [toy.def["id"], toy.index, toy.rest.origin.snapped(Vector3.ONE * 0.1), toy.body.global_position.snapped(Vector3.ONE * 0.1)])
 	_check(strayed.is_empty(), "two seconds on, every toy is still where the map put it", "; ".join(strayed.slice(0, 6)))
-
-	_check(swung_into.is_empty(), "every door swings into free space", "%d doors; %s" % [doors.count(), "; ".join(swung_into.slice(0, 40))])
-	_check(blocked.is_empty(), "every doorway is clear to walk through once its door is open", "; ".join(blocked.slice(0, 6)))
-	await _dispose(game)
-	_finished()
 
 
 ## What a toy's own shapes, lifted five centimetres off the floor it stands on, are inside of

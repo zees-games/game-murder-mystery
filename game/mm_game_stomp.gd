@@ -1,4 +1,4 @@
-extends "mm_game_use.gd"
+extends "mm_game_death.gd"
 
 ## Damage from the world and from heads: the stomp rule and the fall below the map, of
 ## [code]mm_game.gd[/code]. Path-based base, no class_name.
