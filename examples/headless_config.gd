@@ -17,8 +17,18 @@ func _ready() -> void:
 	_run.call_deferred()
 
 
-const ROOT := "user://mm_cfgtest"
+## One directory per suite process (the probe child is handed its parent's): user:// is shared by
+## every copy of this project on a box, and two suites at once wrote and deleted each other's cfg files.
+const ROOT_ARG := "--cfgroot="
+var ROOT := _root()
 const GAME := "game-murder-mystery"
+
+
+func _root() -> String:
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with(ROOT_ARG):
+			return a.substr(ROOT_ARG.length())
+	return "user://mm_cfgtest_%d" % OS.get_process_id()
 
 
 func _run() -> void:
@@ -135,7 +145,7 @@ func _write(rel: String, text: String) -> void:
 func _child() -> String:
 	var out: Array = []
 	OS.execute(OS.get_executable_path(), ["--headless", "--path", ProjectSettings.globalize_path("res://"),
-		"res://examples/headless_config.tscn", "--", "--probe", "--mm-blood-stages=6", "--mm-toy-reach=3.3"], out, true)
+		"res://examples/headless_config.tscn", "--", "--probe", ROOT_ARG + ROOT, "--mm-blood-stages=6", "--mm-toy-reach=3.3"], out, true)
 	return "".join(PackedStringArray(out))
 
 
