@@ -20,7 +20,7 @@ Read the family [CLAUDE.md](../../CLAUDE.md) first; this file is only what is sp
 | --- | --- |
 | `game/mm_game.gd`, `mm_rules.gd` | the simulation: the draw, grace and play, the weapon, the gun and its drops, blood, falls, doors, toys, the decision; a `DotMatchRules` whose outcome is whatever `MmGame` decided |
 | `game/mm_weapons.gd` | the murderer's weapons (knife, cleaver, axe, bat, sword): name, reach, cooldown and the box parts drawn in a hand |
-| `game/mm_map_doc.gd`, `mm_map.gd`, `mm_doors.gd`, `mm_catalogue.gd` | what a map is (boxes, props by catalogue id, lights, doors, toys, spawns), validated, and the conversion of Hide & Seek, Prop Hunt and Playground documents; a map built; the doors; every map the server has and the built-in practice house |
+| `game/mm_map_doc.gd`, `mm_map.gd`, `mm_doors.gd`, `mm_catalogue.gd` | what a map is (boxes, props by catalogue id, lights, doors, toys, spawns), validated, and the conversion of Hide & Seek, Prop Hunt and Playlot documents; a map built; the doors; every map the server has and the built-in practice house |
 | `game/mm_props.gd`, `mm_materials.gd` | the prop catalogue (`props/catalogue.json`) and each prop's collision pieces (`props/pieces.json`); surfaces |
 | `game/mm_player.gd`, `mm_controller.gd` | one person (body, role, weapon drawn, gun, blood, cooldown); `DotFpsController` with the HOLD modifier |
 | `game/mm_config.gd`, `mm_paths.gd` | every rule a round is played under; `rebase` for pack delivery |
