@@ -81,6 +81,9 @@ func _run() -> void:
 	await _until_a_round(game)
 	var local: MmPlayer = _client.get("player")
 	await _wait_for_gate()
+	# Waits past the load cover (slow on a cold GPU box) before any timing starts; capped, so a stuck cover cannot hang the shot.
+	if not await DotShotGate.wait_lifted(get_tree(), _client.get("platform")):
+		printerr("shot: load cover still up after the wait; shooting anyway")
 	await _stage_round(game, local)
 	await _pose(game, local)
 
