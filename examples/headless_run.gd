@@ -635,7 +635,13 @@ func _test_doors() -> void:
 	_check(not doors.is_open(GARDEN_DOOR) and doors.is_open(0), "a new round puts every door back as the map has it",
 		"garden %s, kitchen %s" % [doors.is_open(GARDEN_DOOR), doors.is_open(0)])
 
-	# A stand-in walking out to the garden opens the door on its way.
+	await _door_standin(game)
+	_finished()
+
+
+## A stand-in walking out to the garden opens the door on its way.
+func _door_standin(game: MmGame) -> void:
+	var doors := game.map.doors
 	var bot := game.add_player(&"u990", "DoorBot", MmGame.BYSTANDERS)
 	bot.is_bot = true
 	bot.place_at(Vector3(8.4, 0.05, 0.2), -90.0)
@@ -650,7 +656,6 @@ func _test_doors() -> void:
 			break
 	_check(bot.controller.state.position.x > 12.0, "a stand-in opens a shut door it walks into",
 		"at %s; the door is %s" % [bot.controller.state.position.snapped(Vector3.ONE * 0.1), "open" if doors.is_open(GARDEN_DOOR) else "shut"])
-	_finished()
 
 
 ## The practice house's garden toys (dot-props'): the beach ball at 16.5, -2.5, the football at
@@ -696,6 +701,21 @@ func _test_toys() -> void:
 	var freed: Dictionary = (load("res://examples/toy_freed_prompt.gd") as GDScript).call("run", toys, switch)
 	_check(bool(freed["ok"]), "the HUD's prompt for a toy, or its box, freed under it is empty, with no engine error", str(freed))
 
+	await _toy_rides(game, toys, walker)
+
+	var _off := game.toy_rules.set_cvar(DotPropBodyRules.CVAR_ENABLED, "0")
+	_check(not toys.toy(0).visible and toys.toy(0).process_mode == Node.PROCESS_MODE_DISABLED, "sv_toys 0 takes the toys away")
+	var _on := game.toy_rules.set_cvar(DotPropBodyRules.CVAR_ENABLED, "1")
+
+	await _end_round(game)
+	var home := toys.toy(1)
+	_check(home.body.global_position.distance_to(home.rest.origin) < 0.05, "a new round puts every toy home",
+		"%.2f m away" % home.body.global_position.distance_to(home.rest.origin))
+	_finished()
+
+
+## A trampoline and a roundabout added to the garden: the bounce and the carry.
+func _toy_rides(game: MmGame, toys: DotPropBodyBox, walker: MmPlayer) -> void:
 	# A trampoline throws a person up from inside their movement (a predicting client agrees) and counts each bounce.
 	var placements: Array = (game.map_doc["toys"] as Array).duplicate()
 	placements.append({"toy": "trampoline", "at": [19.5, 0.0, 0.0]})
@@ -734,16 +754,6 @@ func _test_toys() -> void:
 		"%.0f degrees in a second" % rad_to_deg(turned))
 	_check(absf(out - Vector2(before.x, before.z).length()) < 0.25, "and leaves them as far out as they stood",
 		"%.2f m from the hub, from %.2f" % [out, Vector2(before.x, before.z).length()])
-
-	var _off := game.toy_rules.set_cvar(DotPropBodyRules.CVAR_ENABLED, "0")
-	_check(not toys.toy(0).visible and toys.toy(0).process_mode == Node.PROCESS_MODE_DISABLED, "sv_toys 0 takes the toys away")
-	var _on := game.toy_rules.set_cvar(DotPropBodyRules.CVAR_ENABLED, "1")
-
-	await _end_round(game)
-	var home := toys.toy(1)
-	_check(home.body.global_position.distance_to(home.rest.origin) < 0.05, "a new round puts every toy home",
-		"%.2f m away" % home.body.global_position.distance_to(home.rest.origin))
-	_finished()
 
 
 ## A key down for a tick and up again: the game makes a press from the edge, as from a packet.

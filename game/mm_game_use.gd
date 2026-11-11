@@ -194,3 +194,80 @@ func body_position(other: MmPlayer) -> Vector3:
 			return then
 
 	return other.controller.state.position
+
+
+## The use key going down, for everybody: on a toy looked at (a ray, so only the one in the
+## middle of the view), else on the nearest door in reach.
+func _advance_use() -> void:
+	for id: StringName in players:
+		var player: MmPlayer = players[id]
+		var pressed := player.wants_use and not player.use_was_held
+		player.use_was_held = player.wants_use
+
+		if not pressed or not player.is_alive() or player.watching or map == null:
+			continue
+
+		# Held is held: somebody an admin froze does not open the door they are facing.
+		if player.controller.has_modifier(MmController.HOLD):
+			continue
+
+		var toy := toy_aimed(player)
+
+		if toy >= 0:
+			var _played := use_toy(toy, id)
+			continue
+
+		if map.doors == null or map.doors.count() == 0:
+			continue
+
+		var index := map.doors.door_for(player.eye_position(), player.aim_direction())
+
+		if index >= 0:
+			var _used := use_door(index, id)
+
+
+## Opens or shuts door [param index] for [param by], now, if it can be. What the use key does,
+## and what a suite and a bot do directly.
+func use_door(index: int, by: StringName) -> bool:
+	if map == null or map.doors == null or index < 0 or index >= map.doors.count():
+		return false
+
+	if not config.doors_enabled:
+		return false
+
+	if map.doors.moving(index, _tick):
+		return false
+
+	# Nobody anywhere the panel will pass through: see MmDoors. Opening, it goes away from
+	# whoever opened it.
+	var from := map.doors.fraction(index, _tick)
+	var to := 0.0 if map.doors.is_open(index) else 1.0
+	var user := (players[by] as MmPlayer).eye_position() if players.has(by) else Vector3.INF
+	var flip := map.doors.is_flipped(index)
+
+	if to > 0.5 and user != Vector3.INF:
+		flip = map.doors.flips_for(index, user)
+
+	for id: StringName in players:
+		var player: MmPlayer = players[id]
+
+		if not player.is_alive() or player.watching:
+			continue
+
+		if map.doors.sweeps(index, player.controller.state.position, MmPlayer.BODY_RADIUS,
+				player.hull_height(), from, to, 1 if flip else 0):
+			if players.has(by) and not (players[by] as MmPlayer).is_bot:
+				refused.emit(by, "Somebody is in the way of the %s." % map.doors.name_of(index))
+			return false
+
+	var open := to > 0.5
+	map.doors.apply(index, open, flip, _tick)
+	door_used.emit(index, open, flip, _tick, by)
+
+	if progress != null and players.has(by):
+		progress.on_door(by)
+
+	DotLog.debug(CHANNEL, "a door was used", {
+		"door": map.doors.name_of(index), "open": open, "by": String(by), "tick": _tick,
+	})
+	return true
