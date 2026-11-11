@@ -75,7 +75,7 @@ const MAP_BYTES := 65536 + 16
 const AVATAR_BYTES := 1024
 
 ## Where a body may be, in metres, on the wire. [b]Read from [MmGame], not written here[/b]: a quantised position is
-## decoded against this range, so two files holding two numbers put the thing somewhere else (game-arena had 256 against
+## decoded against this range, so two files holding two numbers put the thing somewhere else (game-fatal-contact had 256 against
 ## 128 in two files that each looked right).
 const WORLD_EXTENT := MmGame.NET_WORLD_EXTENT
 const POS_BITS := 24
