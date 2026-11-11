@@ -1,9 +1,8 @@
 extends "mm_net_bridge_events.gd"
 
-## Joins an [MmGame] to a [DotNetManager]: the netcode seam, and the only file here that names
-## both. The map crosses once in `MAP`; per tick only who is alive and what is in a hand
-## ([MmPlayerNet]); no message carries anybody's role but its owner's (docs/design.md). The
-## world ticks once per tick, in the first behaviour through ([method ensure_game_ticked]).
+## Joins an [MmGame] to a [DotNetManager]: the netcode seam, and the only file here that names both. The map crosses
+## once in `MAP`; per tick only who is alive and what is in a hand ([MmPlayerNet]); no message carries anybody's role
+## but its owner's (docs/design.md). The world ticks once per tick, in the first behaviour through ([method ensure_game_ticked]).
 
 
 func _exit_tree() -> void:
@@ -107,21 +106,17 @@ func _connect_server_signals() -> void:
 		game.spectate.view_changed.connect(_on_spectate_changed)
 
 
-## Opens the link under [param parent], whose NAME is half the RPC routing.
-##
-## A [DotServer] on one end and a [DotClientLink] on the other, both called `Server`, with
-## this node under each: Godot routes an RPC by the receiver's node path, so a link opened
-## anywhere else is addressed by a path the other end does not have and every message lands
-## nowhere, with no error on either side.
+## Opens the link under [param parent], whose NAME is half the RPC routing: a [DotServer] on one end and a
+## [DotClientLink] on the other, both called `Server`, with this node under each. A link opened anywhere else is
+## addressed by a path the other end does not have, and every message lands nowhere with no error.
 func open_link(parent: Node) -> void:
 	if parent == null or link != null:
 		return
 
 	link = MmNetLink.attached_to(parent, self, net != null and net.is_server)
-	# Not parent.add_child: the link must sit under `Server` (RPCs route by path) yet die with
-	# this bridge. A bare add_child left a second link after every module reload, Godot renamed
-	# the live one `@Node@n`, and RPCs to real clients were lost silently. DotGameLink frees it
-	# with the bridge, and without remove_child, which errors while the server tree tears down.
+	# Not parent.add_child: the link must sit under `Server` (RPCs route by path) yet die with this bridge. A bare
+	# add_child left a second link after every module reload and RPCs to real clients were lost silently. DotGameLink
+	# frees it with the bridge, and without remove_child, which errors while the server tree tears down.
 	DotGameLink.attach(link, parent, self, MmNetLink.NODE_NAME)
 
 
@@ -134,11 +129,9 @@ func _on_player_added(id: StringName) -> void:
 	if _behaviours.has(session_id):
 		return
 
-	# [b]Every id on the wire is `u<session>`, and anything else parses back to zero.[/b] A
-	# world that added a player called `bot` would replicate it under session 0 — which is
-	# also dot-net's broadcast address — and a second one would silently replace the first
-	# in this table. Refused with a line rather than accepted quietly: the symptom otherwise
-	# is one stand-in playing and the other standing still for ever.
+	# [b]Every id on the wire is `u<session>`, and anything else parses back to zero.[/b] A player called `bot` would
+	# replicate under session 0, dot-net's broadcast address, and a second would replace the first in this table.
+	# Refused with a line rather than accepted quietly: otherwise one stand-in plays and the other stands still for ever.
 	if player_key(session_id) != id:
 		DotLog.warn(CHANNEL, "a player whose id is not a session key is not replicated", {
 			"id": String(id), "hint": "use add_bot() or MmNetBridge.player_key()",
@@ -216,21 +209,18 @@ func _on_phase_changed(phase: int) -> void:
 
 func _on_player_died(player_id: StringName, by: StringName, why: StringName) -> void:
 	var who: MmPlayer = game.players.get(player_id) if game != null else null
-	# [b]`by` is never sent.[/b] Who killed somebody is the one fact the round is about: a
-	# DEATH that named the murderer would end the mystery on every client that read it. The
-	# victim's own camera is told separately (SPECTATE carries the killer to that peer alone).
-	# The way they died (stabbed, shot) is public: everybody nearby heard it.
+	# [b]`by` is never sent.[/b] Who killed somebody is the fact the round is about: a DEATH naming the murderer would end
+	# the mystery on every client. The victim's own camera is told separately (SPECTATE carries the killer to that peer
+	# alone). The way they died (stabbed, shot) is public: everybody nearby heard it.
 	_broadcast(MmEvents.Kind.DEATH, MmEvents.write_death(
 		session_of(player_id), 0, why,
 		who.death if who != null else null
 	))
 
 
-## A view changed on the server. Told to its owner and to nobody else.
-##
-## [b]To the one peer, because a camera is private.[/b] Who somebody is watching is a fact
-## about them that nobody else has any business knowing — and a stand-in, whose peer is
-## zero, is told nothing, which `_tell` guarantees rather than this.
+## A view changed on the server. Told to its owner and nobody else. [b]To the one peer, because a camera is private[/b]:
+## who somebody is watching is nobody else's business, and a stand-in, whose peer is zero, is told nothing (`_tell`
+## guarantees that).
 func _on_spectate_changed(key: String) -> void:
 	var player_id := StringName(key)
 	if game == null or game.spectate == null or game.spectate.manager == null:
@@ -270,10 +260,9 @@ func server_tick(tick: int) -> void:
 
 		_unregistered_in_tick.clear()
 
-	# Belt and braces: `net.server_tick` drives the entities, and the first player behaviour
-	# through calls `ensure_game_ticked`. A server with nobody on it has no behaviours at
-	# all, and a world that only ticked when somebody was connected is a server whose round
-	# clock stops between players — which looks like the server having hung.
+	# Belt and braces: `net.server_tick` drives the entities and the first player behaviour calls `ensure_game_ticked`.
+	# A server with nobody on it has no behaviours, and a world that only ticked with somebody connected has a round
+	# clock that stops between players, which looks like a hung server.
 	ensure_game_ticked(tick)
 
 	if tick % CLOCK_EVERY == 0:
@@ -302,11 +291,9 @@ func ensure_game_ticked(tick: int) -> void:
 	game.tick_once(tick)
 
 
-## How far behind [param tick] this client is drawing everybody else, in quarter ticks: what the
-## server rewinds the other bodies by when this tick's stab or shot fires. Remote players are
-## drawn at the receive timeline less the interpolation delay, and the command is for a tick ahead
-## of the server by the input lead, so the difference is the lead, the flight time and the
-## interpolation delay. -1 when there is nothing to measure against yet.
+## How far behind [param tick] this client is drawing everybody else, in quarter ticks: what the server rewinds the
+## other bodies by when this tick's stab or shot fires (lead, flight time and interpolation delay, since remote players
+## are drawn at the receive timeline less the delay). -1 when there is nothing to measure against yet.
 func view_lag_q(tick: int) -> int:
 	if net == null or net.interpolator == null or not net.clock.is_synced():
 		return -1
@@ -410,12 +397,9 @@ func send_chat(peer_id: int, wire: Dictionary) -> void:
 	_tell(peer_id, MmEvents.Kind.CHAT, MmEvents.write_chat(wire))
 
 
-## A voice frame, in whichever direction.
-##
-## [b]Not a [MmEvent].[/b] Voice is fifty packets a second and every event here is reliable,
-## so a talk spurt would put a hundred retransmittable messages in front of a shot. It also does not go through [DotNetManager]: the message registry seals a
-## message set and hashes it, and adding a fifty-hertz opaque blob buys nothing — the packet
-## has its own header, sequence and validation in [DotVoicePacket].
+## A voice frame, in whichever direction. [b]Not a [MmEvent][/b]: voice is fifty packets a second and every event is
+## reliable, so a talk spurt would queue a hundred retransmittable messages before a shot. It also skips [DotNetManager]
+## (its registry seals and hashes a message set); the packet has its own header, sequence and validation in [DotVoicePacket].
 func receive_voice(peer_id: int, payload: PackedByteArray) -> DotResult:
 	if payload.is_empty():
 		return DotResult.fail(DotError.CODE_INVALID, "An empty voice frame.")
@@ -477,11 +461,9 @@ func _on_request(message: DotNetMessage) -> void:
 			var _switched := game.toggle_flashlight(player_key(player_for_peer(peer_id)))
 
 
-## Somebody who is out asked to look at somebody else. The server's list, the server's rule.
-##
-## [b]A refusal goes back as a notice rather than being dropped.[/b] "This server only lets
-## you watch your own side" is the answer to a key that did nothing, and a key that silently
-## does nothing is reported as broken.
+## Somebody who is out asked to look at somebody else. The server's list, the server's rule. [b]A refusal goes back as a
+## notice, not dropped[/b]: "this server only lets you watch your own side" answers a key that did nothing, and a key
+## that silently does nothing is reported as broken.
 func _spectate_step(peer_id: int, direction: int) -> void:
 	var session_id := player_for_peer(peer_id)
 
@@ -508,13 +490,9 @@ func _spectate_roam(peer_id: int) -> void:
 		notice(peer_id, toggled.error.message)
 
 
-## Tells everybody who somebody is now: a profile that arrived after they were seated, a
-## wardrobe change, an operator's rename. Server only.
-##
-## [b]Through JOIN, which a client already applies to a player it has.[/b] A second message
-## for "this person changed" would be a second thing a joiner has to be told and a second
-## order two of them can arrive in; a JOIN is idempotent and already carries all of it.
-## An empty [param display_name] keeps the one they have.
+## Tells everybody who somebody is now: a late profile, a wardrobe change, an operator's rename. Server only. [b]Through
+## JOIN, which a client already applies to a player it has[/b]: a second message would be a second thing a joiner is told
+## and a second order to arrive in. An empty [param display_name] keeps the one they have.
 func refresh_player(session_id: int, display_name: String, avatar: DotAvatar) -> bool:
 	if net == null or not net.is_server or game == null:
 		return false

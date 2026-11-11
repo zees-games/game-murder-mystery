@@ -4,10 +4,9 @@ const MmConfig := preload("../game/mm_config.gd")
 const MmGame := preload("../game/mm_game.gd")
 const MmPlayer := preload("../game/mm_player.gd")
 
-## Stand-ins play whole rounds against each other on the real maps, and the suite holds what
-## they do to bands: the murderer kills in most rounds without winning every one, the gun is
-## fired and fetched, draws are not far over stabs, bystanders keep together, talk is rationed
-## and nobody stays stuck. `-- --rounds N`, `--first N`, `--difficulty hard`, `MM_BOTS_TRACE=1`.
+## Stand-ins play whole rounds on the real maps; the suite holds them to bands: the murderer kills in most rounds
+## without winning all, the gun is fired and fetched, draws stay near stabs, talk is rationed and nobody stays stuck.
+## `-- --rounds N`, `--first N`, `--difficulty hard`, `MM_BOTS_TRACE=1`.
 
 ## Maps the rounds rotate through, when `maps/` is there: ours, and one of each other game's
 ## that is mounted.

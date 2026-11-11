@@ -1,11 +1,8 @@
 extends RefCounted
 
-## The murderer's melee weapons, and how each is drawn. A table, not a resource per weapon: a
-## weapon here is a reach, a cooldown and a shape, and the server owner picks one by id
-## (`mm_murderer_weapon`). The gun is not here; there is one gun and the game knows it.
-##
-## [b]A shape is boxes in the hand's space[/b] (x right, y up the blade, z forward), so the
-## figure and the first-person view draw the same thing with no model file to deliver.
+## The murderer's melee weapons, and how each is drawn. A table, not a resource per weapon: a weapon is a reach, a
+## cooldown and a shape, picked by id (`mm_murderer_weapon`). The gun is not here. [b]A shape is boxes in the hand's
+## space[/b] (x right, y up the blade, z forward), so the figure and first-person view draw it with no model file.
 
 const DEFAULT := &"knife"
 

@@ -16,9 +16,8 @@ var game: MmGame = null
 func _ready() -> void:
 	var config := MmConfig.new()
 
-	# The family's `defaults < JSON < environment < argv` chain, on the server too. It is how
-	# an operator sets `MM_HIDE_SECONDS` or `--mm-round-seconds` without editing anything, and
-	# the cvars the module adds are the live half of the same numbers.
+	# The family's `defaults < JSON < environment < argv` chain, on the server too: an operator sets `MM_HIDE_SECONDS`
+	# or `--mm-round-seconds` without editing anything, and the module's cvars are the live half of the same numbers.
 	# Plus the cfg/ yml layers; strict (a typo or bad value stops the boot) on a dedicated server.
 	var binder := MmConfig.make_binder(config, "user://cfg/murder.json")
 	var loaded := binder.load_layers()

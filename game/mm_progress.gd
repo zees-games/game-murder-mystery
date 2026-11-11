@@ -112,11 +112,9 @@ static func _add(
 	out.stats.append(def)
 
 
-## What a player can earn, as rules over [method schema]'s numbers.
-##
-## [b]Every stat read here is one [method schema] declares and this file records[/b]: an
-## achievement over a stat nothing reports never unlocks and nothing errors. The suite checks
-## it both ways.
+## What a player can earn, as rules over [method schema]'s numbers. [b]Every stat read here is one [method schema]
+## declares and this file records[/b]: an achievement over a stat nothing reports never unlocks and nothing errors.
+## The suite checks it both ways.
 static func catalogue() -> DotAchievementCatalogue:
 	var made: Array[DotAchievement] = []
 
@@ -281,13 +279,9 @@ func setup(directory: String, report: bool) -> DotResult:
 
 # Counting
 
-## Files one reading for one person, and starts counting for them the first time.
-##
-## [b]Begun lazily, on the first number, and that is what keeps stand-ins out.[/b] A player
-## is added to the world before a bridge or a client marks them a stand-in, so a check at
-## join time would see every bot as a person; by the time anything is worth counting, the
-## flag is set. The memory and file stores load synchronously, so the achievement tracker
-## has them before the reading that follows.
+## Files one reading for one person, and starts counting for them the first time. [b]Begun lazily, on the first number,
+## which keeps stand-ins out[/b]: a player is added before a bridge or client marks them a stand-in, so a join-time check
+## would count every bot. The stores load synchronously, so the tracker has them before the reading that follows.
 func record(player_id: StringName, stat: StringName, value: float = 1.0) -> void:
 	if stats == null:
 		return

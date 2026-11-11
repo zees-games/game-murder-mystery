@@ -22,12 +22,9 @@ var net_modifiers: int = 0
 ## The jump timers (coyote, jump buffer, cooldown), owner only, for the owner's rewind. Opt-in on dot-player-controller API 10; see its docs/networking.md.
 var net_timers: int = 0
 
-## Hit points, and the one field with a hard cap on the wire.
-##
-## [b]Sent against 0..1000 rather than against the player's own maximum.[/b] A server that
-## raised `player_health` mid-round would otherwise change what every number sent earlier
-## MEANT, which is the quantisation version of the map-size bug: the value does not get less
-## precise, it becomes a different value.
+## Hit points, and the one field with a hard cap on the wire. [b]Sent against 0..1000, not the player's own maximum[/b]:
+## a server that raised `player_health` mid-round would change what every earlier number MEANT, the quantisation
+## version of the map-size bug (the value does not get less precise, it becomes a different value).
 var net_health: float = 100.0
 
 ## What full health is, for the HUD.
@@ -186,12 +183,9 @@ func _net_state_applied(tick: int) -> void:
 	DotFpsNetSync.push(self, player.controller.state)
 	_adopt()
 
-	# NOT the node, on a predicted entity: `receive_snapshot` calls this BEFORE the
-	# predictor reconciles, and reconcile's first act is to read the node as "what the
-	# client is showing". Moving it here makes the measured error the whole replay distance,
-	# and the correction rate then reads as if every snapshot snapped. Two games in this
-	# family shipped that line.
-	#
+	# NOT the node, on a predicted entity: `receive_snapshot` calls this BEFORE the predictor reconciles, and reconcile
+	# reads the node as "what the client is showing". Moving it here makes the measured error the whole replay distance,
+	# so the correction rate reads as if every snapshot snapped. Two games in this family shipped that line.
 	if identity == null or not identity.is_predicted():
 		player.global_position = player.controller.state.position
 

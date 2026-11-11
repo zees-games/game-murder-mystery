@@ -2,19 +2,9 @@ extends "headless_net_tests.gd"
 
 const WorkbenchSection := preload("headless_net_workbench.gd")
 
-## The real path minus the socket: two worlds, two managers, two bridges, two links with the
-## RPC replaced by a queue, so the codec, the seal, the snapshots, the prediction and the
-## reconciliation all run, in one process, in two physics worlds.
-##
-## [b]What this suite is for is the claims the game rests on over a wire.[/b] Roles are secret
-## on the wire, not only on the screen: TEAM and JOIN carry everybody as a bystander, a ROLE goes
-## to its owner alone, a DEATH never says by whom and the spectate camera is given no killer, so
-## a client that drew every field it was sent would still not know who the murderer is. What is
-## meant to be seen is: a weapon drawn, a gun in a hand, blood, a shot's tracer, a gun on the
-## floor. Then everything else that crosses: the map document, prediction against doors, the
-## toys, a client that missed its map, the result with the murderer named.
-##
-## Sections and checks are both counted; mg-smash-copter's notes say why the second matters.
+## The real path minus the socket: two worlds, managers, bridges and links with the RPC replaced by a queue, in one process.
+## It holds the claims the game rests on over a wire: roles are secret (TEAM and JOIN carry everybody as a bystander,
+## ROLE goes to its owner, DEATH never says by whom), then the map, doors, toys, the result. Sections and checks are both counted.
 
 const SECTIONS := 18
 const CHECKS := 118

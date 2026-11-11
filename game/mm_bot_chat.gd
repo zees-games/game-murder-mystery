@@ -1,14 +1,8 @@
 extends RefCounted
 
 ## What the stand-ins say in chat: canned lines by moment, a name filled in where one fits.
-##
-## [b]Rationed, or a lobby of bots is a wall of text.[/b] One line per bot every
-## [member per_bot] seconds at most, one from anybody every [constant ANYBODY] seconds, and
-## only some of the moments that could have one get it ([member chance]). A witness's warning
-## is the exception to the chance (it always goes) but not to the spacing.
-##
-## [b]A murderer bot lies like anybody[/b]: it says what a bystander would, and never anything
-## that gives it away. Its own lines are the bystanders' lines.
+## [b]Rationed[/b]: one line per bot every [member per_bot] seconds, one from anybody every [constant ANYBODY] seconds,
+## and only some moments get one ([member chance]; a witness's warning always goes). A murderer bot says what a bystander would.
 
 const ANYBODY := 2.5
 

@@ -1,13 +1,8 @@
 extends "dedicated_tests.gd"
 
-## The game as a deployed server runs it: a real [DotServer], booted from a config file, with
-## the module loaded BY PATH the way an operator names it — so the netcode, the services, the
-## cvars and the stand-ins are the ones a deployment gets, not a copy assembled for a test.
-##
-## [b]What neither of the other suites can reach.[/b] `headless_run` drives a world by hand and
-## `headless_net` joins two halves with no server; this is the only place [MmModule] loads,
-## [DotGameModule]'s order runs, a cvar is typed at a console and a round is played by
-## nothing but the stand-ins the module seats itself.
+## The game as a deployed server runs it: a real [DotServer] booted from a config file, the module loaded BY PATH.
+## The only suite where [MmModule] loads, [DotGameModule]'s order runs, a cvar is typed at a console and a round is
+## played by nothing but the stand-ins the module seats itself; `headless_run` and `headless_net` cannot reach these.
 
 const SECTIONS := 16
 const CHECKS := 119

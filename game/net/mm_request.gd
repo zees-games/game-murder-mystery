@@ -2,12 +2,9 @@ extends DotNetMessage
 
 const MmEvents := preload("mm_events.gd")
 
-## Anything a client asks the authority for. Reliable, rare, to the server only.
-##
-## [b]None of these is a per-tick intent.[/b] Moving is the input packet, because it has to be
-## ordered against the tick it was made on; this is for the other kind — "my world exists",
-## "I am ready", "I want to watch somebody else" — each of which happens once and must not be lost.
-## Nothing here can catch anybody: a catch is the server's measurement, never a request.
+## Anything a client asks the authority for. Reliable, rare, to the server only. [b]None of these is a per-tick intent[/b]:
+## moving is the input packet, ordered against its tick; this is for what happens once and must not be lost ("my world
+## exists", "I am ready", "I want to watch somebody else"). Nothing here can catch anybody: a catch is the server's measurement.
 
 const NAME := &"mm.request"
 const KIND_BITS := 4
@@ -17,13 +14,8 @@ var kind: int = 0
 var body: PackedByteArray = PackedByteArray()
 
 
-## [b]Built with [code]new(kind, body)[/code], and this file does not preload itself.[/b]
-## It did, for a typed [code]static func of() -> MmRequest[/code] factory. A script that
-## [code]extends DotNetMessage[/code] and preloads ITSELF, first loaded from a module a
-## running [DotServer] loads at runtime — which is how every deployed server loads this
-## game — leaks the whole script graph at exit on Godot 4.7.2. Measured in
-## mg-buses-from-hell (8ed866c) with a two-line reproduction. The registry decodes with a
-## bare [code]new()[/code], which is why both arguments default.
+## [b]Built with [code]new(kind, body)[/code], and this file does not preload itself.[/b] A script extending [DotNetMessage]
+## that preloads ITSELF, loaded from a runtime-loaded module, leaks the script graph at exit on Godot 4.7.2 (mg-buses-from-hell 8ed866c). The registry decodes with a bare `new()`: both args default.
 func _init(p_kind: int = 0, p_body: PackedByteArray = PackedByteArray()) -> void:
 	kind = p_kind
 	body = p_body

@@ -2,13 +2,9 @@ extends DotGameCheckSuite
 
 const MmMapConfig := preload("../game/mm_map_config.gd")
 
-## A map with a file gets its values and the next map has the previous ones back.
-##
-## [codeblock]
-## godot --headless --path . res://examples/headless_mapcfg.tscn
-## [/codeblock]
-##
-## The file is written to the server tier into user://, so the check does not depend on what ships.
+## A map with a file gets its values and the next map has the previous ones back. The file is written to the server
+## tier into user://, so the check does not depend on what ships.
+## Run: `godot --headless --path . res://examples/headless_mapcfg.tscn`
 
 const CHECKS := 8
 const SECTIONS := 1

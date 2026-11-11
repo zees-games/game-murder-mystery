@@ -170,10 +170,9 @@ func setup() -> DotResult:
 	manager.mixer = DotAudioMixer.new()
 	manager.register_as_service = false
 	manager.voices = 24
-	# Measured toward the family's -17 LUFS (dot-audio docs/loudness.md): a 40 s stand-in round
-	# read -27.1 LUFS with the beds and the steps in (mostly digital silence before them), -23.4 at +8, -20.9 at +11; after dot-audio's stand-in learnt to turn off walls it read
-	# -19.4 at +13 and -17.9 at +15. The
-	# bed level is dot-audio's default and the map document's ambient.level.
+	# Measured toward the family's -17 LUFS (dot-audio docs/loudness.md): a 40 s stand-in round read -27.1 LUFS at
+	# the old level, -20.9 at +11; with dot-audio's stand-in turning off walls, -19.4 at +13 and -17.9 at +15.
+	# The bed level is dot-audio's default and the map document's ambient.level.
 	manager.loudness_trim_db = 15.0
 	add_child(manager)
 

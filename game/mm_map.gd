@@ -5,9 +5,8 @@ const MmMaterials := preload("mm_materials.gd")
 const MmProps := preload("mm_props.gd")
 const MmDoors := preload("mm_doors.gd")
 
-## A map document, built: the building, the furniture, the lights and the sky. A server builds
-## only what collides; a client also draws, boxes batched by material and twelve-metre chunk (the
-## compatibility renderer lights a mesh with at most eight lamps) and props as MultiMeshes.
+## A map document, built: the building, furniture, lights and sky. A server builds only what collides; a client also
+## draws, boxes batched by material and twelve-metre chunk (at most eight lamps per mesh) and props as MultiMeshes.
 ## A prop's collision is its catalogue pieces, so bots, shots and players agree on the sofa.
 
 const CHANNEL := "mm.map"
@@ -146,11 +145,9 @@ func clear() -> void:
 	_weather = null
 
 
-## The toys, on their own layers: a loose one (a ball, a barrel) on `toy`, which people walk
-## through and push (`MmGame._advance_toys`) and nothing but the world, the props and other
-## toys stops; one somebody stands on (a see-saw, a roundabout) and every frame on `prop`, a
-## wall to a person like a table; and their footprints on `footprint`, which nothing collides
-## with and a bot's walkable mesh is baked round.
+## The toys, on their own layers: a loose one (ball, barrel) on `toy`, which people walk through and push
+## (`MmGame._advance_toys`); one somebody stands on (see-saw, roundabout) on `prop`, a wall to a person; and their
+## footprints on `footprint`, which nothing collides with and a bot's walkable mesh is baked round.
 func _build_toys() -> void:
 	toys = DotPropBodyBox.new()
 	toys.name = "Toys"
@@ -297,13 +294,9 @@ static func _add_box(tool: SurfaceTool, frame: Transform3D, size: Vector3) -> vo
 			tool.add_vertex(v)
 
 
-## Whether map furniture [param prop_id] casts a contact shade: only a furniture-kit block (a
-## cabinet, a counter, a fridge, a bookcase, a washer) that collides as its box and stands
-## upright. Its box is then its shape, so the shade is where its foot is. A piece-built prop (a
-## chair, a table, a tree) is open underneath and its box would shade floor that is lit. Nothing
-## here breaks or moves (the furniture is one static body; doors are their own panels), so the
-## shade, one mesh built at load, never outlives what cast it. mg-prop-hunt makes the same call
-## and also leaves out breakable furniture. See docs/design.md#colour-and-light.
+## Whether map furniture [param prop_id] casts a contact shade: only a furniture-kit block (cabinet, counter, fridge)
+## that collides as its box and stands upright, so the shade is where its foot is. A piece-built prop (chair, table,
+## tree) is open underneath. Nothing here moves, so the one mesh built at load never outlives what cast it. See docs/design.md#colour-and-light.
 func _shades_floor(prop_id: StringName, raw: Dictionary) -> bool:
 	if catalogue == null or not catalogue.pieces_of(prop_id).is_empty():
 		return false
@@ -312,11 +305,9 @@ func _shades_floor(prop_id: StringName, raw: Dictionary) -> bool:
 	return is_zero_approx(float(raw.get("pitch", 0.0))) and is_zero_approx(float(raw.get("roll", 0.0)))
 
 
-## dot-lighting's contact shade (API 4) where a box meets the floor, a wall or another box: the
-## Compatibility renderer has no ambient occlusion, and a wall met the floor with no shade at its
-## foot. Glass and water neither cast nor take one; doors and secret panels move and are not
-## boxes here. By path, behind the level, so a client shell older than the helper still runs the
-## map without it.
+## dot-lighting's contact shade (API 4) where a box meets the floor, a wall or another box, since the Compatibility
+## renderer has no ambient occlusion. Glass and water neither cast nor take one; doors and secret panels are not boxes
+## here. By path, behind the level, so a client shell older than the helper still runs the map without it.
 func _add_contact_shade(boxes: Array) -> void:
 	if boxes.is_empty() or _drawn == null or DotAddonApi.build_level("dot_lighting") < 4 \
 			or not ResourceLoader.exists(CONTACT_SHADE_SCRIPT):
@@ -411,11 +402,9 @@ func _build_lights() -> void:
 		_drawn.add_child(omni)
 
 
-## The sky and the sun: a dot-lighting document made from the map's `environment`
-## ([method light_document]), so every map has the family's light (game-arena's built-in maps:
-## a warm sun with soft shadows, a pale cool fill, filmic tone map, glow) while keeping its
-## own sun angle, sun colour and sky: the woods are still golden hour and the office still
-## late afternoon.
+## The sky and the sun: a dot-lighting document made from the map's `environment` ([method light_document]), so every
+## map has the family's light (warm sun, soft shadows, cool fill, filmic tone map, glow) while keeping its own sun
+## angle, sun colour and sky.
 func _build_environment() -> void:
 	var env_doc: Dictionary = doc["environment"]
 	var lighting := Node3D.new()
@@ -554,10 +543,9 @@ func spawn(side: String, seat: int) -> Array:
 	return [at, float(base.get("yaw", 0.0))]
 
 
-## Starts for [param count] people at once, as `[position, yaw]` each, spread by [param rules]
-## (dot-spawn) so a round does not open with the cast in one corner. More people than spawns
-## fall back to [method spawn]'s rings for the rest. [param offset] is the round's shuffle: the seat to start from, and the tick
-## that varies the pick.
+## Starts for [param count] people at once, as `[position, yaw]` each, spread by [param rules] (dot-spawn). More people
+## than spawns fall back to [method spawn]'s rings for the rest. [param offset] is the round's shuffle: the seat to
+## start from, and the tick that varies the pick.
 func spawn_batch(side: String, count: int, rules: DotSpawnRules, offset: int) -> Array:
 	var list: Array = (doc.get("spawns", {}) as Dictionary).get(side, [])
 	var out: Array = []

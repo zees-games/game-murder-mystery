@@ -264,11 +264,9 @@ func _on_profile(event: DotEvent) -> void:
 	link.refresh_player(session_id, session.display_name, _avatar_for(session_id))
 
 
-## [b]Nothing to undo.[/b] The commands are the module's own and [DotModule] removes them;
-## the netcode, the bridge and the roster are [DotGameModule]'s and it tears them down in
-## the reverse order it built them. The world is NOT this module's to free: it was in the
-## tree before the module loaded, and a server can unload and reload a game module without
-## the map going away, which is what `module reload` is for.
+## [b]Nothing to undo.[/b] The commands are the module's own and [DotModule] removes them; the netcode, bridge and
+## roster are [DotGameModule]'s, torn down in reverse. The world is NOT this module's to free: it was in the tree
+## before the module loaded, and a reload must not take the map away.
 func _game_unload() -> void:
 	if workbench != null:
 		workbench.queue_free()
@@ -297,16 +295,8 @@ func _game_hibernation(hibernating: bool) -> void:
 
 
 ## Keeps enough people in the round for there to be one.
-##
-## [b]A murderer and somebody to murder, or nothing happens at all.[/b] A round ends the moment a side has
-## nobody alive, and a side with nobody AT ALL satisfies that on the first tick — so a server
-## with one person on it would start a round, end it and start another for as long as nobody
-## else joined. Every one of those rounds is decided correctly, which is why nothing errors.
-##
-## A stand-in is removed the moment a person takes their place. They are here to make the
-## game exist, not to take the fun half from the people who came to play it.
-## A murderer plays no avatar action while a round runs: a dance would give them away to the
-## bystanders watching for who acts strangely. Everybody else, and everybody between rounds, may.
+## [b]A murderer and somebody to murder, or nothing happens[/b]: a side with nobody satisfies "ended" at once, so a lone
+## person would see rounds start and end for ever, without an error. A stand-in goes the moment a person takes the place.
 func _avatar_action_veto(peer_id: int, _id: String) -> bool:
 	var world := game as MmGame
 	if world == null or bridge == null or world.phase != MmGame.Phase.PLAY:

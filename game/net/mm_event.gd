@@ -6,23 +6,17 @@ const MmEvents := preload("mm_events.gd")
 
 const NAME := &"mm.event"
 const KIND_BITS := 5
-## Room for the largest MAP a reader accepts ([constant MmEvents.MAP_BYTES]) and its length.
-## It was 4096, and a body past the cap is read as EMPTY with no error: game-hide-n-seek's
-## hs_park grew to 4100 bytes with its toys and every delivered client got a MAP of nothing and
-## built no map. headless_net round-trips a MAP of the largest size through this message.
+## Room for the largest MAP a reader accepts ([constant MmEvents.MAP_BYTES]) and its length. A body past the cap is
+## read as EMPTY with no error (game-hide-n-seek's hs_park once grew past 4096 and clients built no map); headless_net
+## round-trips a MAP of the largest size through this message.
 const MAX_BODY := MmEvents.MAP_BYTES + 8
 
 var kind: int = 0
 var body: PackedByteArray = PackedByteArray()
 
 
-## [b]Built with [code]new(kind, body)[/code], and this file does not preload itself.[/b]
-## It did, for a typed [code]static func of() -> MmEvent[/code] factory. A script that
-## [code]extends DotNetMessage[/code] and preloads ITSELF, first loaded from a module a
-## running [DotServer] loads at runtime — which is how every deployed server loads this
-## game — leaks the whole script graph at exit on Godot 4.7.2. Measured in
-## mg-buses-from-hell (8ed866c) with a two-line reproduction. The registry decodes with a
-## bare [code]new()[/code], which is why both arguments default.
+## [b]Built with [code]new(kind, body)[/code], and this file does not preload itself.[/b] A script extending [DotNetMessage]
+## that preloads ITSELF, loaded from a runtime-loaded module, leaks the script graph at exit on Godot 4.7.2 (mg-buses-from-hell 8ed866c). The registry decodes with a bare `new()`: both args default.
 func _init(p_kind: int = 0, p_body: PackedByteArray = PackedByteArray()) -> void:
 	kind = p_kind
 	body = p_body

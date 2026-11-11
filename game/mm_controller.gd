@@ -1,14 +1,8 @@
 extends DotFpsController
 
-## The first-person controller, with the one modifier this game adds: somebody held still for a
-## while ([member MmPlayer.held_until]), unable to walk, jump or crouch.
-##
-## [b]A modifier, not a check in the game's loop.[/b] A modifier is part of the movement
-## state, so it travels in the snapshot and a predicting client applies it to its own player
-## on exactly the ticks the server does; a rule the game applied around the controller would be
-## skipped by every replayed tick, and a held player's client would predict them walking
-## off while the server held them. Registered in [method _register_extensions], on every
-## player on every machine and in the same order, because the id is what travels.
+## The first-person controller, with this game's modifier: somebody held still ([member MmPlayer.held_until]) cannot walk,
+## jump or crouch. [b]A modifier, not a check in the game's loop[/b]: it travels in the snapshot so a predicting client
+## applies it on the same ticks as the server. Registered in [method _register_extensions] on every player, in the same order.
 
 ## Held still and unable to jump or crouch.
 const HOLD := &"mm_hold"
@@ -54,12 +48,9 @@ func _on_pre_simulate(_tick: int, _delta: float) -> void:
 var carrier: Callable = Callable()
 
 
-## A roundabout's rider goes round with it, after the move, on every end that simulates this
-## person: a rotation about the hub, so a rider a metre out is a metre out after it. A client
-## carries its own player by the spin it measures from the poses it is shown, near enough the
-## server's that the correction is small. Written into the state as well as the body: the next
-## move starts from `state.position`, and a lift on the node alone would be undone by it. The
-## view is not turned: a command's yaw is the player's.
+## A roundabout's rider goes round with it, after the move, on every end that simulates this person (a rotation about
+## the hub). A client uses the spin it measures from the poses shown. Written into the state as well as the body, since
+## the next move starts from `state.position`. The view is not turned: a command's yaw is the player's.
 func _on_post_simulate(_tick: int, delta: float) -> void:
 	if not carrier.is_valid() or not state.is_grounded():
 		return

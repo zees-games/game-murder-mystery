@@ -146,11 +146,9 @@ func _report(props: Array, shaped: Dictionary) -> void:
 
 
 
-## The part-shaped collision (dot-props' DotPropPieces), one prop a line so a re-measure's diff
-## reads by prop: `pieces` is `{id: [[x, y, z, ...] per convex piece]}` in the prop's frame, and
-## `tops` is `{id: [TOPS x TOPS heights]}`, where something set down on the prop rests across
-## its footprint (x across, then z; null where nothing is), for a maps builder that stacks props
-## and has no hull maths. A prop not listed collides as its catalogue box.
+## The part-shaped collision (dot-props' DotPropPieces), one prop a line so a re-measure's diff reads by prop: `pieces`
+## is `{id: [[x, y, z, ...] per convex piece]}` in the prop's frame, `tops` is `{id: [TOPS x TOPS heights]}` for resting
+## things across a footprint (x, then z; null where nothing is). A prop not listed collides as its catalogue box.
 static func _pieces_text(shaped: Dictionary, tops: Dictionary) -> String:
 	var ids := shaped.keys()
 	ids.sort()

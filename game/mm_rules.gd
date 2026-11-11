@@ -15,10 +15,9 @@ static func make() -> DotMatchRules:
 	rules.id = &"murder"
 	rules.display_name = "Murder Mystery"
 	rules.score_limit = 0
-	# The round keeps its own clock; this one is the BACKSTOP, set by [MmGame] to the
-	# grace, the hunt and a minute more. A round the game somehow never decided — a
-	# rule with a hole in it — ends on it as a draw rather than running for ever, and dot-match
-	# stops warning at every boot that nothing but a custom outcome can end a round.
+	# The round keeps its own clock; this one is the BACKSTOP, set by [MmGame] to the grace, the hunt and a minute more.
+	# A round the game somehow never decided ends on it as a draw rather than running for ever, and dot-match stops
+	# warning at every boot that nothing but a custom outcome can end a round.
 	rules.time_limit_sec = 600.0
 	rules.rounds_to_win = 999
 	rules.respawn_disabled = true
