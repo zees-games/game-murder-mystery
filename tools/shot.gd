@@ -80,8 +80,30 @@ func _run() -> void:
 	var game: MmGame = _client.get("game")
 	await _until_a_round(game)
 	var local: MmPlayer = _client.get("player")
-	# The load gate's cover hides the world until the camera, the players and the warm-up are in:
-	# a frame saved under it is the cover, so wait for it to lift (a free camera is not the game's).
+	await _wait_for_gate()
+	await _stage_round(game, local)
+	await _pose(game, local)
+
+	if _board:
+		var menu: Variant = _client.get("settings").menu
+		var tab := InputEventKey.new()
+		tab.physical_keycode = KEY_TAB
+		tab.pressed = true
+		menu.handle_event(tab)
+
+	await _frames(3)
+	var image := get_viewport().get_texture().get_image()
+	var path := ProjectSettings.globalize_path(_out)
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
+	var saved := image.save_png(path)
+	print("saved %s (%s): %s" % [_out, _view, error_string(saved)])
+	await DotShotSeq.new().record(get_tree(), path)
+	get_tree().quit(0 if saved == OK else 1)
+
+
+## The load gate's cover hides the world until the camera, the players and the warm-up are in:
+## a frame saved under it is the cover, so wait for it to lift.
+func _wait_for_gate() -> void:
 	var gate: DotLoadGate = _client.get("gate")
 	for _i in range(1800):
 		if gate == null or gate.is_open():
@@ -90,8 +112,9 @@ func _run() -> void:
 	if gate != null and not gate.is_open():
 		print("the load gate is still closed, held by %s" % [gate.reasons()])
 
-	await _stage_round(game, local)
 
+## The view's own staging: what is moved, drawn or fired before the frame.
+func _pose(game: MmGame, local: MmPlayer) -> void:
 	match _view:
 		"overview":
 			await _frames(6)
@@ -126,6 +149,13 @@ func _run() -> void:
 			var fired := game.attack_now(local.player_id)
 			print("shot: %s" % fired)
 			await _seconds_of(minf(_seconds, 0.12))
+		_:
+			await _pose_scene(game, local)
+
+
+## The views that stage a scene: a death, the spots, a door, the end.
+func _pose_scene(game: MmGame, local: MmPlayer) -> void:
+	match _view:
 		"blood":
 			# The murderer stand-in late in the round, bloodied as far as it goes, from a few
 			# metres: the tell the bystanders have.
@@ -199,22 +229,6 @@ func _run() -> void:
 			await _seconds_of(maxf(_seconds, 1.0))
 		_:
 			await _seconds_of(_seconds)
-
-	if _board:
-		var menu: Variant = _client.get("settings").menu
-		var tab := InputEventKey.new()
-		tab.physical_keycode = KEY_TAB
-		tab.pressed = true
-		menu.handle_event(tab)
-
-	await _frames(3)
-	var image := get_viewport().get_texture().get_image()
-	var path := ProjectSettings.globalize_path(_out)
-	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
-	var saved := image.save_png(path)
-	print("saved %s (%s): %s" % [_out, _view, error_string(saved)])
-	await DotShotSeq.new().record(get_tree(), path)
-	get_tree().quit(0 if saved == OK else 1)
 
 
 ## The person at this keyboard in the role the view is about, and the stand-ins drawn round them, one a murderer when this one is not, through a fresh draw so the HUD hears its role as a round tells it.
