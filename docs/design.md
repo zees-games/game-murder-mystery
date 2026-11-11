@@ -65,7 +65,7 @@ dot-flashlight's, on F, for everybody who is alive and in the round: the murdere
 
 ## Maps from other games
 
-The game plays its own maps (`mm_practice` built in; `mm_mansion` and `mm_motel` from murder-mystery-maps) and every Hide & Seek, Prop Hunt and Playground map mounted under `maps_extra/<game>`. `MmMapDoc.import` reads each foreign kind: Hide & Seek and Prop Hunt documents share this format's boxes, props, doors, toys and lights, so only their spawns are pooled into `players`; a Playground document's boxes are renamed (`material`, `colour`, `turn`) and its single spawn is ringed. A converted document carries `imported_from`, and `headless_maps` checks each one builds, fits the wire and starts a round. Nothing is copied: a fix to a foreign map is made in its own repository.
+The game plays its own maps (`mm_practice` built in; `mm_mansion` and `mm_motel` from murder-mystery-maps) and every Hide & Seek, Prop Hunt and Playlot map mounted under `maps_extra/<game>`. `MmMapDoc.import` reads each foreign kind: Hide & Seek and Prop Hunt documents share this format's boxes, props, doors, toys and lights, so only their spawns are pooled into `players`; a Playlot document's boxes are renamed (`material`, `colour`, `turn`) and its single spawn is ringed. A converted document carries `imported_from`, and `headless_maps` checks each one builds, fits the wire and starts a round. Nothing is copied: a fix to a foreign map is made in its own repository.
 
 ## Each map's air
 

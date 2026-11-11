@@ -35,7 +35,7 @@ Three maps are this game's own: a small practice house built into the game, and 
 | **Blackwood Mansion** | A dark two-storey house with a hall, a library, a cellar and grounds round it |
 | **Lonely Pines Motel** | A roadside motel at dusk: rooms off an outside walkway, an office, a diner and a back lot |
 
-Every Hide & Seek, Prop Hunt and Playground map is playable too: the game reads those games' map packs as they are, mounted under `maps_extra/`, and starts everybody at their spawn points.
+Every Hide & Seek, Prop Hunt and Playlot map is playable too: the game reads those games' map packs as they are, mounted under `maps_extra/`, and starts everybody at their spawn points.
 
 ## Controls
 
@@ -131,7 +131,7 @@ Admin commands come from [dot-moderation](https://github.com/modcommunity/dot-mo
 | Suite | What it covers |
 | --- | --- |
 | `headless_run` | The game itself: the draw, the grace, the weapon, the gun and its drops, blood, winning, falls, joiners, doors, toys, bots, help and the map menu |
-| `headless_maps` | Our maps in full, and every Hide & Seek, Prop Hunt and Playground map for what playing it here needs |
+| `headless_maps` | Our maps in full, and every Hide & Seek, Prop Hunt and Playlot map for what playing it here needs |
 | `headless_bots` | Bots play whole rounds against each other; who kills, who shoots, who wins |
 | `headless_net` | A server and a client in one process: roles stay secret on the wire, a stab, a shot, a dropped gun, doors, toys |
 | `dedicated` | A real server: boots, loads the game, runs its commands, a round of bots, the map vote |
