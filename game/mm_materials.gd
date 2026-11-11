@@ -54,7 +54,7 @@ const GRID_PATH := "res://assets/kenney/prototype/grid.png"
 const TILES_PATH := "res://assets/kenney/prototype/tiles.png"
 
 ## How much world one copy of either texture covers: 4 m, so a major line is 2 m and a faint
-## one 0.5 m, as on game-arena's maps.
+## one 0.5 m, as on game-fatal-contact's maps.
 const GRID_METRES := 4.0
 
 ## The grid's face brightness after [method _wall_grid], of 1.0 (Kenney's is 0.84).
