@@ -439,12 +439,6 @@ func grace_limit() -> float:
 	return minf(asked, config.grace_seconds) if asked > 0.0 else config.grace_seconds
 
 
-## How long the hunt lasts: the map's, under the server's ceiling.
-func round_limit() -> float:
-	var asked := float(map_doc.get("round_seconds", 0.0))
-	return minf(asked, config.round_seconds) if asked > 0.0 else config.round_seconds
-
-
 ## The blood on the murderers: none until [member MmConfig.blood_seconds] before the end, then
 ## rising in [member MmConfig.blood_stages] steps to the whole of it at the buzzer, with a step
 ## more for each kill when [member MmConfig.blood_per_kill].

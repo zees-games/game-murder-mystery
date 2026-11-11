@@ -19,6 +19,9 @@ const MmController := preload("mm_controller.gd")
 const MmBots := preload("mm_bots.gd")
 const MmWeapons := preload("mm_weapons.gd")
 
+## The spawn group every map is read into.
+const SPAWN_GROUP := "players"
+
 const CHANNEL := "mm.game"
 
 ## Where this world publishes itself, so a module can find it. A registry name and not an
@@ -292,3 +295,18 @@ static func make_fall_rules() -> DotFallDamageRules:
 	# Mild for a light-footed game: only a very long drop (about 40 m/s) kills outright.
 	rules.lethal_speed = 40.0
 	return rules
+
+
+func team_of(player_id: StringName) -> int:
+	return int(sides.get(player_id, 0))
+
+
+## How long the hunt lasts: the map's, under the server's ceiling.
+func round_limit() -> float:
+	var asked := float(map_doc.get("round_seconds", 0.0))
+	return minf(asked, config.round_seconds) if asked > 0.0 else config.round_seconds
+
+
+## Overridden in mm_game_gun.gd; here so the death base can call it.
+func _drop_gun(_holder: MmPlayer, _at: Vector3) -> void:
+	pass

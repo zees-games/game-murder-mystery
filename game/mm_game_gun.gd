@@ -2,14 +2,6 @@ extends "mm_game_stomp.gd"
 
 ## The weapon and the gun of [code]mm_game.gd[/code]: the keys, the stab, the shot, the drops and who may pick them up. Path-based base, no class_name.
 
-## The spawn group every map is read into.
-const SPAWN_GROUP := "players"
-
-
-func team_of(player_id: StringName) -> int:
-	return int(sides.get(player_id, 0))
-
-
 ## The murderer's weapon this server carries: the configured id, or the knife.
 func weapon_id() -> StringName:
 	var id := StringName(config.murderer_weapon) if config != null else MmWeapons.DEFAULT
