@@ -99,6 +99,7 @@ static func schema() -> DotStatsSchema:
 	_add(out, FALLS, DotStatsDef.Kind.COUNTER, "Falls", "falls", false)
 	_add(out, DOORS, DotStatsDef.Kind.COUNTER, "Doors opened or shut", "doors", false)
 	var _rank := DotStatsRank.declare(out, RANK_SCORE, "Rank score")
+	var _shots := DotStatsShots.declare(out)
 	return out
 
 
@@ -459,6 +460,12 @@ func on_hero(player_id: StringName) -> void:
 
 func on_innocent(player_id: StringName) -> void:
 	record(player_id, INNOCENTS)
+
+
+## One gun shot for Accuracy (the gun is a hitscan of this game's own, so no dot-combat `shot_resolved` carries it).
+func on_shot(player_id: StringName, landed: bool) -> void:
+	if feed != null:
+		var _filed := feed.report_shot_outcome(player_id, "gun", landed)
 
 
 func on_missed(player_id: StringName) -> void:

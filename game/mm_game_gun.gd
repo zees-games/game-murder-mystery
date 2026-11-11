@@ -185,6 +185,9 @@ func _shoot(gunner: MmPlayer) -> void:
 
 	shot.emit(gunner.player_id, from, to, hit.player_id if hit != null else &"")
 
+	if progress != null:
+		progress.on_shot(gunner.player_id, hit != null)
+
 	if hit == null:
 		if progress != null:
 			progress.on_missed(gunner.player_id)
