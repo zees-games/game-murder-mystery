@@ -1,8 +1,7 @@
 extends Node
 
-## The cameras and bodies the first play test caught, in the real offline game: the chase and
-## spectator cameras flown round the course (never inside, armed), and a player walked into one
-## held still (capsules never overlap with `mp_solidplayers 1`). `--render` adds the frames.
+## The cameras and bodies the first play test caught, in the real offline game: the chase and spectator cameras flown
+## round the course (never inside, armed), and a player walked into one held still. `--render` adds the frames.
 ## `tools/camera_check.sh [--render]`; exit 1 on a failure.
 
 const MmClient := preload("../game/mm_client.gd")
@@ -64,12 +63,9 @@ func _fly(game: MmGame) -> void:
 		_check(DotCameraCheck.passed(total), "%s round %d places in the house: %s" % [name, pivots.size(), DotCameraCheck.summary(total)])
 
 
-## Walks the player (the real input path: the forward action held) into another player held
-## still, with players passing through each other and then solid. Returns
-## [code][pass_through_closest, solid_closest][/code], in metres between the capsules' axes.
-## Deterministic: the other player is put back on its spot every frame, so its own brain
-## cannot steer it away; and the walk is one the pass-through run proved clear (a spot whose
-## way in is blocked by a wall or a start gate proves nothing, and is skipped).
+## Walks the player (the real input path) into another player held still, with players passing through each other and
+## then solid. Returns [code][pass_through_closest, solid_closest][/code], in metres between the capsules' axes.
+## Deterministic: the other player is put back every frame, and the walk is one the pass-through run proved clear.
 func _bodies(game: MmGame) -> Array:
 	var me: MmPlayer = _client.get("player")
 	var space := _client.get_viewport().world_3d.direct_space_state

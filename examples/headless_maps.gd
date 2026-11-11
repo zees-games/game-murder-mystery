@@ -4,10 +4,9 @@ const MmConfig := preload("../game/mm_config.gd")
 const MmGame := preload("../game/mm_game.gd")
 const MmMapDoc := preload("../game/mm_map_doc.gd")
 
-## Every map the game can be sent, built the way a server builds it and looked over for what a
-## map document gets wrong without any error: a spawn in a wall, an unknown prop, a prop sunk or
-## floating, nothing to hide behind, a blocked door, a document too big to send. Our own maps get
-## [constant CHECKS_PER_MAP] checks each, the foreign ones [constant CHECKS_PER_FOREIGN].
+## Every map the game can be sent, built as a server builds it and checked for what a document gets wrong silently:
+## a spawn in a wall, an unknown prop, a prop sunk or floating, nowhere to hide, a blocked door, a document too big.
+## Own maps get [constant CHECKS_PER_MAP] checks each, foreign ones [constant CHECKS_PER_FOREIGN].
 
 const MAPS := ["mm_practice", "mm_mansion", "mm_motel", "mm_silence_hollow", "mm_factory_winter", "mm_open_yard", "mm_office_murder", "mm_murder_mansion", "mm_deco_mansion", "mm_villa", "mm_functionalist_night", "mm_sunken_resort", "mm_rooftops_2016"]
 const CHECKS_PER_MAP := 15
@@ -27,10 +26,8 @@ var _foreign: Array = []
 ## A drawn, non-solid box thicker than this is not floor paint, water or a decal.
 const PAINT_THICKNESS := 0.3
 
-## The maps actually checked: all of MAPS, or only the practice house where `maps/` is not
-## linked in (CI, which clones this repository alone). As mg-deathrun's headless_courses
-## does: the delivered maps are checked wherever they are present, which is every machine
-## that has run dot-bootstrap. Sections and checks are counted against this list.
+## The maps checked: all of MAPS, or only the practice house where `maps/` is not linked in (CI clones this repository
+## alone). As mg-deathrun's headless_courses does. Sections and checks are counted against this list.
 var _maps: Array = []
 
 ## A person's capsule, for "is this spawn clear".
@@ -253,12 +250,8 @@ func _check_toys(game: MmGame, doc: Dictionary) -> void:
 	_check(strayed.is_empty(), "two seconds on, every toy is still where the map put it", "; ".join(strayed.slice(0, 6)))
 
 
-## What a toy's own shapes, lifted five centimetres off the floor it stands on, are inside of
-## the map's walls and furniture, or "". Every toy's colliders are left out: a see-saw's plank
-## lies on its own base.
-## One of the other games' maps, converted: it is this game's kind now, it fits on the wire,
-## the props it names are known, everybody can stand at its spawns, and a round starts on it
-## with a murderer and a gun.
+## One of the other games' maps, converted: it is this game's kind now, it fits on the wire, the props it names are
+## known, everybody can stand at its spawns, and a round starts on it with a murderer and a gun.
 func _test_foreign(id: StringName) -> void:
 	_section("%s (converted)" % id)
 	var game := await _world(id)
@@ -473,13 +466,9 @@ func _world(id: StringName, drawn := false) -> MmGame:
 	return game
 
 
-## dot-core's [DotCollisionAudit] over the map as a client draws it: visible geometry with no
-## shape near it, which a player walks through. Fails on any finding. The audit is the lenient
-## one (a shape anywhere under the map that the mesh touches covers it), because the map keeps
-## its drawing in `Drawn` and its shapes in `Solid`. The exact half is in the document: a
-## visible box that is not solid is drawn and walked through by definition, and the map opts
-## those batches out, so this also holds that to paint: a non-solid box thicker than
-## PAINT_THICKNESS must sit inside a solid one (embers in a hearth), never be a wall or a crate.
+## dot-core's [DotCollisionAudit] over the map as a client draws it: visible geometry with no shape near it. Fails on
+## any finding. The audit is lenient (a shape anywhere under the map that the mesh touches covers it); the exact half
+## is that a non-solid box thicker than PAINT_THICKNESS must sit inside a solid one (embers in a hearth).
 func _audit_colliderless(id: StringName, doc: Dictionary) -> void:
 	var drawn := await _world(id, true)
 	var res := DotCollisionAudit.audit(drawn.map, true)

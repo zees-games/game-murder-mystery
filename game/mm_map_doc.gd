@@ -2,10 +2,9 @@ extends RefCounted
 
 const MmMaterials := preload("mm_materials.gd")
 
-## What a map IS: a JSON document, checked here before anything is built, which the server
-## sends to each client so the two cannot disagree. Lengths are metres, angles degrees; a box's
-## `at` is its CENTRE, a prop's the middle of its footprint ON the floor. Normalised into plain
-## arrays rounded to the millimetre, so the digest does not move. See `maps/README.md`.
+## What a map IS: a JSON document, checked here before anything is built, which the server sends to each client so the
+## two cannot disagree. Lengths are metres, angles degrees; a box's `at` is its CENTRE, a prop's the middle of its
+## footprint ON the floor. Normalised into plain arrays rounded to the millimetre. See `maps/README.md`.
 
 
 ## The format this build reads. A document written for a later one is refused rather than
@@ -82,15 +81,9 @@ static func parse_json(text: String, origin: String = "") -> DotResult:
 	return validate(import(json.data as Dictionary))
 
 
-## [param source] as this game's kind: itself if it is one already, converted if it is one of
-## [constant FOREIGN_KINDS], and untouched otherwise (which [method validate] then refuses).
-##
-## [b]What converts.[/b] Hide & Seek and Prop Hunt documents are this format's parents: the
-## same boxes, props, doors, toys and lights, so only the spawns change (hiders and seekers, or
-## props and hunters, pooled into players). A Playground document's boxes say `material`,
-## `colour` and `turn` where ours say `mat`, `tint` and a rotation, and it has one spawn point,
-## which [method MmMap.spawn] rings people round. Its props are physics objects this game does
-## not simulate, so they are left out; its toys are dot-props' and stay.
+## [param source] as this game's kind: itself if already, converted if one of [constant FOREIGN_KINDS], else untouched
+## (which [method validate] then refuses). Hide & Seek and Prop Hunt differ only in spawns; a Playground one
+## renames `material`, `colour`, `turn`, has one spawn ([method MmMap.spawn] rings people round it) and loses its physics props.
 static func import(source: Dictionary) -> Dictionary:
 	var kind := str(source.get("kind", ""))
 
@@ -444,11 +437,9 @@ static func _prop(raw: Variant) -> Dictionary:
 	return out
 
 
-## A door: a panel that a player opens and shuts with the use key. `at` is the middle of the
-## panel SHUT and `size` is its width, height and thickness, turned by `yaw` like a box; it
-## swings about its `hinge` edge (left is the panel's own -x) by `angle` degrees (the sign is
-## the side it opens to), slides that way by its width, or lifts by its height. Every field but
-## `at` and `size` has a default, so a hand-written door is two lines.
+## A door: a panel a player opens and shuts with the use key. `at` is the middle of the panel SHUT, `size` its width,
+## height and thickness, turned by `yaw`; it swings about its `hinge` edge (left is the panel's own -x) by `angle`
+## degrees, slides that way by its width, or lifts by its height. Only `at` and `size` are required.
 static func _door(raw: Variant) -> Dictionary:
 	if not (raw is Dictionary):
 		return {}

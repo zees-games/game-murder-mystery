@@ -4,19 +4,9 @@ const MmCatalogue := preload("../game/mm_catalogue.gd")
 const MmKillPov := preload("../game/mm_kill_pov.gd")
 const MmProps := preload("../game/mm_props.gd")
 
-## The simulation, headless: the prop catalogue and the map documents, the draw of the roles,
-## the grace, the murderer's weapon (drawn, holstered, its reach, its cone, walls), the gun (a
-## hit, a miss that drops it, an innocent shot, who may pick it up), the blood, how a round is
-## decided, falls, joiners, the numbers dot-stats keeps, the bots' chat, doors, toys, the
-## client offline, and the help and map menus.
-##
-## [b]Counts sections AND checks, and the second is the one that matters.[/b] A script error
-## inside a section aborts that function and the section counter is already satisfied,
-## because the section announced itself on the way in. dot-settings has the story.
-##
-## Every number about the map here is the built-in practice house's
-## ([method MmCatalogue.practice]): the wall between the rooms at x 0 with its door at
-## z -1..0.8, the kitchen east of it, the living room west, the garden past x 10.
+## The simulation, headless: catalogue and map documents, the draw, grace, the weapon and the gun, blood, how a round
+## is decided, falls, joiners, stats, bot chat, doors, toys, the offline client. Counts sections AND checks (a script error
+## aborts a function after its section counter is satisfied). Map numbers are the practice house's ([method MmCatalogue.practice]).
 
 const SECTIONS := 29
 

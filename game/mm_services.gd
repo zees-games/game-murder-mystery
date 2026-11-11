@@ -4,17 +4,9 @@ const MmGame := preload("mm_game.gd")
 const MmNetBridge := preload("net/mm_net_bridge.gd")
 const MmPlayer := preload("mm_player.gd")
 
-## Chat, voice and moderation, wired to this game's sides.
-##
-## [b]Seventy lines, because [DotGameServices] holds the other five hundred.[/b] The five
-## games written before that base each carry their own copy — 557 to 718 lines, differing in
-## the channels, the rules and a voice range. What is left here is what is genuinely this
-## game's: who can hear whom, and where somebody is standing.
-##
-## [b]There is no team channel, because a team is a secret.[/b] A murderer's team line, or a
-## bystander's that the murderer cannot read, would tell everybody who is on which side by who
-## answers it. So chat is everybody, near (a room or two) and whisper, and the side the router
-## sees for anybody is the public one ([method _team_of]), the same for all.
+## Chat, voice and moderation, wired to this game's sides. Short because [DotGameServices] holds the rest: what is left
+## is who can hear whom, and where somebody is standing. [b]No team channel, because a team is a secret[/b]: it would
+## tell everybody who is on which side. So chat is everybody, near and whisper, and the router sees the public side ([method _team_of]).
 
 # No `const CHANNEL`: [DotGameServices] declares one and GDScript refuses a redeclaration,
 # which is the right refusal — one layer, one channel an operator can turn up.
@@ -39,15 +31,9 @@ func _chat_rules() -> Object:
 	return chat_rules()
 
 
-## The same rules, as a static a CLIENT can ask for without building a services layer.
-##
-## [b]Static because the other end needs them and must not instantiate this.[/b] A services
-## layer is a [Node] with a moderation store and a router under it; a client that called
-## `new()` on one to read two numbers off it would build all of that, leak it, and — inside
-## a delivered pack — fail to compile, because a script whose base class lives in the HOST
-## build cannot hand its return type to a script in the mount. Both were measured in
-## game-buses-from-hell: seven leaked objects in a suite, and a client scene that would not
-## load at all on a real server.
+## The same rules, as a static a CLIENT can ask for without building a services layer. [b]Static because the other end
+## must not instantiate this[/b]: a services layer is a [Node] with a store and a router, and a client calling `new()`
+## would leak it and, inside a delivered pack, fail to compile (a base class in the HOST build). Measured in game-buses-from-hell.
 static func chat_rules() -> DotChatRules:
 	var rules := DotChatRules.new()
 	rules.max_length = 140
@@ -112,11 +98,9 @@ static func chat_channels() -> Array[DotChatChannel]:
 	return out
 
 
-## The voice format, which both ends must agree on exactly.
-##
-## Static, because the CLIENT builds one too and a sample rate that differs between two peers
-## is a stream of packets the router refuses for being the wrong length, counted and said to
-## nobody. [method DotVoiceConfig.format_fingerprint] exists for that reason.
+## The voice format, which both ends must agree on exactly. Static, because the CLIENT builds one too, and a sample
+## rate that differs is a stream of packets the router refuses for the wrong length, said to nobody.
+## [method DotVoiceConfig.format_fingerprint] exists for that reason.
 static func voice_format() -> DotVoiceConfig:
 	var config := DotVoiceConfig.new()
 	config.sample_rate = 16000
@@ -144,12 +128,9 @@ func _voice_default_channel() -> int:
 	return DotVoiceRouter.Channel.PROXIMITY
 
 
-## Which side somebody is on, as the router may know it: the public side, the same for
-## everybody in the round, so a team scope anywhere (a channel, team voice) reaches the whole
-## round and tells nobody anything.
-##
-## [b]Read off the game rather than cached, because sides change between rounds.[/b] Anything
-## holding a team id would put a player in the conversation they were in last round.
+## Which side somebody is on, as the router may know it: the public side, the same for everybody in the round, so a team
+## scope reaches the whole round and tells nobody anything. [b]Read off the game, not cached, because sides change
+## between rounds[/b]: a cached team id would put a player in last round's conversation.
 func _team_of(peer_id: int) -> int:
 	var player := _player_of(peer_id)
 	return MmNetBridge.public_side((game as MmGame).team_of(player.player_id)) if player != null else 0
@@ -158,10 +139,9 @@ func _team_of(peer_id: int) -> int:
 func _position_of(peer_id: int) -> Vector3:
 	var player := _player_of(peer_id)
 
-	# [b]The simulated state, not the node.[/b] The node is wherever the last frame drew
-	# them, which on an interpolating client is between two ticks; the state is where the
-	# tick that is being resolved put them — and a proximity channel resolved against a
-	# rendered position is one whose range is a frame's worth of walking out.
+	# [b]The simulated state, not the node.[/b] The node is wherever the last frame drew them (between two ticks on an
+	# interpolating client); the state is where the resolved tick put them, and a range resolved against a rendered
+	# position is a frame's worth of walking out.
 	return player.controller.state.position if player != null else Vector3.ZERO
 
 
@@ -179,16 +159,9 @@ func _player_of(peer_id: int) -> MmPlayer:
 
 # dot-moderation's live tools
 
-## What the admin set means here, one callable per ability. See `DotGameServices`.
-##
-## [b]Noclip is how a stuck player gets looked at, freeze how a griefer is stopped, and respawn
-## puts somebody back at their side's start[/b] — alive, mid-round, which is an admin's call to
-## make and is said in the log. Give and strip are refused: nobody here carries
-## anything.
-##
-## [b]Blind and beacon are the two about a SCREEN rather than a body[/b], and each is one flag
-## on [MmPlayer] that `MmPlayerNet` replicates — the blind to its owner alone, the beacon to
-## everybody — and that the client draws.
+## What the admin set means here, one callable per ability. See `DotGameServices`. [b]Noclip gets a stuck player looked
+## at, freeze stops a griefer, respawn puts somebody back at their side's start[/b] (alive, mid-round, said in the log).
+## Give and strip are refused. [b]Blind and beacon are about a SCREEN[/b]: one flag on [MmPlayer] that `MmPlayerNet` replicates.
 func _mod_abilities() -> Dictionary:
 	return {
 		"noclip": func(id: StringName, args: Dictionary) -> DotResult:
@@ -275,12 +248,9 @@ func _mod_unsupported() -> Dictionary:
 	}
 
 
-## Toggles that outlive a new body here, beyond dot-moderation's own god and buddha.
-##
-## [b]Blind and beacon are about the person, not the body.[/b] A noclip or a freeze ends with
-## the round because starting a round noclipped is the round broken; a player an admin blinded
-## or wanted the room to watch is still that player next round, and being found is exactly
-## what somebody being punished would otherwise use to end it.
+## Toggles that outlive a new body here, beyond dot-moderation's own god and buddha. [b]Blind and beacon are about the
+## person, not the body[/b]: noclip and freeze end with the round (a round started noclipped is broken), but a player an
+## admin blinded or marked is still that player next round, else being found would be how a punished player ends it.
 const PERSIST_ON_RESPAWN: Array[String] = ["blind", "beacon"]
 
 
@@ -372,12 +342,9 @@ func _mod_hurt(id: StringName, amount: float) -> DotResult:
 	return DotResult.success(null)
 
 
-## A round is everybody's new body: a noclip or a freeze from last round ends, god carries.
-##
-## [b]And a new map is a new map.[/b] Every `return` point is a place on some map, and a round
-## on a different one has its floors somewhere else, so `return` would drop a player inside a
-## wall. The history is cleared when the map changes and kept when it does not
-## (`[modtools-return-1]`).
+## A round is everybody's new body: a noclip or a freeze from last round ends, god carries. [b]And a new map is a new
+## map[/b]: a `return` point is a place on some map and would drop a player inside a wall on another. The history is
+## cleared when the map changes and kept when it does not (`[modtools-return-1]`).
 func _on_round_began_for_tools(_number: int, layout: StringName) -> void:
 	for key: StringName in (game as MmGame).players:
 		mod_player_respawned(StringName(String(key).trim_prefix("u")))
@@ -391,10 +358,8 @@ func _on_round_began_for_tools(_number: int, layout: StringName) -> void:
 var _tools_layout: StringName = &""
 
 
-## The team seam dot-chat and dot-voice both ask for, which the base cannot wire.
-##
-## [DotGameServices] knows nothing about teams — a lobby has none — so the two `team_fn`
-## hooks are set here, after the base has built each router.
+## The team seam dot-chat and dot-voice both ask for, which the base cannot wire. [DotGameServices] knows nothing about
+## teams (a lobby has none), so the two `team_fn` hooks are set here, after the base has built each router.
 func setup(p_server: DotServer, p_game: Object, p_link: Object) -> DotResult:
 	var ready_now: DotResult = await super.setup(p_server, p_game, p_link)
 

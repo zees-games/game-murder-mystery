@@ -1,12 +1,8 @@
 extends DotConfig
 
-## Everything a server owner can tune, layered as every Dot game does:
-## defaults < `user://cfg/murder.json` < `MM_*` environment < `--mm-*` arguments.
-##
-## [b]The round[/b]: a short grace while everybody scatters (the murderer cannot draw yet), then
-## the round proper until the clock runs out or one side is gone. [b]The sides[/b]: one or more
-## murderers, one or more bystanders handed the gun, and everybody else unarmed. Who is what is
-## the server's secret; see docs/design.md "Roles are secret".
+## Everything a server owner can tune, layered as every Dot game does: defaults < `user://cfg/murder.json` < `MM_*`
+## environment < `--mm-*` arguments. [b]The round[/b]: a grace while everybody scatters, then play until the clock or one
+## side is gone. [b]The sides[/b]: murderers, bystanders handed the gun, the rest unarmed; roles are secret (docs/design.md).
 
 # The round
 
@@ -138,11 +134,9 @@ extends DotConfig
 @export_range(1, 50, 1) var rounds_per_map: int = 3
 @export var map_directory: String = "maps"
 
-## The file that says which installed maps ROTATE: `cfg/maps.yml`, layered over the game's
-## shipped `res://maps.yml` (dot-map's `DotMapRotationFile`: named rotations, `random` or
-## `cycle`, wildcards, command names). Empty, or no such file, rotates every map. A map the
-## active rotation leaves out stays installed (`mm_map <id>` and the map menu load it); it is
-## only never drawn, balloted or nominated. `sv_map_rotation_file`.
+## The file that says which installed maps ROTATE: `cfg/maps.yml`, layered over the shipped `res://maps.yml`
+## (dot-map's `DotMapRotationFile`). Empty, or no file, rotates every map. A map the rotation leaves out stays installed
+## (`mm_map <id>` loads it) but is never drawn, balloted or nominated. `sv_map_rotation_file`.
 @export var map_rotation_file: String = "cfg/maps.yml"
 
 ## Where the other games' map packs are mounted, one directory per pack under it. Hide & Seek,

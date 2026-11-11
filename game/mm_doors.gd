@@ -3,11 +3,9 @@ extends Node3D
 const MmMapDoc := preload("mm_map_doc.gd")
 const MmMaterials := preload("mm_materials.gd")
 
-## A map's doors: panels a player opens and shuts with the use key.
-##
-## A door's pose is a pure function of `(open, since)` and the tick, so only the use is sent.
-## It is a static body moved through `PhysicsServer3D` (a kinematic body is a step late), on the
-## world layer, and a use is refused while any body stands in the panel's way.
+## A map's doors: panels a player opens and shuts with the use key. A door's pose is a pure function of `(open, since)`
+## and the tick, so only the use is sent. A static body moved through `PhysicsServer3D` (a kinematic one is a step
+## late), on the world layer; a use is refused while any body stands in the panel's way.
 
 const CHANNEL := "mm.doors"
 
@@ -25,13 +23,9 @@ var physics: DotPhysicsLayout = null
 var draw_world: bool = false
 var tick_rate: int = 64
 
-## One per door, in document order: `{spec, body, open, since, ticks, flip}`. `open` is the side
-## it is going to or is at; `since` is the tick it set off, or -1 for "at rest where it
-## started"; `flip` is whether a swinging door went the other way from the document's angle.
-##
-## [b]A swinging door opens away from whoever opens it[/b], unless the map says `away: false`.
-## One that always swung the same way would be a door nobody standing on that side could open,
-## because they would be standing in its way.
+## One per door, in document order: `{spec, body, open, since, ticks, flip}`. `open` is the side it is going to or is at;
+## `since` is the tick it set off, or -1 at rest; `flip` is whether a swinging door went the other way from the document.
+## [b]A swinging door opens away from whoever opens it[/b] unless the map says `away: false`, or none could be opened.
 var doors: Array[Dictionary] = []
 
 
@@ -251,12 +245,9 @@ static func _place(body: Node3D, at: Transform3D) -> void:
 
 # Asking
 
-## Which door somebody at [param eyes] looking along [param aim] would use: the nearest whose
-## panel, where it was last posed, is within reach and in front of them. -1 for none.
-##
-## [b]Where it was posed, not where the tick says[/b], because a client never ticks the world:
-## it poses the doors for its own input tick, and the HUD asking with any other tick would be
-## a prompt for a door somewhere it is not.
+## Which door somebody at [param eyes] looking along [param aim] would use: the nearest whose panel, where it was last
+## posed, is within reach and in front of them. -1 for none. [b]Where it was posed, not where the tick says[/b]: a
+## client never ticks the world, so the HUD asking with another tick would prompt for a door that is not there.
 func door_for(eyes: Vector3, aim: Vector3, reach: float = REACH) -> int:
 	var best := -1
 	var closest := reach

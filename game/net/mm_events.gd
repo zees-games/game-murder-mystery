@@ -2,17 +2,9 @@ extends RefCounted
 
 const MmGame := preload("../mm_game.gd")
 
-## The wire format for everything that is not a snapshot or an input.
-##
-## Encoders and decoders in pairs, and nothing checks that they are inverses for you —
-## `headless_net` round-trips every one of them, because this family has already shipped a
-## serialisation whose two ends never met: dot-moderation wrote `"voice muted"` and read
-## back a warning, and the one thing that addon existed for silently did nothing.
-##
-## [b]The map is a document, and it travels whole.[/b] `MAP` carries the normalised document
-## a server built (see [MmMapDoc]), deflated: a client builds the identical map from it and
-## needs no map files of its own. After that what changes about the world is who is on which
-## side — a `TEAM` at the draw (always the public side), the owner's `ROLE`, shots and guns on the floor. What a snapshot carries is players.
+## The wire format for everything that is not a snapshot or an input. Encoders and decoders in pairs; `headless_net`
+## round-trips every one, since nothing else checks they are inverses. [b]The map travels whole[/b]: `MAP` carries the
+## normalised document, deflated (see [MmMapDoc]); after that only sides (`TEAM`, `ROLE`), shots and guns change.
 
 enum Kind {
 	## Who you are, how fast the server ticks, and how long each part of a round is.
@@ -67,12 +59,9 @@ enum Ask {
 	FLASHLIGHT,
 }
 
-## Every decoder returns an `ok` beside its fields, and every caller checks it.
-##
-## [b]A reader past its end returns plausible zeros rather than failing.[/b] dot-net shipped
-## with exhaustion that was not sticky, so a decoder that skipped this check got a
-## believable value for the field AFTER the overrun — and a truncated packet decodes as a
-## valid message about nothing.
+## Every decoder returns an `ok` beside its fields, and every caller checks it. [b]A reader past its end returns
+## plausible zeros rather than failing[/b] (dot-net's exhaustion was not sticky), so a truncated packet would decode as
+## a valid message about nothing.
 const NAME_BYTES := 64
 const ID_BYTES := 64
 const TEXT_BYTES := 256
@@ -85,12 +74,9 @@ const MAP_BYTES := 65536 + 16
 ## talk its way past.
 const AVATAR_BYTES := 1024
 
-## Where a body may be, in metres, on the wire.
-##
-## [b]Read from [MmGame], not written here.[/b] A quantised position is decoded against this
-## range, so two files holding two numbers do not lose precision — they put the thing
-## somewhere else. game-arena had exactly this, 256 against 128, in two files that each
-## looked right on its own.
+## Where a body may be, in metres, on the wire. [b]Read from [MmGame], not written here[/b]: a quantised position is
+## decoded against this range, so two files holding two numbers put the thing somewhere else (game-arena had 256 against
+## 128 in two files that each looked right).
 const WORLD_EXTENT := MmGame.NET_WORLD_EXTENT
 const POS_BITS := 24
 
@@ -164,11 +150,9 @@ static func read_hello(r: DotNetReader) -> Dictionary:
 
 # The map
 
-## The map: [MmMapDoc.encode]'s bytes, as they are.
-##
-## [b]Opaque here, and checked at the other end.[/b] The client decodes and VALIDATES what it
-## is sent, so a document this build cannot read is refused with a sentence rather than half
-## built; this layer only has to carry bytes without cutting them.
+## The map: [MmMapDoc.encode]'s bytes, as they are. [b]Opaque here, checked at the other end[/b]: the client decodes and
+## VALIDATES what it is sent, so a document this build cannot read is refused with a sentence rather than half built;
+## this layer only carries bytes without cutting them.
 static func write_map(encoded: PackedByteArray) -> PackedByteArray:
 	var w := _w()
 	w.write_bytes(encoded)
@@ -182,13 +166,9 @@ static func read_map(r: DotNetReader) -> Dictionary:
 
 # Players
 
-## A join, or a change to who somebody is: their name, their side, their avatar.
-##
-## [b]The avatar is the document, not the skin it picks[/b] — as JSON, capped at
-## [constant AVATAR_BYTES], and empty for the stock person. A skin index would be smaller,
-## and would make every client's reading of a document the server's, so a slot this game
-## adds later would need a new wire. [b]Appended, never inserted[/b]: a field before it
-## would move the team for every reader of the old layout.
+## A join, or a change to who somebody is: name, side, avatar. [b]The avatar is the document, not the skin it picks[/b]:
+## JSON capped at [constant AVATAR_BYTES], empty for the stock person, so a slot added later needs no new wire.
+## [b]Appended, never inserted[/b]: a field before it would move the team for every reader of the old layout.
 static func write_join(
 	player_id: int, net_id: int, display_name: String, team: int,
 	avatar: DotAvatar = null
@@ -280,11 +260,9 @@ static func read_death(r: DotNetReader) -> Dictionary:
 
 # The round
 
-## The clock, and the numbers a client cannot count for itself.
-##
-## [b]`play_elapsed` is the round's own clock[/b], which a client shows; the phase's clock
-## restarts at every phase. [b]`murderers` is a count, never a name[/b]: how many are still in
-## is public, who they are is not.
+## The clock, and the numbers a client cannot count for itself. [b]`play_elapsed` is the round's own clock[/b], which a
+## client shows; the phase's clock restarts at every phase. [b]`murderers` is a count, never a name[/b]: how many are
+## still in is public, who they are is not.
 static func write_clock(
 	round_number: int,
 	elapsed: float,
@@ -359,15 +337,9 @@ static func read_phase(r: DotNetReader) -> Dictionary:
 
 # Watching
 
-## A view dot-spectate decided, for the one player it belongs to.
-##
-## [b]The death position travels.[/b] `DotSpectatorView.to_wire` did not carry it at first,
-## and a mirror without it puts every death camera at the world origin, which on
-## most maps is under the floor. This event stays the game's own: bit-packed and keyed
-## by session, where dot-spectate's is a dictionary keyed by string. Everything else a mirror needs to
-## draw the camera it already has: the players are in its world.
-##
-## Sessions rather than keys, as everywhere on this wire; zero is nobody.
+## A view dot-spectate decided, for the one player it belongs to. [b]The death position travels[/b]: a mirror without it
+## puts every death camera at the world origin, under the floor on most maps. Kept the game's own: bit-packed and keyed
+## by session (zero is nobody), where dot-spectate's is a string-keyed dictionary. The players are already in the mirror's world.
 static func write_spectate(
 	viewer: int, mode: int, target: int, killer: int, death_at: Vector3
 ) -> PackedByteArray:
@@ -535,13 +507,9 @@ static func chat_kinds_fit() -> bool:
 	return DotChatMessage.KIND_NAMES.size() <= (1 << CHAT_KIND_BITS)
 
 
-## One routed line, in [DotChatMessage]'s own wire shape.
-##
-## [b]Field by field rather than `var_to_bytes`, like every other message here.[/b] A
-## dictionary serialised whole is a dictionary whose contents are whatever the sender put
-## in it — including keys a client will happily read — and the widths below are the
-## validation. `x.p` is the one meta field this game carries: the speaker's session id, so
-## a client can colour a line by whose it is.
+## One routed line, in [DotChatMessage]'s own wire shape. [b]Field by field rather than `var_to_bytes`[/b], like every
+## message here: a dictionary serialised whole holds whatever the sender put in it, and the widths below are the
+## validation. `x.p` is the one meta field: the speaker's session id, so a client can colour a line by whose it is.
 static func write_chat(wire: Dictionary) -> PackedByteArray:
 	var w := _w()
 	w.write_varint(int(wire.get("n", 0)))
@@ -592,12 +560,9 @@ static func read_chat(r: DotNetReader) -> Dictionary:
 	return out
 
 
-## What a client sends when somebody presses Enter: a channel and a line, and nothing else.
-##
-## [b]No speaker, no time, no colour.[/b] Everything about what a line MEANS is decided on
-## the server — who said it, whether they are gagged, whether they are talking too fast,
-## which channel they may use and who can hear it. A client that sent any of that would be
-## a client that could claim it.
+## What a client sends when somebody presses Enter: a channel and a line, nothing else. [b]No speaker, time or colour[/b]:
+## everything about what a line MEANS (who said it, gagged, too fast, which channel, who hears it) is decided on the
+## server; a client that sent any of that could claim it.
 static func write_say(channel_id: StringName, text: String) -> PackedByteArray:
 	var w := _w()
 	w.write_string(String(channel_id), CHAT_CHANNEL_BYTES)

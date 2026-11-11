@@ -4,14 +4,8 @@ const MmMapDoc := preload("mm_map_doc.gd")
 const MmPaths := preload("mm_paths.gd")
 
 ## Every map this server can play, and which one is next.
-##
-## [b]Two sources, and the built-in one is a floor rather than a feature.[/b] The maps are
-## documents read from [member MmConfig.map_directory] — `maps/`, a link to murder-mystery-maps,
-## in a checkout; a directory in a delivered pack. A server whose directory is missing or empty
-## still has [method practice], so it plays rather than refusing to start.
-##
-## [b]A server reads documents; a client never does.[/b] The map travels in its own event (see
-## [MmMapDoc]), so nothing here runs on a connected client.
+## [b]Two sources[/b]: documents read from [member MmConfig.map_directory] (`maps/` in a checkout, a directory in a pack),
+## and [method practice], the built-in floor so a server with no maps still plays. A client never reads documents; the map travels in its own event.
 
 const CHANNEL := "mm.catalogue"
 
@@ -163,12 +157,9 @@ func playable(allowed: PackedStringArray) -> Array[StringName]:
 	return out
 
 
-## The next map: drawn from [param stream] when shuffling, in order otherwise, and never the
-## same one twice running when there is a choice.
-##
-## [param pool] is maps.yml's rotation (ids, in the file's order): when it holds anything
-## playable, only those are drawn from. Empty, or nothing in it playable, draws from every
-## playable map, because a rotation that empties the server must never leave it stuck.
+## The next map: drawn from [param stream] when shuffling, in order otherwise, never the same twice running if there is a choice.
+## [param pool] is maps.yml's rotation (ids, file order): when it holds anything playable only those are drawn from;
+## empty, or nothing in it playable, draws from every playable map, so a rotation never leaves the server stuck.
 func next_map(allowed: PackedStringArray, shuffle: bool, stream: DotRandomStream,
 		previous: StringName, pool: Array[StringName] = []) -> Dictionary:
 	var ids := playable(allowed)
@@ -226,13 +217,9 @@ func describe_lines(in_rotation_fn: Callable = Callable()) -> PackedStringArray:
 
 # The one built in
 
-## A two-room house with a garden: enough furniture to lose somebody behind and a door between the rooms.
-##
-## [b]Written here rather than shipped as a file,[/b] so a server with no map directory at all
-## — a fresh clone, a suite — has something to play, and the suites have a map whose every
-## number is in front of them. They lean on these: the floor is x -10..10, z -8..8 at y 0; the
-## wall between the rooms is at x 0 with a 1.8 m door at z -1..0.8; everybody starts spread
-## over both rooms; the garden is x 10..22, with its toys.
+## A two-room house with a garden. [b]Written here, not shipped as a file[/b], so a server with no map directory has
+## something to play and the suites have a map whose every number is in front of them: floor x -10..10, z -8..8 at y 0;
+## wall at x 0 with a 1.8 m door at z -1..0.8; garden x 10..22 with its toys; everybody starts spread over both rooms.
 static func practice() -> Dictionary:
 	var source := {
 		"format": MmMapDoc.FORMAT,

@@ -1,10 +1,7 @@
 extends DotGameCheckSuite
 
-## MmConfig through DotGameConfigBinder: fields, cvars, strict refusal, the diff, a shipped yml loading back, and the workbench round trip.
-##
-## [codeblock]
-## godot --headless --path . res://examples/headless_config.tscn
-## [/codeblock]
+## MmConfig through DotGameConfigBinder: fields, cvars, strict refusal, the diff, a shipped yml loading back, and the
+## workbench round trip. Run: `godot --headless --path . res://examples/headless_config.tscn`
 
 const MmConfig := preload("../game/mm_config.gd")
 const MmGame := preload("../game/mm_game.gd")

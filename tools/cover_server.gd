@@ -3,12 +3,8 @@ extends DotCoverServer
 const MmConfig := preload("../game/mm_config.gd")
 const MmGame := preload("../game/mm_game.gd")
 
-## A headless dedicated world for tools/render_cover.gd to join: the boot examples/dedicated.gd
-## does (DotServer, the world, the module), left running.
-##
-## [codeblock]
-## godot --headless --path . res://tools/cover_server.tscn -- --port 27431
-## [/codeblock]
+## A headless dedicated world for tools/render_cover.gd to join: the boot examples/dedicated.gd does (DotServer, the
+## world, the module), left running. Run: `godot --headless --path . res://tools/cover_server.tscn -- --port 27431`
 
 var game: MmGame = null
 

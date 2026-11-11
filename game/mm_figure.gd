@@ -2,17 +2,9 @@ extends Node3D
 
 const MmPaths := preload("mm_paths.gd")
 
-## What somebody ELSE looks like: one of the family's people (dot-player-char's
-## [DotHumanoidFigure]), scaled to the player's hull, in this round's shirt, turned to where they
-## are looking, with what is in their hand and the blood on them. Client side only.
-##
-## [b]Top level, and placed by its caller every frame.[/b] The player node is the simulation's
-## and moves once a tick; `MmClient.present_frame` hands every body the position this frame
-## draws, so nothing here computes one.
-##
-## [b]The shirt is a colour drawn per round, not a side.[/b] Everybody looks alike on purpose;
-## see docs/design.md "Roles are secret". What gives a murderer away is a drawn weapon
-## ([method hold]) and, near the end, blood ([method bleed]).
+## What somebody ELSE looks like: one of the family's people ([DotHumanoidFigure]) scaled to the hull, in this round's
+## shirt, turned where they look, with what is in their hand and the blood on them. Client side only, top level, placed by
+## `MmClient.present_frame`. The shirt is per round, not a side; only a drawn weapon ([method hold]) and late blood ([method bleed]) show a murderer.
 
 const MmWeapons := preload("mm_weapons.gd")
 

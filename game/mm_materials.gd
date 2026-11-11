@@ -6,15 +6,9 @@ extends RefCounted
 
 const MmPaths := preload("mm_paths.gd")
 
-## [b]Photographs for the generic ids.[/b] The pastel grid above is the family's look for the
-## hand-built maps' furniture-and-toys rooms, and it is what made the converted maps "look awful
-## compared to the original": a real hotel's oak, brick and plaster drawn as peach and coral
-## graph paper. The ids the shared texture list (dot-map's `source_textures.tsv`) writes into a
-## converted map are drawn from CC0 photographs instead: Poly Haven's and ambientCG's, resized
-## to 512 px, diffuse and normal only ([code]assets/polyhaven/License.txt[/code] has each
-## source). Mapped in world space like every surface here, at the metres one tile covers below.
-## A checkout without the files, or a pack mounted without them, falls back to the older look of
-## the same surface ([constant FALLBACK]) rather than failing, as the Kenney textures do.
+## [b]Photographs for the generic ids.[/b] The pastel grid above is the family's look for hand-built maps; converted
+## maps' ids (dot-map's `source_textures.tsv`) are drawn from CC0 photographs instead (Poly Haven, ambientCG; 512 px,
+## diffuse and normal; `assets/polyhaven/License.txt`), in world space; without them a surface falls back to [constant FALLBACK].
 const PHOTO_DIR := "res://assets/polyhaven/"
 
 ## id -> `{metres, rough, metal}`: how much world one copy covers, and the surface's sheen.
@@ -66,13 +60,9 @@ const GRID_METRES := 4.0
 ## The grid's face brightness after [method _wall_grid], of 1.0 (Kenney's is 0.84).
 const GRID_BODY := 0.66
 
-## surface id -> `[pastel, floor]`: the colour of a building surface on the grid, and whether
-## it is a floor (Kenney's tiles) or a wall (the grid). A surface not here keeps its
-## generated pattern. Each pastel is light enough that a sunlit face does not clip and
-## distinct enough that "the coral wall", "the blue carpet" can be called out.
-## The ground outside (grass, concrete, sidewalk, tiles, dirt, sand, asphalt) is a step
-## deeper than the walls: it is half of every outdoor frame, and at the old near-white values
-## the sunlit field rendered at 0.9 luminance and over under Compatibility.
+## surface id -> `[pastel, floor]`: the colour of a building surface on the grid, and whether it is a floor (Kenney's
+## tiles) or a wall (the grid). A surface not here keeps its generated pattern. Each pastel is light enough that a
+## sunlit face does not clip yet distinct enough to call out. The ground outside is a step deeper (half of every outdoor frame).
 const PASTELS := {
 	"wood_floor": [Color(0.98, 0.84, 0.70), true],
 	"parquet": [Color(0.98, 0.86, 0.72), true],
@@ -259,12 +249,9 @@ static func _pastel(id: String, tint: Color) -> StandardMaterial3D:
 	return m
 
 
-## The wall grid with its body pulled down to [constant GRID_BODY] and its lines kept white.
-## Kenney's grid is a flat light grey (214 of 255) with white lines, so a wall under a 0.97
-## pastel and the map's light sat at the top of the range and the lines (the only detail) were
-## a few percent brighter than the face: every wall read as one pale wash. Darkening the body
-## in the texture, not the albedo, keeps the lines at full brightness, so the wall is a mid
-## tone with a visible grid, and the ceiling and roof, which share it, no longer glare.
+## The wall grid with its body pulled down to [constant GRID_BODY] and its lines kept white. Kenney's grid is a flat
+## light grey, so under a 0.97 pastel every wall read as one pale wash. Darkening the body in the texture, not the
+## albedo, keeps the lines bright: a mid tone with a visible grid, and the ceiling and roof no longer glare.
 static func _wall_grid() -> Texture2D:
 	var key := "wall_grid"
 	if _textures.has(key):
