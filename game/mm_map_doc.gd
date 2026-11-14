@@ -126,32 +126,129 @@ static func import(source: Dictionary) -> Dictionary:
 
 ## A Playground spawn hangs a metre above its floor (a person is dropped in), where ours is the feet.
 ## Left as it is, eight people start in the air and a spawn audit finds nothing under them, so the
-## point is lowered to the highest unturned solid box top under it, within 1.5 m. No box found, no change.
+## point is lowered to the highest solid box top under it, within 1.5 m (a tilted box's top is its
+## plane: terrain is made of those). A spawn the author put against a wall, or whose floor is all
+## tilted boxes, is moved to the nearest point (rings out to 4 m) that has a floor and room for a person
+## (a 0.4 m, 1.8 m capsule). Nothing found, no change.
+const SPAWN_RADIUS := 0.4
+const SPAWN_HEIGHT := 1.8
+const SPAWN_RINGS := [0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0]
+
 static func _playground_spawn_on_floor(spawn: Variant, boxes: Array) -> Variant:
 	if not (spawn is Array) or (spawn as Array).size() != 3:
 		return spawn
 
 	var p := v3(spawn)
-	var best := -INF
+	var solids: Array = _solid_frames(boxes)
+
+	for ring: float in SPAWN_RINGS:
+		var count := 1 if ring == 0.0 else 8
+
+		for k in range(count):
+			var angle := float(k) * PI * 0.25
+			var x := p.x + ring * cos(angle)
+			var z := p.z + ring * sin(angle)
+			var y := _stand_height(solids, x, z, p.y)
+
+			if y == -INF:
+				continue
+
+			var feet := y + 0.02
+			if _room_for_person(solids, x, feet, z):
+				return [x, feet, z]
+
+	return spawn
+
+
+## Every solid box as [centre, half size, basis] (a turn is `[ax, ay, az, degrees]`).
+static func _solid_frames(boxes: Array) -> Array:
+	var frames: Array = []
 
 	for box: Variant in boxes:
 		var b: Dictionary = box
-		var turn: Variant = b.get("turn")
-		# A turn of no degrees (the editor writes one on every box) is still a level top.
-		if turn is Array and (turn as Array).size() == 4 and absf(float(turn[3])) > 0.01:
-			continue
 		if b.get("solid", true) == false:
 			continue
-		var centre := v3(b["at"])
-		var half := v3(b["size"]) * 0.5
-		var top := centre.y + half.y
-		if absf(p.x - centre.x) <= half.x and absf(p.z - centre.z) <= half.z and top <= p.y + 0.1 and top >= p.y - 1.5:
-			best = maxf(best, top)
 
-	if best == -INF:
-		return spawn
+		var basis := Basis.IDENTITY
+		var turn: Variant = b.get("turn")
+		if turn is Array and (turn as Array).size() == 4 and absf(float(turn[3])) > 0.01:
+			var axis := Vector3(float(turn[0]), float(turn[1]), float(turn[2]))
+			if axis.length() > 0.0001:
+				basis = Basis(axis.normalized(), deg_to_rad(float(turn[3])))
 
-	return [p.x, best + 0.02, p.z]
+		frames.append([v3(b["at"]), v3(b["size"]) * 0.5, basis])
+
+	return frames
+
+
+## The height of the highest box top under (x, z) within 1.5 m below or 0.1 m above [param ref_y], or -INF.
+## The standing point is the highest of that under the spot and under a ring of a person's radius round it.
+static func _stand_height(solids: Array, x: float, z: float, ref_y: float) -> float:
+	var best := -INF
+
+	for k in range(9):
+		var px := x
+		var pz := z
+		if k > 0:
+			var angle := float(k - 1) * PI * 0.25
+			px += SPAWN_RADIUS * cos(angle)
+			pz += SPAWN_RADIUS * sin(angle)
+
+		var top := _top_under(solids, px, pz, ref_y)
+
+		if k == 0 and top == -INF:
+			return -INF
+
+		best = maxf(best, top)
+
+	return best
+
+
+static func _top_under(solids: Array, x: float, z: float, ref_y: float) -> float:
+	var best := -INF
+
+	for frame: Array in solids:
+		var centre: Vector3 = frame[0]
+		var half: Vector3 = frame[1]
+		var basis: Basis = frame[2]
+		var up := basis.y
+
+		if up.y < 0.5:
+			continue
+
+		var corner := centre + basis * Vector3(0.0, half.y, 0.0)
+		var y := corner.y - (up.x * (x - corner.x) + up.z * (z - corner.z)) / up.y
+		var local := basis.transposed() * (Vector3(x, y, z) - centre)
+
+		if absf(local.x) <= half.x and absf(local.z) <= half.z and y <= ref_y + 0.1 and y >= ref_y - 1.5:
+			best = maxf(best, y)
+
+	return best
+
+
+## No solid box holds any of a person's capsule: its axis and a ring of its radius, at five heights.
+static func _room_for_person(solids: Array, x: float, feet: float, z: float) -> bool:
+	for k in range(9):
+		var px := x
+		var pz := z
+		if k > 0:
+			var angle := float(k - 1) * PI * 0.25
+			px += SPAWN_RADIUS * cos(angle)
+			pz += SPAWN_RADIUS * sin(angle)
+
+		for rise: float in [0.25, 0.6, 1.0, 1.4, SPAWN_HEIGHT - 0.05]:
+			var point := Vector3(px, feet + rise, pz)
+
+			for frame: Array in solids:
+				var centre: Vector3 = frame[0]
+				var half: Vector3 = frame[1]
+				var basis: Basis = frame[2]
+				var local := basis.transposed() * (point - centre)
+
+				if absf(local.x) <= half.x and absf(local.y) <= half.y and absf(local.z) <= half.z:
+					return false
+
+	return true
 
 
 static func _playground_box(b: Dictionary) -> Dictionary:
