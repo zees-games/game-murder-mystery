@@ -110,6 +110,9 @@ func _adopt(candidate: MmPlayer) -> void:
 		return
 
 	player = candidate
+	if touch != null and _offline and player.sampler != null:
+		# The one touch sampler, so the buttons' jump and the stick reach the simulated body.
+		player.sampler = _sampler
 	gate.freeze(player)
 	_build_camera()
 

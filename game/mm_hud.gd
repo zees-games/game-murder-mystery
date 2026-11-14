@@ -4,6 +4,7 @@ const MmGame := preload("mm_game.gd")
 const MmPlayer := preload("mm_player.gd")
 const MmBindings := preload("mm_bindings.gd")
 const MmController := preload("mm_controller.gd")
+const MmTouch := preload("mm_touch.gd")
 
 ## What a player needs on screen: the clock, how many are alive, this player's own role (roles
 ## are secret, so only `game.team_of(player)`, the ROLE sent to this player alone), what they
@@ -137,6 +138,14 @@ func _build() -> void:
 	_shout.offset_right = 600.0
 	_shout.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_shout.add_theme_color_override("font_color", Color(0.99, 0.86, 0.40))
+	if MmTouch.wanted():
+		# The desktop band sits across the DRAW button on a phone; this one ends above the highest button.
+		_shout.add_theme_font_size_override("font_size", MmTouch.SHOUT_FONT)
+		_shout.offset_top = MmTouch.SHOUT_TOP
+		_shout.offset_bottom = MmTouch.SHOUT_BOTTOM
+		_shout.offset_left = -MmTouch.SHOUT_HALF_WIDTH
+		_shout.offset_right = MmTouch.SHOUT_HALF_WIDTH
+		_shout.clip_text = true
 
 	_build_status()
 
@@ -221,6 +230,12 @@ func _build_status() -> void:
 	_meter_label.offset_right = 620.0
 	_meter_label.offset_top = -241.0
 	_meter_label.offset_bottom = -219.0
+
+	if MmTouch.wanted():
+		# Drop the role block below the shout band: on a phone it would sit under the shout's left end.
+		for control: Control in [_disc, weapon_icon, _as, _lock, _meter_back, _meter_fill, _meter_label]:
+			control.offset_top += MmTouch.ROLE_DROP
+			control.offset_bottom += MmTouch.ROLE_DROP
 
 
 func _build_crosshair() -> void:
@@ -411,7 +426,8 @@ func _draw_disc(role: StringName) -> void:
 
 
 func _draw_hints(role: StringName) -> void:
-	if player == null or not player.is_alive() or player.watching or role == &"":
+	# Keyboard hints name keys a touch player does not have, and sit under the Menu button.
+	if MmTouch.wanted() or player == null or not player.is_alive() or player.watching or role == &"":
 		_hints.text = ""
 		return
 

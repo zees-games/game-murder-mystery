@@ -39,6 +39,8 @@ static func spec_for() -> DotMenuGameSpec:
 	s.gore_text = "Blood splatters on the wall or floor where somebody is shot or stabbed."
 	s.ambient_text = "Quiet sounds under the map."
 	s.not_applied = NOT_APPLIED
+	# The touch Menu button sits top right, clear of the thumbs.
+	s.menu_button_corner = &"top_right"
 	s.bindings_maker = func() -> DotMenuBindings: return MmBindings.make()
 	s.help_about = "Somebody here is a murderer, and only they know it. One bystander has the gun. Everybody else has nothing but their eyes. The murderer wins when nobody else is left; the bystanders win when the murderer is dead or the clock runs out."
 	s.help_cards = [
