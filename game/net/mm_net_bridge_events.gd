@@ -16,6 +16,8 @@ func _on_event(message: DotNetMessage) -> void:
 			_apply_hello(reader)
 		MmEvents.Kind.MAP:
 			_apply_map(reader)
+		MmEvents.Kind.MAP_PART:
+			_apply_map_part(reader)
 		MmEvents.Kind.TOYS:
 			_apply_toys(reader)
 		MmEvents.Kind.JOIN:
@@ -256,7 +258,55 @@ func _apply_map(reader: DotNetReader) -> void:
 	if not bool(told["ok"]) or game == null:
 		return
 
-	var decoded := MmMapDoc.decode(told["encoded"])
+	_map_next = 0
+	_build_map_bytes(told["encoded"])
+
+
+## One piece of a large map. Index 0 starts it over; a piece out of order, or a whole that
+## does not add up, drops the map with a line rather than building half of one.
+func _apply_map_part(reader: DotNetReader) -> void:
+	var told := MmEvents.read_map_part(reader)
+
+	if not bool(told["ok"]) or game == null:
+		return
+
+	var index := int(told["index"])
+
+	if index == 0:
+		_map_next = 0
+		_map_count = int(told["count"])
+		_map_total = int(told["total"])
+		_map_joined = PackedByteArray()
+
+	if index != _map_next or int(told["count"]) != _map_count or int(told["total"]) != _map_total:
+		DotLog.warn(CHANNEL, "a map piece arrived out of order; the map is dropped", {
+			"index": index, "expected": _map_next, "count": told["count"],
+		})
+		_map_next = -1
+		return
+
+	_map_joined.append_array(told["chunk"])
+	_map_next += 1
+
+	if _map_next < _map_count:
+		return
+
+	_map_next = 0
+
+	if _map_joined.size() != _map_total:
+		DotLog.warn(CHANNEL, "a map's pieces do not add up; the map is dropped", {
+			"bytes": _map_joined.size(), "expected": _map_total,
+		})
+		return
+
+	var whole := _map_joined
+	_map_joined = PackedByteArray()
+	_build_map_bytes(whole)
+
+
+## A whole map's bytes, decoded and built.
+func _build_map_bytes(encoded: PackedByteArray) -> void:
+	var decoded := MmMapDoc.decode(encoded)
 
 	if not decoded.ok:
 		DotLog.warn(CHANNEL, "the server sent a map this build cannot build", {

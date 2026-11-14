@@ -30,6 +30,8 @@ func _ready() -> void:
 	_build_progress()
 
 	if authoritative:
+		# The document limits are settings (0 = no limit), read before any map is.
+		MmMapDoc.apply_limits(config)
 		catalogue = MmCatalogue.new()
 		var _loaded := catalogue.load_from(config.map_directory)
 		# The other games' packs, mounted beside this one's (see .gitignore's bootstrap links

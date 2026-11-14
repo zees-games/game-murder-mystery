@@ -112,8 +112,7 @@ func _admit(peer_id: int) -> void:
 	))
 
 	# The map, before anything that stands on it.
-	if not _map_body.is_empty():
-		_tell(peer_id, MmEvents.Kind.MAP, _map_body)
+	_send_map(peer_id)
 
 	if not _toys_body.is_empty():
 		_tell(peer_id, MmEvents.Kind.TOYS, _toys_body)

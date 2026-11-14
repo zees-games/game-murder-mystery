@@ -127,11 +127,19 @@ var _in_server_tick := false
 var _unregistered_in_tick: Array[int] = []
 var _client_ticked_for: int = -1
 
-## The map the clients were last sent, so a late joiner is sent the same bytes.
-var _map_body: PackedByteArray = PackedByteArray()
+## The map the clients were last sent, as `[kind, body]` messages (one MAP, or MAP_PARTs in
+## order), so a late joiner is sent the same bytes.
+var _map_messages: Array = []
+
+## A client's map so far while it arrives in MAP_PARTs: the next index it expects, how many,
+## the whole size, and the bytes joined.
+var _map_next: int = 0
+var _map_count: int = 0
+var _map_total: int = 0
+var _map_joined: PackedByteArray = PackedByteArray()
 
 ## The map's toys on the wire, one behaviour per toy in toy order, and the TOYS event that
-## names their net ids (kept for a joiner, as [member _map_body] is).
+## names their net ids (kept for a joiner, as [member _map_messages] is).
 var _toy_nets: Array = []
 var _toys_body: PackedByteArray = PackedByteArray()
 
@@ -163,6 +171,12 @@ func peer_for_player(session_id: int) -> int:
 
 func player_for_peer(peer_id: int) -> int:
 	return int(_player_of_peer.get(peer_id, 0))
+
+
+## The last map sent, to one peer, in the messages everybody had.
+func _send_map(peer_id: int) -> void:
+	for message in _map_messages:
+		_tell(peer_id, message[0], message[1])
 
 
 ## How every dot-net message reaches a peer, routed by delivery, not kind: snapshots unreliable, the

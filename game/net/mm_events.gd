@@ -44,6 +44,10 @@ enum Kind {
 	TOYS,
 	## A gun lies on the floor (dropped), or is gone from it (taken): its id and where.
 	GUN,
+	## One piece of a map too large for one MAP ([constant MmMapDoc.PART_BYTES] and up): its
+	## index, how many pieces, the whole size, then the bytes. Sent in order instead of MAP; a
+	## client joins them and builds as from a MAP. Appended, so every kind before it reads the same.
+	MAP_PART,
 }
 
 enum Ask {
@@ -66,7 +70,8 @@ const NAME_BYTES := 64
 const ID_BYTES := 64
 const TEXT_BYTES := 256
 
-## The largest map a reader accepts: [MmMapDoc.WIRE_LIMIT] and its header.
+## The most one MAP or MAP_PART carries: a piece ([constant MmMapDoc.PART_BYTES]) and its
+## header. Not a limit on a map: a larger one goes as several MAP_PARTs.
 const MAP_BYTES := 65536 + 16
 
 ## The most an avatar document may take in a JOIN. One slot is about eighty bytes; the rest
@@ -162,6 +167,37 @@ static func write_map(encoded: PackedByteArray) -> PackedByteArray:
 static func read_map(r: DotNetReader) -> Dictionary:
 	var encoded := r.read_bytes(MAP_BYTES)
 	return {"encoded": encoded, "ok": r.ok() and not encoded.is_empty()}
+
+
+## The bodies a map is sent as: one MAP when it fits in [param part_bytes], else MAP_PARTs in
+## order. Each entry is `[kind, body]`. A map of any size goes; only the piece size is fixed.
+static func write_map_parts(encoded: PackedByteArray, part_bytes: int) -> Array:
+	if encoded.size() <= part_bytes:
+		return [[Kind.MAP, write_map(encoded)]]
+
+	var count := ceili(float(encoded.size()) / float(part_bytes))
+	var out := []
+
+	for index in count:
+		var w := _w()
+		w.write_varint(index)
+		w.write_varint(count)
+		w.write_varint(encoded.size())
+		w.write_bytes(encoded.slice(index * part_bytes, mini((index + 1) * part_bytes, encoded.size())))
+		out.append([Kind.MAP_PART, w.to_bytes()])
+
+	return out
+
+
+static func read_map_part(r: DotNetReader) -> Dictionary:
+	var index := r.read_varint()
+	var count := r.read_varint()
+	var total := r.read_varint()
+	var chunk := r.read_bytes(MAP_BYTES)
+	return {
+		"index": index, "count": count, "total": total, "chunk": chunk,
+		"ok": r.ok() and not chunk.is_empty() and count > 0 and index < count and total > 0,
+	}
 
 
 # Players

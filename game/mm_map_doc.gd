@@ -32,17 +32,27 @@ const PLAYGROUND_MATS := {
 ## Playground's liquids, which are volumes to fall into rather than floors.
 const PLAYGROUND_LIQUIDS := ["water", "lava", "slime"]
 
-## The largest a document may be on the wire, compressed. A WebSocket's outbound buffer is
-## sixty-four kilobytes and a message past it is never sent (mg-look-at-me's finding), so a map
-## must fit with room for the header.
-const WIRE_LIMIT := 60000
+## A map larger than this, compressed, is sent in pieces: a WebSocket's outbound buffer is
+## sixty-four kilobytes and a message past it is never sent (mg-look-at-me's finding), so the
+## bridge sends MAP_PART messages of at most this many bytes each. Not a limit on a map: a
+## document of any size is sent.
+const PART_BYTES := 60000
 
-const MAX_BOXES := 6000
-const MAX_PROPS := 2000
-const MAX_LIGHTS := 128
-const MAX_SPAWNS := 64
-const MAX_DOORS := 256
-const MAX_TOYS := 48
+## How many of each thing a document may hold, 0 for no limit (the default for every one).
+## Settings, not constants: [method apply_limits] reads them from a config's `max_map_*`
+## fields when it has them. A document over a set limit is refused with the count, never cut
+## down. What a big map costs to draw and send is its author's choice.
+static var max_boxes: int = 0
+static var max_props: int = 0
+static var max_lights: int = 0
+static var max_spawns: int = 0
+static var max_doors: int = 0
+static var max_toys: int = 0
+## Past this many lights a document is still read, with a warning in the log: every light is
+## drawn, and the Compatibility renderer lights a mesh with at most eight. 0 is no warning.
+static var lights_warn: int = 128
+
+const CHANNEL := "mm.map"
 
 ## How a door moves: about a hinge at one edge, sideways into the wall, or up like a shutter.
 const DOOR_MOTIONS := ["swing", "slide", "lift"]
@@ -120,7 +130,7 @@ static func import(source: Dictionary) -> Dictionary:
 				if list is Array:
 					spawns.append_array(list)
 
-	doc["spawns"] = {"players": spawns.slice(0, MAX_SPAWNS)}
+	doc["spawns"] = {"players": spawns}
 	return doc
 
 
@@ -363,8 +373,8 @@ static func _fill_lists(source: Dictionary, doc: Dictionary) -> String:
 			return "box %d is not {at, size, mat}" % boxes.size()
 		boxes.append(box)
 
-	if boxes.size() > MAX_BOXES:
-		return "%d boxes; the most is %d" % [boxes.size(), MAX_BOXES]
+	if _over(boxes.size(), max_boxes):
+		return "%d boxes; this server takes at most %d (max_map_boxes, 0 = no limit)" % [boxes.size(), max_boxes]
 
 	doc["boxes"] = boxes
 
@@ -387,8 +397,8 @@ static func _fill_lists(source: Dictionary, doc: Dictionary) -> String:
 			return "prop %d is not {id, at}" % props.size()
 		props.append(prop)
 
-	if props.size() > MAX_PROPS:
-		return "%d props; the most is %d" % [props.size(), MAX_PROPS]
+	if _over(props.size(), max_props):
+		return "%d props; this server takes at most %d (max_map_props, 0 = no limit)" % [props.size(), max_props]
 
 	doc["props"] = props
 
@@ -404,8 +414,13 @@ static func _fill_lists(source: Dictionary, doc: Dictionary) -> String:
 			"colour": _floats(light.get("colour", [1.0, 0.95, 0.85]), 3),
 		})
 
-	if lights.size() > MAX_LIGHTS:
-		return "%d lights; the most is %d" % [lights.size(), MAX_LIGHTS]
+	if _over(lights.size(), max_lights):
+		return "%d lights; this server takes at most %d (max_map_lights, 0 = no limit)" % [lights.size(), max_lights]
+
+	if _over(lights.size(), lights_warn):
+		DotLog.warn(CHANNEL, "a map has more lights than the warning level; each one costs every frame", {
+			"map": str(source.get("id", "?")), "lights": lights.size(), "warn_at": lights_warn,
+		})
 
 	doc["lights"] = lights
 
@@ -416,8 +431,8 @@ static func _fill_lists(source: Dictionary, doc: Dictionary) -> String:
 			return "door %d is not {at, size} with a known motion" % doors.size()
 		doors.append(door)
 
-	if doors.size() > MAX_DOORS:
-		return "%d doors; the most is %d" % [doors.size(), MAX_DOORS]
+	if _over(doors.size(), max_doors):
+		return "%d doors; this server takes at most %d (max_map_doors, 0 = no limit)" % [doors.size(), max_doors]
 
 	doc["doors"] = doors
 
@@ -436,8 +451,8 @@ static func _fill_toys(source: Dictionary, doc: Dictionary) -> String:
 			return "toy %d is not {toy, at}" % toys.size()
 		toys.append(toy)
 
-	if toys.size() > MAX_TOYS:
-		return "%d toys; the most is %d" % [toys.size(), MAX_TOYS]
+	if _over(toys.size(), max_toys):
+		return "%d toys; this server takes at most %d (max_map_toys, 0 = no limit)" % [toys.size(), max_toys]
 
 	for toy: Dictionary in toys:
 		for link: int in toy.get("links", []):
@@ -463,8 +478,8 @@ static func _fill_spawns(source: Dictionary, doc: Dictionary) -> String:
 			list.append({"at": _floats((raw as Dictionary)["at"], 3), "yaw": _r(float((raw as Dictionary).get("yaw", 0.0)))})
 		if list.is_empty():
 			return "no spawns for the %s" % side
-		if list.size() > MAX_SPAWNS:
-			return "%d %s spawns; the most is %d" % [list.size(), side, MAX_SPAWNS]
+		if _over(list.size(), max_spawns):
+			return "%d %s spawns; this server takes at most %d (max_map_spawns, 0 = no limit)" % [list.size(), side, max_spawns]
 		out_spawns[side] = list
 
 	doc["spawns"] = out_spawns
@@ -608,8 +623,9 @@ static func decode(bytes: PackedByteArray) -> DotResult:
 	if bytes.decode_u32(4) != bytes.size() - 8:
 		return DotResult.fail(DotError.CODE_PARSE, "A map on the wire is not the length it says.")
 
-	# A size this large is a corrupt header; decompressing it would allocate whatever it says.
-	if size <= 0 or size > WIRE_LIMIT * 40:
+	# A size past what deflate can expand these bytes to (1032 to 1) is a corrupt header;
+	# decompressing it would allocate whatever it says.
+	if size <= 0 or size > (bytes.size() - 8) * 1032:
 		return DotResult.fail(DotError.CODE_PARSE, "A map on the wire says it is %d bytes." % size)
 
 	var raw := bytes.slice(8).decompress(size, FileAccess.COMPRESSION_DEFLATE)
@@ -618,6 +634,26 @@ static func decode(bytes: PackedByteArray) -> DotResult:
 		return DotResult.fail(DotError.CODE_PARSE, "A map on the wire would not decompress.")
 
 	return parse_json(raw.get_string_from_utf8(), "wire")
+
+
+static func _over(count: int, limit: int) -> bool:
+	return limit > 0 and count > limit
+
+
+## Sets the document limits from a config's `max_map_*` and `map_lights_warn` fields, those it
+## has (0 = no limit). Static, so every reader in the process (catalogue, bridge) uses them.
+static func apply_limits(config: Object) -> void:
+	max_boxes = _setting(config, "max_map_boxes", 0)
+	max_props = _setting(config, "max_map_props", 0)
+	max_lights = _setting(config, "max_map_lights", 0)
+	max_spawns = _setting(config, "max_map_spawns", 0)
+	max_doors = _setting(config, "max_map_doors", 0)
+	max_toys = _setting(config, "max_map_toys", 0)
+	lights_warn = _setting(config, "map_lights_warn", 128)
+
+
+static func _setting(config: Object, field: String, fallback: int) -> int:
+	return int(config.get(field)) if config != null and field in config else fallback
 
 
 ## A short fingerprint of a document, for a log line and for two ends to compare.

@@ -176,15 +176,17 @@ func _on_world_rebuilt() -> void:
 
 	var encoded := MmMapDoc.encode(game.map.doc)
 
-	if encoded.size() > MmMapDoc.WIRE_LIMIT:
-		# Sent anyway: a client on a native transport will take it, and the line says why a
-		# browser does not. A WebSocket message past its outbound buffer is never delivered.
-		DotLog.warn(CHANNEL, "a map is larger than a browser can be sent in one message", {
-			"map": String(game.map.id()), "bytes": encoded.size(), "limit": MmMapDoc.WIRE_LIMIT,
+	# A map larger than one message goes in pieces: a WebSocket message past its outbound
+	# buffer is never delivered, so no message is let near it, whatever the map's size.
+	_map_messages = MmEvents.write_map_parts(encoded, MmMapDoc.PART_BYTES)
+
+	if _map_messages.size() > 1:
+		DotLog.info(CHANNEL, "a large map goes in pieces", {
+			"map": String(game.map.id()), "bytes": encoded.size(), "pieces": _map_messages.size(),
 		})
 
-	_map_body = MmEvents.write_map(encoded)
-	_broadcast(MmEvents.Kind.MAP, _map_body)
+	for message in _map_messages:
+		_broadcast(message[0], message[1])
 	_register_toys()
 
 

@@ -70,6 +70,26 @@ func _test_the_codec() -> void:
 	_check(bool(carried["ok"]) and (carried["encoded"] as PackedByteArray).size() == MmEvents.MAP_BYTES,
 		"a MAP as large as a reader accepts fits in an event", "%d of %d bytes" % [(carried["encoded"] as PackedByteArray).size(), MmEvents.MAP_BYTES])
 
+	# A map has no size limit: past one message it goes in MAP_PARTs, each one an event, joined whole.
+	var large := PackedByteArray()
+	large.resize(MmMapDoc.PART_BYTES * 3 + 5)
+	for i in large.size():
+		large[i] = (i * 31 + 7) & 0xff
+	var parts := MmEvents.write_map_parts(large, MmMapDoc.PART_BYTES)
+	var joined := PackedByteArray()
+	var parts_ok := parts.size() == 4
+	for part in parts:
+		var sent_part := MmEvent.new(part[0], part[1])
+		var part_wire := DotNetWriter.new()
+		sent_part._write(part_wire)
+		var got_part := MmEvent.new()
+		got_part._read(DotNetReader.new(part_wire.to_bytes()))
+		var piece := MmEvents.read_map_part(got_part.reader())
+		parts_ok = parts_ok and got_part.kind == MmEvents.Kind.MAP_PART and bool(piece["ok"]) and int(piece["total"]) == large.size()
+		joined.append_array(piece["chunk"])
+	_check(parts_ok and joined == large and MmEvents.write_map_parts(PackedByteArray([1, 2]), MmMapDoc.PART_BYTES)[0][0] == MmEvents.Kind.MAP,
+		"a map past one message goes in MAP_PARTs that join whole; a small one is one MAP", "%d parts, %d of %d bytes" % [parts.size(), joined.size(), large.size()])
+
 	_check(MmEvent.fits(), "every event kind fits the event's kind field",
 		"%d kinds in %d bits" % [MmEvents.Kind.size(), MmEvent.KIND_BITS])
 	_check(MmRequest.fits(), "every request kind fits the request's kind field",
@@ -589,8 +609,11 @@ func _test_a_client_without_the_map() -> void:
 		"and reads every snapshot to its end, a player seated after them included", "%s, %d of %d snapshots applied" % [
 			"no copy" if copy == null else "%.2f m apart" % copy.global_position.distance_to(third.global_position), applied[0], received])
 
-	# The MAP arrives late: the same mirrors are handed the toys, nothing registered again.
-	_server_bridge._tell(CLIENT_PEER, MmEvents.Kind.MAP, _server_bridge.get("_map_body"))
+	# The MAP arrives late, and in pieces (a map larger than one message goes as MAP_PARTs; a
+	# small piece size makes this one several): the same mirrors are handed the toys, nothing registered again.
+	var pieces := MmEvents.write_map_parts(MmMapDoc.encode(_server_game.map_doc), 512)
+	for piece in pieces:
+		_server_bridge._tell(CLIENT_PEER, piece[0], piece[1])
 	await _steps(6)
 	var still := ids.filter(func(id: int) -> bool: return _client_net.registry.has(id)).size()
 	_check(_client_game.map.id() == &"practice_again" and _client_bridge.toy_count() == 5 and still == ids.size()

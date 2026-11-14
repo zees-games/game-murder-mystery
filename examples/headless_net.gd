@@ -7,7 +7,7 @@ const WorkbenchSection := preload("headless_net_workbench.gd")
 ## ROLE goes to its owner, DEATH never says by whom), then the map, doors, toys, the result. Sections and checks are both counted.
 
 const SECTIONS := 18
-const CHECKS := 118
+const CHECKS := 119
 
 
 func _ready() -> void:

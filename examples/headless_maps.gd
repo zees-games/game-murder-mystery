@@ -65,7 +65,7 @@ func _run() -> void:
 		await _test_foreign(StringName(id))
 
 	var sections := 1 + _maps.size() + _foreign.size()
-	var checks := 2 + CHECKS_PER_MAP * _maps.size() + CHECKS_PER_FOREIGN * _foreign.size()
+	var checks := 4 + CHECKS_PER_MAP * _maps.size() + CHECKS_PER_FOREIGN * _foreign.size()
 
 	if _maps.is_empty():
 		_broken = true
@@ -96,6 +96,7 @@ func _test_the_catalogue() -> void:
 
 	_check(missing.is_empty() and game.catalogue.refused.is_empty(),
 		"every map is in it, and no file was refused", "have %s, missing %s, refused %s" % [ids, missing, game.catalogue.refused])
+	_test_limits()
 
 	var extra := DirAccess.dir_exists_absolute(ProjectSettings.globalize_path("res://maps_extra"))
 	var kinds := {}
@@ -115,6 +116,34 @@ func _test_the_catalogue() -> void:
 	_finished()
 
 
+## No hard cap on a document: past the old 6000 boxes and 128 lights it is read (the lights
+## with a warning), and a limit set refuses it with the count. 0 is no limit.
+func _test_limits() -> void:
+	var boxes: Array = []
+	for i in 6500:
+		boxes.append({"at": [float(i % 100), 0.0, floorf(i / 100.0)], "size": [0.5, 0.5, 0.5], "mat": "flat"})
+	var lights: Array = []
+	for i in 200:
+		lights.append({"at": [float(i), 3.0, 0.0]})
+	var doc := {
+		"format": MmMapDoc.FORMAT, "kind": MmMapDoc.KIND, "id": "mm_huge", "name": "Huge",
+		"boxes": boxes, "lights": lights,
+		"spawns": {"players": [{"at": [0.0, 0.05, 30.0]}, {"at": [5.0, 0.05, 30.0]}]},
+	}
+	var open := MmMapDoc.validate(doc)
+	var bytes := MmMapDoc.encode(open.value).size() if open.ok else 0
+	var back := MmMapDoc.decode(MmMapDoc.encode(open.value)) if open.ok else open
+	_check(open.ok and back.ok and (back.value["boxes"] as Array).size() == 6500 and (back.value["lights"] as Array).size() == 200,
+		"with no limits set, 6500 boxes and 200 lights are read and round-trip", "%s, %d bytes" % [
+			"ok" if open.ok else open.error.message, bytes])
+
+	MmMapDoc.max_boxes = 6000
+	var capped := MmMapDoc.validate(doc)
+	MmMapDoc.apply_limits(MmConfig.new())
+	_check(not capped.ok and "6500 boxes" in capped.error.message and MmMapDoc.max_boxes == 0,
+		"a box limit refuses it with the count, and the config's default lifts it again", "" if capped.ok else capped.error.message)
+
+
 func _test_map(id: StringName) -> void:
 	_section(String(id))
 	var game := await _world(id)
@@ -122,7 +151,7 @@ func _test_map(id: StringName) -> void:
 	_check(str(doc.get("id", "")) == String(id), "it is the map that was built", str(doc.get("id", "")))
 
 	var bytes := MmMapDoc.encode(doc).size()
-	_check(bytes > 0 and bytes < MmMapDoc.WIRE_LIMIT, "it fits on the wire", "%d of %d bytes" % [bytes, MmMapDoc.WIRE_LIMIT])
+	_check(bytes > 0, "it encodes for the wire", "%d bytes, %d messages" % [bytes, ceili(float(bytes) / MmMapDoc.PART_BYTES)])
 
 	var missing: PackedStringArray = game.map.get("_missing")
 	_check(missing.is_empty() and game.map.props.size() == (doc["props"] as Array).size(),
@@ -259,7 +288,7 @@ func _test_foreign(id: StringName) -> void:
 	_check(str(doc.get("id", "")) == String(id) and str(doc.get("kind", "")) == MmMapDoc.KIND,
 		"it was built as this game's kind, from %s" % str(doc.get("imported_from", "?")))
 	var bytes := MmMapDoc.encode(doc).size()
-	_check(bytes > 0 and bytes < MmMapDoc.WIRE_LIMIT, "it fits on the wire", "%d of %d bytes" % [bytes, MmMapDoc.WIRE_LIMIT])
+	_check(bytes > 0, "it encodes for the wire", "%d bytes, %d messages" % [bytes, ceili(float(bytes) / MmMapDoc.PART_BYTES)])
 	var missing: PackedStringArray = game.map.get("_missing")
 	_check(missing.is_empty(), "every prop it names is one the catalogue has", ", ".join(missing.slice(0, 8)))
 	var spawns_n := (doc["spawns"][MmGame.SPAWN_GROUP] as Array).size()
