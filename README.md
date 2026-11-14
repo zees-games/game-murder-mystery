@@ -1,5 +1,3 @@
-# Murder Mystery
-
 Murder Mystery is a 3D multiplayer game of hidden roles. Everybody looks the same. One or two players are **murderers**. Everybody else is a **bystander**, and one or two bystanders also carry a **gun** with a single shot. Nobody knows anybody's role but their own. Find out who the murderer is before they get to you.
 
 It is built on [Godot 4](https://godotengine.org/), the [Dot collection](https://moddingcommunity.com/co/4-dot-assets) and [TMC's gaming platform](https://moddingcommunity.com/play).
