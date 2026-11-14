@@ -16,13 +16,13 @@
 # players_per_murderer: 12.0
 #  [1..8]
 # min_murderers: 1
-#  [1..8]
+#  [1..]
 # max_murderers: 2
 # How many bystanders start with the gun, the same way. [2.0..64.0]
 # players_per_gunner: 12.0
 #  [1..8]
 # min_gunners: 1
-#  [1..8]
+#  [1..]
 # max_gunners: 2
 
 # --- Points
