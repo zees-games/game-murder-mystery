@@ -8,6 +8,7 @@ const MmBlood := preload("mm_blood.gd")
 const MmFigure := preload("mm_figure.gd")
 const MmKillcamBodies := preload("mm_killcam_bodies.gd")
 const MmSettings := preload("mm_settings.gd")
+const MmTouch := preload("mm_touch.gd")
 const MmServices := preload("mm_services.gd")
 const MmNetBridge := preload("net/mm_net_bridge.gd")
 
@@ -75,6 +76,8 @@ var third_person: bool = false
 
 var _offline: bool = true
 var _sampler: DotFpsSampler = null
+## The on-screen buttons, only where a finger is the input (see MmTouch.wanted).
+var touch: MmTouch = null
 var _watch_id: int = -1
 ## The spectator's free camera while roaming, and the mouse motion not yet turned into a look.
 var _free_cam: DotSpectatorFreeCam = null
