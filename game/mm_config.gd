@@ -26,12 +26,12 @@ extends DotConfig
 ## How many murderers: one per this many players, between the two bounds.
 @export_range(2.0, 64.0, 0.5) var players_per_murderer: float = 12.0
 @export_range(1, 8, 1) var min_murderers: int = 1
-@export_range(1, 8, 1) var max_murderers: int = 2
+@export_range(1, 8, 1, "or_greater") var max_murderers: int = 2
 
 ## How many bystanders start with the gun, the same way.
 @export_range(2.0, 64.0, 0.5) var players_per_gunner: float = 12.0
 @export_range(1, 8, 1) var min_gunners: int = 1
-@export_range(1, 8, 1) var max_gunners: int = 2
+@export_range(1, 8, 1, "or_greater") var max_gunners: int = 2
 
 # The murderer's weapon
 
@@ -131,7 +131,7 @@ extends DotConfig
 
 @export var map_ids: PackedStringArray = PackedStringArray()
 @export var shuffle_maps: bool = true
-@export_range(1, 50, 1) var rounds_per_map: int = 3
+@export_range(1, 50, 1, "or_greater") var rounds_per_map: int = 3
 @export var map_directory: String = "maps"
 
 ## The file that says which installed maps ROTATE: `cfg/maps.yml`, layered over the shipped `res://maps.yml`
@@ -171,7 +171,7 @@ func spawn_rules() -> DotSpawnRules:
 
 @export_group("Bots")
 
-@export_range(0, 255, 1) var minimum_players: int = 6
+@export_range(0, 255, 1, "or_greater") var minimum_players: int = 6
 
 ## Whether the stand-ins talk in chat ("did anyone see that?"). Canned lines; see mm_bot_chat.gd.
 @export var bot_chat: bool = true

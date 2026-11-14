@@ -4,7 +4,7 @@
 # --- The maps
 # map_ids: []
 # shuffle_maps: true
-#  [1..50]
+#  [1..]
 # rounds_per_map: 3
 # map_directory: "maps"
 # The file that says which installed maps ROTATE: `cfg/maps.yml`, layered over the shipped `res://maps.yml` (...
