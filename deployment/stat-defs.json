@@ -1,0 +1,127 @@
+{
+	"format": "dot-stat-defs",
+	"version": 1,
+	"stats": [
+		{
+			"key": "mm.rounds_won",
+			"name": "Rounds won",
+			"description": "",
+			"kind": "COUNTER",
+			"unit": "rounds",
+			"decimals": 0,
+			"category": "",
+			"column": "OPTIONAL",
+			"better": null
+		},
+		{
+			"key": "mm.murderer_rounds",
+			"name": "Rounds as the murderer",
+			"description": "",
+			"kind": "COUNTER",
+			"unit": "rounds",
+			"decimals": 0,
+			"category": "",
+			"column": "OPTIONAL",
+			"better": null
+		},
+		{
+			"key": "mm.murderer_wins",
+			"name": "Rounds won as the murderer",
+			"description": "",
+			"kind": "COUNTER",
+			"unit": "rounds",
+			"decimals": 0,
+			"category": "",
+			"column": "OPTIONAL",
+			"better": null
+		},
+		{
+			"key": "mm.survived",
+			"name": "Rounds survived",
+			"description": "",
+			"kind": "COUNTER",
+			"unit": "rounds",
+			"decimals": 0,
+			"category": "",
+			"column": "OPTIONAL",
+			"better": null
+		},
+		{
+			"key": "mm.kills",
+			"name": "Kills",
+			"description": "",
+			"kind": "COUNTER",
+			"unit": "kills",
+			"decimals": 0,
+			"category": "",
+			"column": "OPTIONAL",
+			"better": null
+		},
+		{
+			"key": "mm.best_round_kills",
+			"name": "Most kills in a round",
+			"description": "",
+			"kind": "BEST",
+			"unit": "kills",
+			"decimals": 0,
+			"category": "",
+			"column": "OPTIONAL",
+			"better": null
+		},
+		{
+			"key": "mm.heroics",
+			"name": "Murderers shot",
+			"description": "",
+			"kind": "COUNTER",
+			"unit": "murderers",
+			"decimals": 0,
+			"category": "",
+			"column": "OPTIONAL",
+			"better": null
+		},
+		{
+			"key": "mm.innocents_shot",
+			"name": "Innocents shot",
+			"description": "",
+			"kind": "COUNTER",
+			"unit": "people",
+			"decimals": 0,
+			"category": "",
+			"column": "OPTIONAL",
+			"better": null
+		},
+		{
+			"key": "rank_score",
+			"name": "Rank score",
+			"description": "",
+			"kind": "GAUGE",
+			"unit": "",
+			"decimals": 0,
+			"category": "",
+			"column": "OPTIONAL",
+			"better": null
+		},
+		{
+			"key": "shots",
+			"name": "Shots fired",
+			"description": "",
+			"kind": "COUNTER",
+			"unit": "shots",
+			"decimals": 0,
+			"category": "accuracy",
+			"column": "OPTIONAL",
+			"better": null
+		},
+		{
+			"key": "hits",
+			"name": "Shots landed",
+			"description": "",
+			"kind": "COUNTER",
+			"unit": "shots",
+			"decimals": 0,
+			"category": "accuracy",
+			"column": "OPTIONAL",
+			"better": null
+		}
+	]
+}
