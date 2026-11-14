@@ -24,13 +24,13 @@ extends DotConfig
 @export_group("The sides")
 
 ## How many murderers: one per this many players, between the two bounds.
-@export_range(2.0, 64.0, 0.5) var players_per_murderer: float = 12.0
-@export_range(1, 8, 1) var min_murderers: int = 1
+@export_range(2.0, 64.0, 0.5, "or_greater") var players_per_murderer: float = 12.0
+@export_range(1, 8, 1, "or_greater") var min_murderers: int = 1
 @export_range(1, 8, 1, "or_greater") var max_murderers: int = 2
 
 ## How many bystanders start with the gun, the same way.
-@export_range(2.0, 64.0, 0.5) var players_per_gunner: float = 12.0
-@export_range(1, 8, 1) var min_gunners: int = 1
+@export_range(2.0, 64.0, 0.5, "or_greater") var players_per_gunner: float = 12.0
+@export_range(1, 8, 1, "or_greater") var min_gunners: int = 1
 @export_range(1, 8, 1, "or_greater") var max_gunners: int = 2
 
 # The murderer's weapon
@@ -99,10 +99,10 @@ extends DotConfig
 
 @export_group("Points")
 
-@export_range(0, 100, 1) var winner_points: int = 10
-@export_range(0, 100, 1) var kill_points: int = 5
-@export_range(0, 100, 1) var hero_points: int = 15
-@export_range(0, 100, 1) var survive_points: int = 5
+@export_range(0, 100, 1, "or_greater") var winner_points: int = 10
+@export_range(0, 100, 1, "or_greater") var kill_points: int = 5
+@export_range(0, 100, 1, "or_greater") var hero_points: int = 15
+@export_range(0, 100, 1, "or_greater") var survive_points: int = 5
 
 @export var doors_enabled: bool = true
 

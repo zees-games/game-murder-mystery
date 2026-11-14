@@ -62,22 +62,22 @@ func _add_tunables(world: MmGame) -> void:
 		func(value: float) -> void: config.round_seconds = clampf(value, 30.0, 1800.0))
 	_tunable("mm_players_per_murderer", config.players_per_murderer,
 		"One murderer for every this many players, from the next round",
-		func(value: float) -> void: config.players_per_murderer = clampf(value, 2.0, 64.0))
+		func(value: float) -> void: config.players_per_murderer = maxf(value, 2.0))
 	_tunable("mm_min_murderers", float(config.min_murderers),
 		"The fewest murderers a round starts with, from the next round",
 		func(value: float) -> void: config.min_murderers = clampi(int(value), 1, config.max_murderers))
 	_tunable("mm_max_murderers", float(config.max_murderers),
 		"The most murderers a round starts with, from the next round",
-		func(value: float) -> void: config.max_murderers = clampi(int(value), config.min_murderers, 8))
+		func(value: float) -> void: config.max_murderers = maxi(int(value), config.min_murderers))
 	_tunable("mm_players_per_gunner", config.players_per_gunner,
 		"One bystander with the gun for every this many players, from the next round",
-		func(value: float) -> void: config.players_per_gunner = clampf(value, 2.0, 64.0))
+		func(value: float) -> void: config.players_per_gunner = maxf(value, 2.0))
 	_tunable("mm_min_gunners", float(config.min_gunners),
 		"The fewest bystanders handed the gun, from the next round",
 		func(value: float) -> void: config.min_gunners = clampi(int(value), 1, config.max_gunners))
 	_tunable("mm_max_gunners", float(config.max_gunners),
 		"The most bystanders handed the gun, from the next round",
-		func(value: float) -> void: config.max_gunners = clampi(int(value), config.min_gunners, 8))
+		func(value: float) -> void: config.max_gunners = maxi(int(value), config.min_gunners))
 	_tunable("mm_melee_range", config.melee_range,
 		"Metres a murderer's strike reaches (0 = the weapon's own)",
 		func(value: float) -> void: config.melee_range = clampf(value, 0.0, 4.0))

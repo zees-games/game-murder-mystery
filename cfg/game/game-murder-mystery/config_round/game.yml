@@ -12,27 +12,27 @@
 # warmup_seconds: 8.0
 
 # --- The sides
-# How many murderers: one per this many players, between the two bounds. [2.0..64.0]
+# How many murderers: one per this many players, between the two bounds. [2.0..]
 # players_per_murderer: 12.0
-#  [1..8]
+#  [1..]
 # min_murderers: 1
 #  [1..]
 # max_murderers: 2
-# How many bystanders start with the gun, the same way. [2.0..64.0]
+# How many bystanders start with the gun, the same way. [2.0..]
 # players_per_gunner: 12.0
-#  [1..8]
+#  [1..]
 # min_gunners: 1
 #  [1..]
 # max_gunners: 2
 
 # --- Points
-#  [0..100]
+#  [0..]
 # winner_points: 10
-#  [0..100]
+#  [0..]
 # kill_points: 5
-#  [0..100]
+#  [0..]
 # hero_points: 15
-#  [0..100]
+#  [0..]
 # survive_points: 5
 # doors_enabled: true
 # Metres from the eye at which a toy can be aimed at and used. [0.5..10.0]
