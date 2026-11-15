@@ -5,7 +5,7 @@ extends "dedicated_tests.gd"
 ## played by nothing but the stand-ins the module seats itself; `headless_run` and `headless_net` cannot reach these.
 
 const SECTIONS := 16
-const CHECKS := 119
+const CHECKS := 123
 
 
 func _ready() -> void:

@@ -59,8 +59,8 @@ func _net_config() -> DotNetConfig:
 	# server's measurement, not dot-combat shots; this keeps dot-net's history in step.
 	config.enable_lag_compensation = true
 	# Everybody playing, and nothing else: the furniture is the map document, not entities, so
-	# a snapshot is a full server's players and room to spare.
-	config.max_entities_per_snapshot = 0
+	# a snapshot is a full server's players and room to spare; `mm_max_entities_per_snapshot` caps it (0 is no cap).
+	config.max_entities_per_snapshot = (game as MmGame).config.max_entities_per_snapshot
 	return config
 
 

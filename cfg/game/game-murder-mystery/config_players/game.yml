@@ -15,5 +15,7 @@
 #  [1.0..]
 # gravity: 20.0
 # auto_bunny_hop: false
+# The most entities one network snapshot may name; 0 is no most. Everybody playing is all there is (the furni... [0..]
+# max_entities_per_snapshot: 0
 #  [0.0..]
 # air_accelerate: 20.0

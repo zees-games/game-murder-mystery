@@ -117,6 +117,8 @@ Settings are console variables ("cvars"). Set them in the server's config, on th
 | `mp_freeroam` | 1 | 1 = a player who is out may fly a free camera |
 | `mp_freeroam_speed` | 8 | Free camera speed in metres per second |
 
+A value under a setting's least (a round is 30 seconds at least, a gun reaches 5 metres, a stand-in count 0) is refused with a warning in the log and the old value stays; it is never bent into range. There is no most, except the two real limits: a stab's cone is 90 degrees at most and `mm_spectate_camera` is 0 to 2. 0 as `mm_max_murderers` or `mm_max_gunners` means no most.
+
 Console commands:
 
 | Command | What it does |

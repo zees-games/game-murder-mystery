@@ -222,6 +222,18 @@ func _test_the_commands() -> void:
 	var _back := _run_command("mm_max_murderers 0")
 	_check(game.config.max_murderers == 0, "0 as the most murderers means no most",
 		"%d" % game.config.max_murderers)
+	var _low := _run_command("mm_round_seconds 5")
+	_check(is_equal_approx(game.config.round_seconds, 45.0) and _said(_run_command("mm_round_seconds"), "45"),
+		"a value under the least is refused and the old one kept, not clamped", "%.1f" % game.config.round_seconds)
+	var _wide := _run_command("mm_melee_cone 120")
+	_check(is_equal_approx(game.config.melee_cone, 40.0), "a cone over 90 degrees is refused",
+		"%.1f" % game.config.melee_cone)
+	var _text := _run_command("mm_gun_range far")
+	_check(is_equal_approx(game.config.gun_range, 120.0), "a value that is not a number is refused",
+		"%.1f" % game.config.gun_range)
+	var _long := _run_command("mm_round_seconds 100000")
+	_check(is_equal_approx(game.config.round_seconds, 100000.0), "and no most: a day-long round is allowed",
+		"%.1f" % game.config.round_seconds)
 	_finished()
 
 

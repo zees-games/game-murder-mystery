@@ -123,6 +123,11 @@ extends DotConfig
 @export_range(0.1, 5.0, 0.05, "or_greater") var jump_height: float = 1.15
 @export_range(1.0, 60.0, 0.5, "or_greater") var gravity: float = 20.0
 @export var auto_bunny_hop: bool = false
+
+## The most entities one network snapshot may name; 0 is no most. Everybody playing is all there is
+## (the furniture is the map document), so the default leaves it open.
+@export_range(0, 4096, 16, "or_greater") var max_entities_per_snapshot: int = 0
+
 @export_range(0.0, 200.0, 1.0, "or_greater") var air_accelerate: float = 20.0
 
 # The maps
