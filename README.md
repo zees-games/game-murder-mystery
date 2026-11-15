@@ -88,9 +88,9 @@ Settings are console variables ("cvars"). Set them in the server's config, on th
 | `mm_grace_seconds` | 10 | Seconds at the start with roles told and no weapons |
 | `mm_round_seconds` | 180 | How long a round is played |
 | `mm_players_per_murderer` | 12 | One murderer for every this many players |
-| `mm_min_murderers` / `mm_max_murderers` | 1 / 2 | Fewest and most murderers |
+| `mm_min_murderers` / `mm_max_murderers` | 1 / 2 | Fewest and most murderers (most 0 = unlimited) |
 | `mm_players_per_gunner` | 12 | One gun for every this many players |
-| `mm_min_gunners` / `mm_max_gunners` | 1 / 2 | Fewest and most guns |
+| `mm_min_gunners` / `mm_max_gunners` | 1 / 2 | Fewest and most guns (most 0 = unlimited) |
 | `mm_murderer_weapon` | `knife` | `knife`, `cleaver`, `axe`, `bat` or `sword` |
 | `mm_melee_range` | 0 | Metres a stab reaches (0 = the weapon's own) |
 | `mm_melee_cooldown` | 0 | Seconds between stabs (0 = the weapon's own) |

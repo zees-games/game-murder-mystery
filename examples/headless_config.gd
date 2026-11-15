@@ -5,7 +5,7 @@ extends DotGameCheckSuite
 
 const MmConfig := preload("../game/mm_config.gd")
 const MmGame := preload("../game/mm_game.gd")
-const CHECKS := 34
+const CHECKS := 35
 const SECTIONS := 5
 
 var _sections_entered := 0
@@ -42,6 +42,10 @@ func _run() -> void:
 	binder.strict = true
 	_check(binder.load_layers().ok, "defaults load")
 	_check(binder.diff().is_empty(), "no diff at the code defaults")
+	var open_ended := MmConfig.new()
+	open_ended.max_murderers = 0
+	open_ended.players_per_murderer = 2.0
+	_check(open_ended.validate().ok and open_ended.murderers_for(12) == 6, "max_murderers 0 means no most")
 	var keys := PackedStringArray()
 	for e: Dictionary in binder.schema():
 		keys.append(e["key"])

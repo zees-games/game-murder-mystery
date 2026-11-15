@@ -220,7 +220,7 @@ func _test_the_commands() -> void:
 	_check(is_equal_approx(game.config.round_seconds, 45.0), "and setting it writes through to the world",
 		"%.1f" % game.config.round_seconds)
 	var _back := _run_command("mm_max_murderers 0")
-	_check(game.config.max_murderers == 1, "a round with no murderer is not one: it is taken as one",
+	_check(game.config.max_murderers == 0, "0 as the most murderers means no most",
 		"%d" % game.config.max_murderers)
 	_finished()
 

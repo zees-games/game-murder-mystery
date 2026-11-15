@@ -16,7 +16,7 @@
 # --- Spawning
 # dot-spawn strategies for the round's start: `spread` sends everybody to different parts of the map, `map` i...
 # spawn_strategy: "spread"
-# Metres `spread` tries to keep between two starts, and the least it settles for. [0.0..200.0]
+# Metres `spread` tries to keep between two starts, and the least it settles for. [0.0..]
 # spawn_spread_distance: 20.0
-#  [0.0..200.0]
+#  [0.0..]
 # spawn_spread_min: 4.0
