@@ -1,8 +1,8 @@
 Murder Mystery is a 3D multiplayer game of hidden roles. Everybody looks the same. One or two players are **murderers**. Everybody else is a **bystander**, and one or two bystanders also carry a **gun** with a single shot. Nobody knows anybody's role but their own. Find out who the murderer is before they get to you.
 
-It is built on [Godot 4](https://godotengine.org/), the [Dot collection](https://moddingcommunity.com/co/4-dot-assets) and [TMC's gaming platform](https://moddingcommunity.com/play).
+It is built on [Godot 4](https://godotengine.org/), the [Gamespice](https://gamespice.net) platform and addon collection.
 
-Everything in this repository is open source under the MIT license. The only closed part is the website back-end it can sign in through. If you do not want to use TMC's platform, you can plug in your own sign-in back-end.
+Everything in this repository is open source under the MIT license. The only closed part is the website back-end it can sign in through. If you do not want to use Gamespice, you can plug in your own sign-in back-end.
 
 The game was built with Claude Code and is maintained with it. It has a full automated test suite, but few real players have tried it yet, so expect rough edges. Please report what you find, and tell the maintainer if you want to help.
 
@@ -62,7 +62,7 @@ The maps of Hide & Seek, Prop Hunt and Playlot also work here. The game reads th
 
 ## Getting started
 
-You need [Godot 4.7](https://godotengine.org/download). The game uses many Dot addons, each in its own repository. The easiest way to get everything is [dot-bootstrap](https://github.com/gamespice-platform/bootstrap), which lists this game in its project table. It clones each project and links the addons and map packs into it. Then:
+You need [Godot 4.7](https://godotengine.org/download). The game uses many Gamespice addons, each in its own repository. The easiest way to get everything is [dot-bootstrap](https://github.com/gamespice-platform/bootstrap), which lists this game in its project table. It clones each project and links the addons and map packs into it. Then:
 
 ```bash
 cd projects/game-murder-mystery
