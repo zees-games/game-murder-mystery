@@ -1,6 +1,6 @@
 extends DotConfig
 
-## Everything a server owner can tune, layered as every Dot game does: defaults < `user://cfg/murder.json` < `MM_*`
+## Everything a server owner can tune, layered as every Gamespice game does: defaults < `user://cfg/murder.json` < `MM_*`
 ## environment < `--mm-*` arguments. [b]The round[/b]: a grace while everybody scatters, then play until the clock or one
 ## side is gone. [b]The sides[/b]: murderers, bystanders handed the gun, the rest unarmed; roles are secret (docs/design.md).
 
