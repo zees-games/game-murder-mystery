@@ -56,6 +56,20 @@ func _test_the_codec() -> void:
 		and absf(float(clock["play_elapsed"]) - 40.25) < 0.1 and int(clock["alive"]) == 5
 		and int(clock["murderers"]) == 1 and bool(clock["playable"]), "CLOCK", str(clock))
 
+	_codec_map_sizes()
+
+	_check(MmEvent.fits(), "every event kind fits the event's kind field",
+		"%d kinds in %d bits" % [MmEvents.Kind.size(), MmEvent.KIND_BITS])
+	_check(MmRequest.fits(), "every request kind fits the request's kind field",
+		"%d kinds in %d bits" % [MmEvents.Ask.size(), MmRequest.KIND_BITS])
+	_check(MmEvents.chat_kinds_fit(), "every chat kind fits the chat line's kind field",
+		"%d kinds in %d bits" % [DotChatMessage.KIND_NAMES.size(), MmEvents.CHAT_KIND_BITS])
+
+	_finished()
+
+
+## MAP at the reader's limit fits one event; past one message it goes in MAP_PARTs.
+func _codec_map_sizes() -> void:
 	# A kind goes out in a fixed masked field, so one past it aliases a smaller kind.
 	# The largest MAP a reader accepts must survive the event's own body cap: at 4096 a
 	# 4100-byte map was read back as no bytes, silently.
@@ -89,15 +103,6 @@ func _test_the_codec() -> void:
 		joined.append_array(piece["chunk"])
 	_check(parts_ok and joined == large and MmEvents.write_map_parts(PackedByteArray([1, 2]), MmMapDoc.PART_BYTES)[0][0] == MmEvents.Kind.MAP,
 		"a map past one message goes in MAP_PARTs that join whole; a small one is one MAP", "%d parts, %d of %d bytes" % [parts.size(), joined.size(), large.size()])
-
-	_check(MmEvent.fits(), "every event kind fits the event's kind field",
-		"%d kinds in %d bits" % [MmEvents.Kind.size(), MmEvent.KIND_BITS])
-	_check(MmRequest.fits(), "every request kind fits the request's kind field",
-		"%d kinds in %d bits" % [MmEvents.Ask.size(), MmRequest.KIND_BITS])
-	_check(MmEvents.chat_kinds_fit(), "every chat kind fits the chat line's kind field",
-		"%d kinds in %d bits" % [DotChatMessage.KIND_NAMES.size(), MmEvents.CHAT_KIND_BITS])
-
-	_finished()
 
 
 func _test_a_client_joins() -> void:
