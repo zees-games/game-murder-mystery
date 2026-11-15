@@ -14,7 +14,10 @@ const USER_MAPS := "user://maps"
 
 const PRACTICE := &"mm_practice"
 
-## id -> normalised document.
+## id -> the listing of a map: `name`, `blurb`, `author`, `props` (a count), `imported_from` and
+## `thumbnail` when it has them. Not the document: a catalogue of every pack's maps held whole is
+## a few hundred megabytes of nested arrays that only the map being played ever needs, so
+## [method doc] reads one back from its file when it is built.
 var maps: Dictionary = {}
 
 ## Files that were refused, with why. What `mm_maps` prints, so a mapper can see it.
@@ -26,6 +29,15 @@ var shadowed: Dictionary = {}
 
 var _mounted: bool = false
 
+## id -> the absolute path its document was read from; the built-in map has none and is kept
+## whole in [member _built_in].
+var _paths: Dictionary = {}
+var _built_in: Dictionary = {}
+
+## The last document read back, so two asks for one map in a row read the file once.
+var _last_id: StringName = &""
+var _last_doc: Dictionary = {}
+
 var _order: Array[StringName] = []
 var _next: int = 0
 
@@ -34,10 +46,14 @@ var _next: int = 0
 ## one built in. Forgets anything read before.
 func load_from(directory: String) -> int:
 	maps.clear()
+	_paths.clear()
+	_built_in = {}
+	_last_id = &""
+	_last_doc = {}
 	refused.clear()
 	shadowed.clear()
 
-	_add(practice(), "built-in")
+	_add(practice(), "built-in", "")
 
 	var root := MmPaths.rebase("res://" + directory.trim_prefix("res://").trim_prefix("/"))
 	var loaded := _read_directory(root)
@@ -116,14 +132,14 @@ func _read_directory(root: String) -> int:
 			})
 			continue
 
-		if _add(parsed.value, file):
+		if _add(parsed.value, file, root.path_join(file)):
 			loaded += 1
 
 	return loaded
 
 
-func _add(doc: Dictionary, origin: String) -> bool:
-	var id := StringName(str(doc["id"]))
+func _add(source: Dictionary, origin: String, path: String) -> bool:
+	var id := StringName(str(source["id"]))
 
 	if maps.has(id) and origin != "built-in" and id != PRACTICE:
 		if _mounted:
@@ -133,8 +149,47 @@ func _add(doc: Dictionary, origin: String) -> bool:
 		refused[origin] = "a second map with id %s" % id
 		return false
 
-	maps[id] = doc
+	maps[id] = _listing(source)
+	if path == "":
+		_built_in = source
+		_paths.erase(id)
+	else:
+		_paths[id] = path
+	if id == _last_id:
+		_last_id = &""
+		_last_doc = {}
 	return true
+
+
+static func _listing(source: Dictionary) -> Dictionary:
+	var out := {
+		"id": source["id"], "name": source["name"], "blurb": source.get("blurb", ""),
+		"author": source["author"], "props": (source["props"] as Array).size(),
+	}
+	for key in ["imported_from", "thumbnail"]:
+		if source.has(key):
+			out[key] = source[key]
+	return out
+
+
+## The whole document of map [param id], read back from its file and checked as it was when
+## the catalogue read it; the practice house when the id is unknown or the file has gone
+## or changed past use.
+func doc(id: StringName) -> Dictionary:
+	if not maps.has(id):
+		return {}
+	var path: String = _paths.get(id, "")
+	if path == "":
+		return _built_in
+	if id == _last_id:
+		return _last_doc
+	var parsed := MmMapDoc.parse_json(FileAccess.get_file_as_string(path), path)
+	if not parsed.ok or StringName(str(parsed.value["id"])) != id:
+		DotLog.error(CHANNEL, "a map's file no longer reads; playing practice", {"id": String(id), "path": path})
+		return _built_in if not _built_in.is_empty() else practice()
+	_last_id = id
+	_last_doc = parsed.value
+	return _last_doc
 
 
 func _rebuild_order() -> void:
@@ -183,7 +238,7 @@ func next_map(allowed: PackedStringArray, shuffle: bool, stream: DotRandomStream
 		DotLog.warn(CHANNEL, "no map matches the allowed list; playing practice", {
 			"allowed": ",".join(allowed),
 		})
-		return maps.get(PRACTICE, practice())
+		return doc(PRACTICE) if maps.has(PRACTICE) else practice()
 
 	var pick: StringName
 
@@ -196,7 +251,7 @@ func next_map(allowed: PackedStringArray, shuffle: bool, stream: DotRandomStream
 		pick = ids[_next % ids.size()]
 		_next += 1
 
-	return maps[pick]
+	return doc(pick)
 
 
 ## [param in_rotation_fn]: `(id) -> bool`; a map it refuses (maps.yml leaves it out) is marked.
@@ -204,10 +259,10 @@ func describe_lines(in_rotation_fn: Callable = Callable()) -> PackedStringArray:
 	var lines := PackedStringArray(["maps (%d)" % maps.size()])
 
 	for id in _order:
-		var doc: Dictionary = maps[id]
+		var listing: Dictionary = maps[id]
 		var out_of := in_rotation_fn.is_valid() and not bool(in_rotation_fn.call(id))
 		lines.append("  %-22s %-28s %4d props  %s%s" % [
-			id, str(doc["name"]), (doc["props"] as Array).size(), str(doc["author"]),
+			id, str(listing["name"]), int(listing["props"]), str(listing["author"]),
 			"  (not in rotation)" if out_of else "",
 		])
 

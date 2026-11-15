@@ -25,7 +25,7 @@ func _lay_out_map() -> void:
 	var doc: Dictionary = {}
 
 	if next_map_id != &"" and catalogue.playable(config.map_ids).has(next_map_id):
-		doc = catalogue.maps[next_map_id]
+		doc = catalogue.doc(next_map_id)
 
 	next_map_id = &""
 
