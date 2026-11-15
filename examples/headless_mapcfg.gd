@@ -37,7 +37,7 @@ func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(real)
 	var path := real.path_join("mm_testhouse.yml")
 	var f := FileAccess.open(path, FileAccess.WRITE)
-	f.store_string("mm_round_seconds: 120\nmm_doors: 0\nmm_bots: 0\nmm_gun_range: 9999\n")
+	f.store_string("mm_round_seconds: 120\nmm_doors: 0\nmm_bots: 0\nmm_gun_range: 1\n")
 	f.close()
 
 	var got := cfg.apply("mm_testhouse")

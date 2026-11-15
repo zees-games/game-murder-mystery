@@ -6,21 +6,21 @@ extends RefCounted
 
 const GAME_ID := "game-murder-mystery"
 
-## cvar -> its constraint. Never a command, a path or the weapon's name.
+## cvar -> its constraint: the same least as `MmModuleConfig.TUNABLE_BOUNDS`, and no most (a map may set a longer round or reach than any default; a value under the least is refused with a warning and the old one stays, never clamped). 0 as `mm_max_murderers` or `mm_max_gunners` is no most. The one ceiling left is `mm_doors`, a switch. Never a command, a path or the weapon's name.
 const KEYS := {
-	"mm_grace_seconds": {"type": "float", "min": 0.0, "max": 300.0},
-	"mm_round_seconds": {"type": "float", "min": 30.0, "max": 3600.0},
-	"mm_players_per_murderer": {"type": "float", "min": 1.0},
+	"mm_grace_seconds": {"type": "float", "min": 0.0},
+	"mm_round_seconds": {"type": "float", "min": 30.0},
+	"mm_players_per_murderer": {"type": "float", "min": 2.0},
 	"mm_min_murderers": {"type": "int", "min": 1},
-	"mm_max_murderers": {"type": "int", "min": 1},
-	"mm_players_per_gunner": {"type": "float", "min": 1.0},
-	"mm_min_gunners": {"type": "int", "min": 0},
+	"mm_max_murderers": {"type": "int", "min": 0},
+	"mm_players_per_gunner": {"type": "float", "min": 2.0},
+	"mm_min_gunners": {"type": "int", "min": 1},
 	"mm_max_gunners": {"type": "int", "min": 0},
-	"mm_melee_range": {"type": "float", "min": 0.5, "max": 5.0},
-	"mm_melee_cooldown": {"type": "float", "min": 0.1, "max": 30.0},
-	"mm_gun_cooldown": {"type": "float", "min": 0.1, "max": 60.0},
-	"mm_gun_range": {"type": "float", "min": 5.0, "max": 500.0},
-	"mm_blood_seconds": {"type": "float", "min": 0.0, "max": 3600.0},
-	"mm_murderer_speed": {"type": "float", "min": 0.5, "max": 2.0},
+	"mm_melee_range": {"type": "float", "min": 0.0},
+	"mm_melee_cooldown": {"type": "float", "min": 0.0},
+	"mm_gun_cooldown": {"type": "float", "min": 0.0},
+	"mm_gun_range": {"type": "float", "min": 5.0},
+	"mm_blood_seconds": {"type": "float", "min": 0.0},
+	"mm_murderer_speed": {"type": "float", "min": 0.5},
 	"mm_doors": {"type": "int", "min": 0, "max": 1},
 }
