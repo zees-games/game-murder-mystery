@@ -28,4 +28,4 @@
 
 ## CI perf smoke
 
-`ci/perf/smoke.json` is the budget of dot-ci's perf smoke, which loads `mm.tscn` and lets it lay out its first map. That map is a seeded pick from the catalogue, so the budget depends on which maps the run can see. CI has `maps/` but not `maps_extra/` (18 maps, `mm_factory_winter`, about 5.5k nodes); a checkout with the other games' maps mounted picks a smaller one (about 3.4k). Record the budget with `maps_extra/*` unlinked, and re-record it when a map is added to murder-mystery-maps, because the pick moves.
+`ci/perf/smoke.json` is the budget of dot-ci's perf smoke, which loads `mm.tscn` and lets it lay out its first map. The budget pins that map (`"env": {"MM_MAP_IDS": "mm_factory_winter"}`, exported to the run by dot-ci 1.3.20), so CI and a checkout with `maps_extra/` mounted load the same map and the same node count, whichever packs are present. Re-record only when the pinned map changes: `perf-smoke.sh --init --scene res://game/mm.tscn --env MM_MAP_IDS=<id> .` after removing the file.

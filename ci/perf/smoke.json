@@ -1,7 +1,11 @@
 {
   "scene": "res://game/mm.tscn",
-  "load_ms": 1722.4,
-  "frame_ms": 11.437,
-  "nodes": 5531,
-  "mem_mb": 336.3
+  "load_ms": 2843.3,
+  "frame_ms": 201.166,
+  "nodes": 5743,
+  "mem_mb": 442.7,
+  "host": "local",
+  "env": {
+    "MM_MAP_IDS": "mm_factory_winter"
+  }
 }
