@@ -20,7 +20,7 @@ Each round starts with a short grace period (10 seconds by default). Everybody i
 
 The bystanders win if every murderer is dead, or if the clock runs out with a murderer still alive. The murderers win if nobody else is left. At the end of the round everybody is told who the murderer was.
 
-By default a win is worth 10 points to everyone on that side, a kill 5, shooting a murderer 15 and surviving 5. Kills, deaths, innocents shot and the rest go to your stats and the TMC leaderboards.
+By default a win is worth 10 points to everyone on that side, a kill 5, shooting a murderer 15 and surviving 5. Kills, deaths, innocents shot and the rest go to your stats and the Gamespice leaderboards.
 
 The murderer is picked at random, and never the same person twice in a row when someone else could be. Players who join during a round watch until the next one.
 
