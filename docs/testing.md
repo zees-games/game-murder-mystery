@@ -25,3 +25,7 @@
 ## Renders
 
 `tools/shot.sh --view=<view>` under xvfb, with `--mm-map-ids=<id>`, `--at=x,y,z --look=x,y,z`, `--third`, `--board`, `--doors=open`, `--seconds=`. The views: `overview`, `room`, `grace`, `bystander`, `murderer`, `gunner`, `stab`, `shot`, `blood`, `end`, `ragdoll`, `door`, `spots`. Frames go to `screenshots/` (ignored); look at each one. `--headless` gives a null renderer and saves a frame of nothing, so never render without xvfb.
+
+## CI perf smoke
+
+`ci/perf/smoke.json` is the budget of dot-ci's perf smoke, which loads `mm.tscn` and lets it lay out its first map. That map is a seeded pick from the catalogue, so the budget depends on which maps the run can see. CI has `maps/` but not `maps_extra/` (18 maps, `mm_factory_winter`, about 5.5k nodes); a checkout with the other games' maps mounted picks a smaller one (about 3.4k). Record the budget with `maps_extra/*` unlinked, and re-record it when a map is added to murder-mystery-maps, because the pick moves.
