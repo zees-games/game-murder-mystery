@@ -32,16 +32,14 @@ const PLAYGROUND_MATS := {
 ## Playground's liquids, which are volumes to fall into rather than floors.
 const PLAYGROUND_LIQUIDS := ["water", "lava", "slime"]
 
-## A map larger than this, compressed, is sent in pieces: a WebSocket's outbound buffer is
-## sixty-four kilobytes and a message past it is never sent (mg-look-at-me's finding), so the
-## bridge sends MAP_PART messages of at most this many bytes each. Not a limit on a map: a
-## document of any size is sent.
+## A map larger than this, compressed, is sent in pieces: a WebSocket's outbound buffer is sixty-four kilobytes and a message past it
+## is never sent (mg-look-at-me's finding), so the bridge sends MAP_PART messages of at most this many bytes each. Not a limit on a map:
+## a document of any size is sent.
 const PART_BYTES := 60000
 
-## How many of each thing a document may hold, 0 for no limit (the default for every one).
-## Settings, not constants: [method apply_limits] reads them from a config's `max_map_*`
-## fields when it has them. A document over a set limit is refused with the count, never cut
-## down. What a big map costs to draw and send is its author's choice.
+## How many of each thing a document may hold, 0 for no limit (the default for every one). Settings, not constants: [method apply_limits]
+## reads them from a config's `max_map_*` fields when it has them. A document over a set limit is refused with the count, never cut down.
+## What a big map costs to draw and send is its author's choice.
 static var max_boxes: int = 0
 static var max_props: int = 0
 static var max_lights: int = 0
@@ -134,12 +132,9 @@ static func import(source: Dictionary) -> Dictionary:
 	return doc
 
 
-## A Playground spawn hangs a metre above its floor (a person is dropped in), where ours is the feet.
-## Left as it is, eight people start in the air and a spawn audit finds nothing under them, so the
-## point is lowered to the highest solid box top under it, within 1.5 m (a tilted box's top is its
-## plane: terrain is made of those). A spawn the author put against a wall, or whose floor is all
-## tilted boxes, is moved to the nearest point (rings out to 4 m) that has a floor and room for a person
-## (a 0.4 m, 1.8 m capsule). Nothing found, no change.
+## A Playlot spawn hangs a metre above its floor where ours is the feet, so eight people would start in the air: the point is lowered to the highest solid box top under it within 1.5 m
+## (a tilted box's top is its plane: terrain is made of those). A spawn against a wall, or whose floor is all tilted boxes, is moved to the nearest point (rings out to 4 m)
+## with a floor and room for a person (a 0.4 m, 1.8 m capsule). Nothing found, no change.
 const SPAWN_RADIUS := 0.4
 const SPAWN_HEIGHT := 1.8
 const SPAWN_RINGS := [0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0]
