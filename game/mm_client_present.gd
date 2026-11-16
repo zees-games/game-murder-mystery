@@ -22,6 +22,8 @@ func _present_hide() -> void:
 const VIEW_REST := Vector3(0.08, -0.27, -0.42)
 ## Drawn larger than the world model, or the fists hide it.
 const VIEW_SCALE := 1.7
+## Metres the weapon lunges forward after an attack; more than the arms reach pulls their shoulders into view.
+const JAB := 0.05
 
 
 func _present_view_model() -> void:
@@ -46,7 +48,7 @@ func _present_view_model() -> void:
 			_view_model.name = "ViewModel"
 			camera.add_child(_view_model)
 			if what != "gun":
-				_view_model.rotation = Vector3(-PI / 2.6, 0.15, -0.4 if MmWeapons.length_of(StringName(what)) > MmWeapons.LONG_REACH else 0.0)
+				_view_model.rotation = MmWeapons.view_rotation(StringName(what))
 		_hold_in_arms(_view_model, what)
 	var sway := Vector3.ZERO
 	if view_arms != null:
@@ -55,7 +57,7 @@ func _present_view_model() -> void:
 	if _view_model != null:
 		# A jab forward for a moment after each attack.
 		var since := float(Time.get_ticks_msec()) / 1000.0 - _swing_at
-		var jab := maxf(0.0, 1.0 - since / 0.18) * 0.18
+		var jab := maxf(0.0, 1.0 - since / 0.18) * JAB
 		_view_model.position = VIEW_REST + Vector3(0.0, 0.0, -jab) + sway
 		if player.attacks != _swings_seen:
 			_swings_seen = player.attacks

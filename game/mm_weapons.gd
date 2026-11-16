@@ -88,6 +88,14 @@ static func known(id: StringName) -> bool:
 	return TABLE.has(id)
 
 
+## How a weapon is turned in the first-person view: a blade tilted up and in, a long one leaning
+## its tip off the crosshair. The gun points straight ahead.
+static func view_rotation(id: StringName) -> Vector3:
+	if id == &"gun":
+		return Vector3.ZERO
+	return Vector3(-PI / 2.6, 0.15, -0.4 if length_of(id) > LONG_REACH else 0.0)
+
+
 ## A node of boxes for [param parts], unshaded where it has to read at a distance.
 static func build(parts: Array, scale: float = 1.0) -> Node3D:
 	var root := Node3D.new()

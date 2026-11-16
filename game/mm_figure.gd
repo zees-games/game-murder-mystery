@@ -9,6 +9,7 @@ const MmPaths := preload("mm_paths.gd")
 const MmWeapons := preload("mm_weapons.gd")
 
 const CHANNEL := "mm.figure"
+const HELD_SCALE := 1.5
 
 ## The six people a player can be, by the blocky kit's atlas letters (the avatar documents name
 ## them). Only the letter is read: the people are coloured, not textured.
@@ -108,6 +109,8 @@ func hold(what: int, weapon: StringName) -> void:
 	if what == 1:
 		# A blade held forward of the fist, not up the forearm.
 		_held.rotation = Vector3(-PI * 0.5, 0.0, 0.0)
+	# Drawn larger than life so the blade reads at the distance a victim sees it from.
+	_held.scale = Vector3.ONE * HELD_SCALE
 	hand.add_child(_held)
 
 
