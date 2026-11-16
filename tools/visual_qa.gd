@@ -20,6 +20,9 @@ const BODY_LAYER := 1 << 10
 const EYE_HEIGHT := 1.62
 ## Ground speed of each clip; the subject walks that fast along -Z so the feet have a floor to slide on.
 const SPEEDS := {"idle": 0.0, "walk": 2.0, "run": 5.5, "strike": 0.0}
+## bone_pop limit in the strike clip: a real strike turns the forearm about 1700 deg/s (dot-player-char's
+## strike_turn_rate lets it through), ~117 deg in the 1/15 s window. Walk, run and idle keep the 90 default.
+const STRIKE_POP_DEG := 130.0
 
 var _figure: MmFigure = null
 var _arms: MmViewArms = null
@@ -149,7 +152,14 @@ func _place_first_person(_item: String) -> void:
 
 
 ## The first-person hand's distance to its grip: a hand off the handle shows here, not only in the frames.
-func _checks(_item: String, _clip_id: String, rows: Array[Dictionary]) -> Array[Dictionary]:
+## A strike's bone_pop is judged at [constant STRIKE_POP_DEG].
+func _checks(_item: String, clip_id: String, rows: Array[Dictionary]) -> Array[Dictionary]:
+	if clip_id == "strike":
+		for row: Dictionary in rows:
+			if row["check"] == "bone_pop" and not row.get("skip", false):
+				row["pass"] = float(row["value"]) <= STRIKE_POP_DEG
+				row["limit"] = "%.3f" % STRIKE_POP_DEG
+				row["note"] = "%s (a strike)" % row.get("note", "")
 	if _arms != null:
 		var error := _arms.hand_error()
 		rows.append({"check": "grip", "pass": error >= 0.0 and error < 0.06, "value": "%.3f" % error, "limit": "0.06", "note": "m from palm to grip point, first person"})
