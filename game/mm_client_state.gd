@@ -11,6 +11,7 @@ const MmSettings := preload("mm_settings.gd")
 const MmTouch := preload("mm_touch.gd")
 const MmServices := preload("mm_services.gd")
 const MmNetBridge := preload("net/mm_net_bridge.gd")
+const MmMapDrop := preload("mm_map_drop.gd")
 
 const MmConfig := preload("mm_config.gd")
 const MmGame := preload("mm_game.gd")
@@ -59,6 +60,8 @@ var board: DotMenuScoreboard = null
 var chat: DotGameChatClient = null
 var audio: MmAudio = null
 var settings: MmSettings = null
+## Maps dropped on the window or the executable (MmMapDrop); null on dot-map older than API 26.
+var map_drop: Node = null
 
 ## The player's console (the platform's).
 var console: DotConsoleController = null

@@ -50,6 +50,7 @@ func _ready() -> void:
 	_build_chat()
 	_build_audio()
 	_build_settings()
+	map_drop = MmMapDrop.attach(self, game, _say_drop)
 
 	if _offline:
 		_start_offline()
@@ -152,3 +153,11 @@ func _physics_process(delta: float) -> void:
 			continue
 
 		bridge.client_tick(net.clock.input_tick() - (ticks - 1 - i), move)
+
+
+## One line about a dropped map, in the console (MmMapDrop).
+func _say_drop(line: String) -> void:
+	if chat != null:
+		chat.notice(line)
+	else:
+		print(line)

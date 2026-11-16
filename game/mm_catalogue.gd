@@ -192,6 +192,24 @@ func doc(id: StringName) -> Dictionary:
 	return _last_doc
 
 
+## id -> the user://maps file of each map dropped this run (MmMapDrop), which a later drop may replace.
+var dropped: Dictionary = {}
+
+
+## A map dropped on the game (MmMapDrop), already checked and copied to [param path]: listed at once, in place of an
+## earlier drop with the same id, and read back from [param path] when played.
+func add_dropped(source: Dictionary, path: String) -> void:
+	dropped[StringName(str(source["id"]))] = path
+	var id := StringName(str(source["id"]))
+	maps[id] = _listing(source)
+	_paths[id] = path
+	refused.erase(path.get_file())
+	if id == _last_id:
+		_last_id = &""
+		_last_doc = {}
+	_rebuild_order()
+
+
 func _rebuild_order() -> void:
 	_order.clear()
 
