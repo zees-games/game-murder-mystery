@@ -42,7 +42,7 @@ func _build_touch() -> void:
 	add_child(layer)
 	touch = MmTouch.new()
 	touch.name = "Touch"
-	touch.build(_sampler as DotFpsTouchSampler, platform)
+	touch.build(_sampler as DotFpsTouchSampler, platform, game.mobile_rules, platform as Node)
 	layer.add_child(touch)
 
 

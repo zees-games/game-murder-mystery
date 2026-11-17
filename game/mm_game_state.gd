@@ -8,6 +8,7 @@ const MmCatalogue := preload("mm_catalogue.gd")
 const MmConfig := preload("mm_config.gd")
 const MmFlashlight := preload("mm_flashlight.gd")
 const MmMap := preload("mm_map.gd")
+const MmTouch := preload("mm_touch.gd")
 const MmMapDoc := preload("mm_map_doc.gd")
 const MmPaths := preload("mm_paths.gd")
 const MmPlayer := preload("mm_player.gd")
@@ -172,6 +173,10 @@ var players: Dictionary = {}
 ## dot-player-char's `mp_*` view and body rules.
 var view_rules: DotPlayerViewRules = DotPlayerViewRules.new()
 var body_rules: DotPlayerBodyRules = DotPlayerBodyRules.new()
+
+## dot-mobile's touch, aim assist and auto-fire cvars (`sv_mobile_*`, `sv_aim_assist*`, `sv_autofire*`): bound by the module
+## (REPLICATED), followed by the client's overlay. Auto-fire is off: nobody is known to be an enemy (mm_touch.gd).
+var mobile_rules: DotMobileRules = MmTouch.make_rules()
 
 ## `sv_falldamage*`: landing hard hurts. On in this game (dot-combat's default is off); the
 ## server applies it through [member combat], a client never does.

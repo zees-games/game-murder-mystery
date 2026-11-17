@@ -91,6 +91,8 @@ func _drive_spectator_camera() -> bool:
 
 
 func _process(delta: float) -> void:
+	if touch != null:
+		touch.sync(_covered() or (platform != null and platform.is_input_blocked()))
 	if blood != null:
 		blood.advance(delta)
 	var _shown := present_frame(net, game, player, not third_person, delta, -1.0, _watched_through_eyes())

@@ -183,6 +183,11 @@ func _bind_rule_cvars(world: MmGame) -> void:
 	var _fall := world.fall_rules.bind_cvars(add_cvar, DotConVar.FLAG_NOTIFY)
 	var _stomp := world.stomp.rules.bind_cvars(add_cvar, DotConVar.FLAG_NOTIFY)
 
+	# sv_mobile_*, sv_aim_assist*, sv_autofire*: dot-mobile's touch controls, REPLICATED for the clients' overlay.
+	var _mobile := world.mobile_rules.bind_cvars(
+		add_cvar, DotConVar.FLAG_ARCHIVE | DotConVar.FLAG_NOTIFY | DotConVar.FLAG_REPLICATED
+	)
+
 	# mp_forceview and mp_solidplayers, REPLICATED: the client places its own camera under the
 	# first and predicts its own player under the second.
 	var _views := world.view_rules.bind_cvars(

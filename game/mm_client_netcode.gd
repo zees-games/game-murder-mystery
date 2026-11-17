@@ -108,6 +108,7 @@ func _build_netcode() -> DotResult:
 	# predicts its own player.
 	var _view := game.view_rules.follow_cvars(link)
 	var _solid := game.body_rules.follow_cvars(link)
+	var _mobile := game.mobile_rules.follow_cvars(link)
 	var _ambient := game.ambient_rules.follow_cvars(link)
 	# The server's sv_ragdoll* set: this end draws the bodies.
 	var _dead := game.ragdoll_rules.follow_cvars(link)

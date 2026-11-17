@@ -113,7 +113,7 @@ func is_roaming() -> bool:
 func _physics_process(delta: float) -> void:
 	# The use key, held: the game makes the press from the edge, on the server or here.
 	var use := _key_held(MmBindings.USE) or (touch != null and touch.use_held and not _covered())
-	var attack := (_held(MmBindings.ATTACK) or (touch != null and touch.attack_held and not _covered())) and not is_spectating()
+	var attack := ((_held(MmBindings.ATTACK) and not (touch != null and touch.active())) or (touch != null and touch.attack_held and not _covered())) and not is_spectating()
 	var holster := _key_held(MmBindings.HOLSTER) or (touch != null and touch.holster_held and not _covered())
 
 	if _offline:

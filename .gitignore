@@ -57,6 +57,7 @@
 
 /addons/dot_player_char
 /addons/dot_replay
+/addons/dot_mobile
 
 # The maps are murder-mystery-maps, a repository and a pack of their own.
 # bootstrap-link: murder-mystery-maps/maps ci

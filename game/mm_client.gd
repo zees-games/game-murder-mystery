@@ -50,6 +50,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if touch != null and (event is InputEventScreenTouch or event is InputEventScreenDrag):
+		# The overlay forwards a touch to the sampler itself; forwarding it here too would handle the finger twice.
+		if touch.takes(event):
+			return
 		if _offline and player != null and player.sampler != null:
 			player.sampler.handle_event(event)
 		elif _sampler != null:
