@@ -17,8 +17,8 @@ const SPREAD_PLAYERS := 10
 const SPREAD_MIN := 4.0
 
 ## The other games' packs that must be present wherever `maps_extra/` is linked, and the
-## fewest maps each must bring.
-const FOREIGN_PACKS := {"hideseek_map": 8, "prophunt_map": 6, "playground_map": 8}
+## fewest maps each must bring. A Playlot pack still under its former kind counts as Playlot (MmMapDoc.import).
+const FOREIGN_PACKS := {"hideseek_map": 8, "prophunt_map": 6, "playlot_map": 8}
 
 ## The other games' maps found in the catalogue, by id.
 var _foreign: Array = []
@@ -65,7 +65,7 @@ func _run() -> void:
 		await _test_foreign(StringName(id))
 
 	var sections := 1 + _maps.size() + _foreign.size()
-	var checks := 4 + CHECKS_PER_MAP * _maps.size() + CHECKS_PER_FOREIGN * _foreign.size()
+	var checks := 5 + CHECKS_PER_MAP * _maps.size() + CHECKS_PER_FOREIGN * _foreign.size()
 
 	if _maps.is_empty():
 		_broken = true
@@ -97,6 +97,7 @@ func _test_the_catalogue() -> void:
 	_check(missing.is_empty() and game.catalogue.refused.is_empty(),
 		"every map is in it, and no file was refused", "have %s, missing %s, refused %s" % [ids, missing, game.catalogue.refused])
 	_test_limits()
+	_test_playlot_kinds()
 
 	var extra := DirAccess.dir_exists_absolute(ProjectSettings.globalize_path("res://maps_extra"))
 	var kinds := {}
@@ -114,6 +115,27 @@ func _test_the_catalogue() -> void:
 	_check(not extra or short.is_empty(), "the other games' maps are in it, converted (%s)" % str(kinds), ", ".join(short))
 	await _dispose(game)
 	_finished()
+
+
+## A Playlot document reads the same under its kind and under the kind its packs had before the rename, and
+## both are marked as imported from the new one.
+func _test_playlot_kinds() -> void:
+	var source := {
+		"format": 1, "id": "pl_kinds", "name": "Kinds", "spawn": [0.0, 1.0, 0.0],
+		"boxes": [{"at": [0.0, -0.5, 0.0], "size": [8.0, 1.0, 8.0], "material": "rock"},
+			{"at": [3.0, 0.1, 3.0], "size": [1.0, 0.2, 1.0], "material": "lava"}],
+	}
+	var docs: Array = []
+	for kind: String in [MmMapDoc.PLAYLOT_KIND, MmMapDoc.PLAYLOT_FORMER_KIND]:
+		var one := source.duplicate(true)
+		one["kind"] = kind
+		docs.append(MmMapDoc.import(one))
+	var a: Dictionary = docs[0]
+	var b: Dictionary = docs[1]
+	_check(a == b and a.get("kind") == MmMapDoc.KIND and a.get("imported_from") == MmMapDoc.PLAYLOT_KIND
+			and (a["boxes"] as Array).size() == 2 and (a["boxes"] as Array)[1].get("solid") == false
+			and MmMapDoc.FOREIGN_KINDS.has(MmMapDoc.PLAYLOT_FORMER_KIND),
+		"a Playlot map converts the same under its kind and its former one", "%s / %s" % [a, b])
 
 
 ## No hard cap on a document: past the old 6000 boxes and 128 lights it is read (the lights

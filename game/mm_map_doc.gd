@@ -15,10 +15,15 @@ const KIND := "murder_map"
 
 ## The other games' kinds this game reads, converted by [method import]: their rooms, furniture,
 ## doors, toys and lights as they are, every spawn group pooled into one.
-const FOREIGN_KINDS := ["hideseek_map", "prophunt_map", "playground_map"]
+const FOREIGN_KINDS := ["hideseek_map", "prophunt_map", PLAYLOT_KIND, PLAYLOT_FORMER_KIND]
 
-## Playground's materials that are not ours, as the nearest of ours and a tint.
-const PLAYGROUND_MATS := {
+## Playlot's map kind, and the one its packs were published under before the rename: both are read, the
+## old one as the new ([method import] writes `imported_from` as [constant PLAYLOT_KIND]).
+const PLAYLOT_KIND := "playlot_map"
+const PLAYLOT_FORMER_KIND := "playground_map"
+
+## Playlot's materials that are not ours, as the nearest of ours and a tint.
+const PLAYLOT_MATS := {
 	"rock": ["stone", [0.62, 0.6, 0.58]],
 	"foliage": ["hedge", [1.0, 1.0, 1.0]],
 	"ice": ["tile", [0.8, 0.92, 1.0]],
@@ -29,8 +34,8 @@ const PLAYGROUND_MATS := {
 	"slime": ["rubber", [0.5, 1.4, 0.4]],
 }
 
-## Playground's liquids, which are volumes to fall into rather than floors.
-const PLAYGROUND_LIQUIDS := ["water", "lava", "slime"]
+## Playlot's liquids, which are volumes to fall into rather than floors.
+const PLAYLOT_LIQUIDS := ["water", "lava", "slime"]
 
 ## A map larger than this, compressed, is sent in pieces: a WebSocket's outbound buffer is sixty-four kilobytes and a message past it
 ## is never sent (mg-look-at-me's finding), so the bridge sends MAP_PART messages of at most this many bytes each. Not a limit on a map:
@@ -90,7 +95,7 @@ static func parse_json(text: String, origin: String = "") -> DotResult:
 
 
 ## [param source] as this game's kind: itself if already, converted if one of [constant FOREIGN_KINDS], else untouched
-## (which [method validate] then refuses). Hide & Seek and Prop Hunt differ only in spawns; a Playground one
+## (which [method validate] then refuses). Hide & Seek and Prop Hunt differ only in spawns; a Playlot one
 ## renames `material`, `colour`, `turn`, has one spawn ([method MmMap.spawn] rings people round it) and loses its physics props.
 static func import(source: Dictionary) -> Dictionary:
 	var kind := str(source.get("kind", ""))
@@ -99,18 +104,20 @@ static func import(source: Dictionary) -> Dictionary:
 		return source
 
 	var doc := source.duplicate(true)
+	if kind == PLAYLOT_FORMER_KIND:
+		kind = PLAYLOT_KIND
 	doc["kind"] = KIND
 	doc["imported_from"] = kind
 	var spawns: Array = []
 
-	if kind == "playground_map":
+	if kind == PLAYLOT_KIND:
 		var boxes: Array = []
 		for raw: Variant in source.get("boxes", []):
 			if raw is Dictionary:
-				boxes.append(_playground_box(raw as Dictionary))
+				boxes.append(_playlot_box(raw as Dictionary))
 		doc["boxes"] = boxes
 		doc["props"] = []
-		var at: Variant = _playground_spawn_on_floor(source.get("spawn", [0.0, 1.0, 0.0]), boxes)
+		var at: Variant = _playlot_spawn_on_floor(source.get("spawn", [0.0, 1.0, 0.0]), boxes)
 		var yaw := float(source.get("spawn_yaw", 0.0))
 		for i in range(8):
 			spawns.append({"at": at, "yaw": yaw + 45.0 * i})
@@ -139,7 +146,7 @@ const SPAWN_RADIUS := 0.4
 const SPAWN_HEIGHT := 1.8
 const SPAWN_RINGS := [0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0]
 
-static func _playground_spawn_on_floor(spawn: Variant, boxes: Array) -> Variant:
+static func _playlot_spawn_on_floor(spawn: Variant, boxes: Array) -> Variant:
 	if not (spawn is Array) or (spawn as Array).size() != 3:
 		return spawn
 
@@ -256,13 +263,13 @@ static func _room_for_person(solids: Array, x: float, feet: float, z: float) -> 
 	return true
 
 
-static func _playground_box(b: Dictionary) -> Dictionary:
+static func _playlot_box(b: Dictionary) -> Dictionary:
 	var out := {"at": b.get("at", [0, 0, 0]), "size": b.get("size", [1, 1, 1])}
 	var material := str(b.get("material", "flat")) if b.get("material") != null else "flat"
 	var tint: Array = _colour_list(b.get("colour", [1.0, 1.0, 1.0]))
 
-	if PLAYGROUND_MATS.has(material):
-		var pair: Array = PLAYGROUND_MATS[material]
+	if PLAYLOT_MATS.has(material):
+		var pair: Array = PLAYLOT_MATS[material]
 		var over: Array = pair[1]
 		tint = [tint[0] * over[0], tint[1] * over[1], tint[2] * over[2]]
 		material = pair[0]
@@ -270,7 +277,7 @@ static func _playground_box(b: Dictionary) -> Dictionary:
 	out["mat"] = material
 	out["tint"] = tint
 
-	if PLAYGROUND_LIQUIDS.has(str(b.get("material", ""))):
+	if PLAYLOT_LIQUIDS.has(str(b.get("material", ""))):
 		out["solid"] = false
 
 	var turn: Variant = b.get("turn")
@@ -505,7 +512,7 @@ static func _box(raw: Variant) -> Dictionary:
 	if float(b.get("yaw", 0.0)) != 0.0:
 		out["yaw"] = _r(float(b["yaw"]))
 
-	# A rotation about any axis, `[ax, ay, az, degrees]`: a Playground ramp.
+	# A rotation about any axis, `[ax, ay, az, degrees]`: a Playlot ramp.
 	var turn: Variant = b.get("turn")
 	if turn is Array and (turn as Array).size() == 4 and float(turn[3]) != 0.0:
 		var axis := Vector3(float(turn[0]), float(turn[1]), float(turn[2]))

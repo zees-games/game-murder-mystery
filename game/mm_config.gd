@@ -145,7 +145,7 @@ extends DotConfig
 @export var map_rotation_file: String = "cfg/maps.yml"
 
 ## Where the other games' map packs are mounted, one directory per pack under it. Hide & Seek,
-## Prop Hunt and Playground documents are read there and converted (see mm_map_doc.gd).
+## Prop Hunt and Playlot documents are read there and converted (see mm_map_doc.gd).
 @export var extra_map_directory: String = "maps_extra"
 
 @export var seed_value: int = 20261018

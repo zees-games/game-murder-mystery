@@ -68,7 +68,9 @@
 /maps_extra/hide-n-seek
 # bootstrap-link: mg-prop-hunt-maps/maps
 /maps_extra/prop-hunt
-# bootstrap-link: game-playground-maps/maps
+# bootstrap-link: playlot-maps/maps
+/maps_extra/playlot
+# The Playlot pack's link under its former name, left by older bootstraps (shadowed, harmless; delete it).
 /maps_extra/playground
 
 # Exports

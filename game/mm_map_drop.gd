@@ -15,7 +15,7 @@ const CHANNEL := "mm.map_drop"
 const NEEDS_LEVEL := 26
 const INTAKE_SCRIPT := "res://addons/dot_map/core/dot_map_drop_intake.gd"
 ## What the refusal says this game takes.
-const TAKES := "a Murder Mystery map (.json of kind murder_map, or a hideseek, prophunt or playground map) or a folder of them"
+const TAKES := "a Murder Mystery map (.json of kind murder_map, or a hideseek, prophunt or playlot map) or a folder of them"
 ## The document kinds a drop may hold: this game's, and the ones [method MmMapDoc.parse_json] imports.
 const KINDS := [MmMapDoc.KIND] + MmMapDoc.FOREIGN_KINDS
 ## Options dot-core reads whose next argument is their value (never read as a dropped path).

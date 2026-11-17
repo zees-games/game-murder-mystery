@@ -29,7 +29,7 @@ Read the family [CLAUDE.md](../../CLAUDE.md) first; this file is only what is sp
 | `game/mm_client.gd`, `mm_hud.gd`, `mm_audio.gd`, `mm_figure.gd`, `mm_avatars.gd`, `mm_bindings.gd`, `mm_settings.gd`, `mm.tscn` | the client: first person, F5 for third; keys as dot-menu bindings; the Escape menu |
 | `game/mm_bots.gd`, `mm_bot_chat.gd` | the stand-ins by role on dot-bot and dot-npc-ai's annotations; their canned lines |
 | `props/`, `assets/props/`, `art-src/` | `kits.json`, the measured `catalogue.json` and `pieces.json`; vendored Kenney models (CC0), seventy-four furniture and nature ones rebuilt by `art-src/build_props.py` (stock copies in `art-src/base/`, `.gdignore`d; rerun it, then `measure_props.gd -- --check`) |
-| `maps/`, `maps_extra/` | links: `../murder-mystery-maps/maps`; `hide-n-seek`, `prop-hunt`, `playground` to those games' map packs |
+| `maps/`, `maps_extra/` | links: `../murder-mystery-maps/maps`; `hide-n-seek`, `prop-hunt`, `playlot` to those games' map packs |
 | `examples/` | `headless_run`, `headless_maps`, `headless_bots`, `headless_net`, `dedicated` |
 | `tools/` | `shot.sh` (render a view: `cover` the loading cover, `grace`, `bystander`, `murderer`, `gunner`, `stab`, `shot`, `blood`, `end`, `ragdoll`, `door`, `spots`, `overview`, `room`), `visual_qa_shot.sh` (every avatar and held weapon, first person plus outside cameras, 60 fps clips and contact sheets: `bash addons/dot_game/tools/dot_game_visual_qa.sh --shot tools/visual_qa_shot.sh --fresh all`), `camera_check.sh`, `audio_probe`, `measure_props.gd`, `load_probe.gd` |
 
@@ -64,7 +64,7 @@ Read the family [CLAUDE.md](../../CLAUDE.md) first; this file is only what is sp
 - **A READY before the player is seated is kept** (`_ready_unseated` in the bridge) and answered by `add_player`; `headless_net` sends it first (armed). [history](docs/history.md)
 - Players and bots are dot-player-char's people (`MmFigure`); the shirt is a colour per person, never a side colour, since sides are secret.
 - **Toys** and **doors** are as in game-hide-n-seek: toys paired across the wire by index (TOYS after MAP; mirrors registered on TOYS whether the map is built or not); door state is `(open, since, flip)` and only a `DOOR` use is sent. [doors](docs/doors.md)
-- **Maps from other games are converted, not copied**: `MmMapDoc` reads `hideseek_map`, `prophunt_map` and `playground_map` (`FOREIGN_KINDS`), pools their spawns into `players` and marks `imported_from`. Mount a pack under `maps_extra/<game>`; never copy its files in.
+- **Maps from other games are converted, not copied**: `MmMapDoc` reads `hideseek_map`, `prophunt_map` and `playlot_map` (and its former kind, still in published packs; `FOREIGN_KINDS`), pools their spawns into `players` and marks `imported_from`. Mount a pack under `maps_extra/<game>`; never copy its files in.
 - The HUD follows the menu's theme and HUD size (`MmHud.follow_menu`); `headless_run` checks a theme change reaches the clock and the lines.
 - **H is help** (`MmSettings._fill_help` writes the goal and rules) and **M is the map list** (`MmGame.map_rows()`, `change_map_now()`); nothing in `MmBindings` may default to either. `headless_run` checks both.
 - **Delivery**: no `class_name` in `game/`; every own `res://` path through `MmPaths.rebase()`. Maps are their own pack, named by the server owner's map config and fetched by `MmModule._add_delivered_maps`; the game's own pack carries only `mm_practice`.

@@ -24,7 +24,7 @@ module: game/mm_module.gd
 
 # No maps pack is required here (the suggested one is at the bottom). Which maps a server runs is the server owner's choice, made in
 # their deployment's map config (dot-server-deploy's cfg/content.yml: gamemann/murder-mystery-maps
-# for this game's own, and gamemann/hide-n-seek-maps, the Prop Hunt maps and the Playground
+# for this game's own, and gamemann/hide-n-seek-maps, the Prop Hunt maps and the Playlot
 # maps, which it converts); the module fetches what the server names. This game's own pack
 # ships only its built-in practice house.
 

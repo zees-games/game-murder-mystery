@@ -511,7 +511,7 @@ static func light_profile(ambient_energy: float = 0.5) -> DotLightProfile:
 	return p
 
 
-## A box's rotation: its yaw, or a `turn` about any axis (a Playground ramp).
+## A box's rotation: its yaw, or a `turn` about any axis (a Playlot ramp).
 static func _box_basis(box: Dictionary) -> Basis:
 	var turn: Variant = box.get("turn")
 	if turn is Array and (turn as Array).size() == 4:

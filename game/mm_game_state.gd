@@ -155,7 +155,7 @@ var physics: DotPhysicsLayout = null
 ## How a body falls when somebody dies: dot-player-char's rules, `mp_ragdoll*`.
 var ragdoll_rules: DotPlayerRagdollRules = DotPlayerRagdollRules.new()
 
-## The playground toys' rules, when a Playground map is played: dot-props'.
+## Playlot's toys' rules, when a Playlot map is played: dot-props'.
 var toy_rules: DotPropBodyRules = DotPropBodyRules.new()
 
 ## A person's weight on a toy, in kilograms.
