@@ -21,6 +21,30 @@ const ROLE_DROP := 104.0
 ## Chat lines kept on a phone: the log is bottom left under the role block, and a tall one climbs into it.
 const CHAT_LINES := 3
 
+## Where the chat log goes on a phone, in the phone canvas's units (short side 720, see DotGameScreenFit): right of the stick and
+## left of the buttons in landscape, above the stick in portrait where the buttons leave no room beside it.
+const CANVAS_SHORT := 720.0
+const CHAT_STICK_RIGHT := 464.0
+const CHAT_BUTTONS_LEFT := 1060.0
+const CHAT_PORTRAIT_LIFT := 270.0
+const CHAT_MIN_WIDTH := 200.0
+const CHAT_MAX_WIDTH := 460.0
+
+
+## Chat box settings for a phone window of `window_px` real pixels: clear of the stick and the buttons, never over them.
+static func chat_settings(window_px: Vector2) -> Dictionary:
+	var out := {"max_lines": CHAT_LINES}
+	var canvas := window_px * (CANVAS_SHORT / maxf(1.0, minf(window_px.x, window_px.y)))
+	if canvas.x >= canvas.y:
+		out["margin_left"] = CHAT_STICK_RIGHT
+		out["width"] = clampf(CHAT_BUTTONS_LEFT - CHAT_STICK_RIGHT, CHAT_MIN_WIDTH, CHAT_MAX_WIDTH)
+		out["margin_bottom"] = 12.0
+	else:
+		out["margin_left"] = 16.0
+		out["width"] = clampf(canvas.x - 32.0, CHAT_MIN_WIDTH, CHAT_MAX_WIDTH)
+		out["margin_bottom"] = CHAT_PORTRAIT_LIFT
+	return out
+
 ## The server's touch rules, built in [MmGame]: auto-fire stays off (`sv_autofire 0`) unless an operator turns it on.
 ## Nobody is known to be an enemy here (roles are secret), so even then [method crosshair_kind] never allows a shot.
 static func make_rules() -> DotMobileRules:

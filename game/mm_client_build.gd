@@ -58,7 +58,7 @@ func _build_chat() -> void:
 	# No team key: this game has no team channel, because a team is a secret (mm_services.gd).
 	chat.window_settings = {"team_action": &""}
 	if MmTouch.wanted():
-		chat.window_settings["max_lines"] = MmTouch.CHAT_LINES
+		chat.window_settings.merge(MmTouch.chat_settings(Vector2(DisplayServer.window_get_size())), true)
 	chat.voice_config = MmServices.voice_format()
 	add_child(chat)
 
