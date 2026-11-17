@@ -323,8 +323,51 @@ func _finish_annotation(doc: Dictionary) -> DotNpcAiNavAnnotations:
 	return found
 
 
+## The bots' rays ask dot-sim's `DotSimSightRay` (bound in [method _sight_bind] each tick) when the library has it, to the
+## script's bit (`headless_native_sight`); off, or with no library (the web), the game's `_clear_between` answers.
+static var native_sight := true
+## With the native ray, re-runs the script beside every [method _los] and counts any difference (an error each); the
+## parity suite's live half. Costly: not for play.
+static var sight_verify := false
+## Rays checked and rays that differed under [member sight_verify].
+static var sight_checked := 0
+static var sight_differ := 0
+
+## The native ray bound to the game's world for this tick, null for the script.
+var _sight: Variant = null
+
+
+## Binds the native ray to the game's world with `_clear_between`'s furniture mask, or drops it (no library, no world,
+## [member native_sight] off). Each tick, before any bot asks.
+func _sight_bind() -> void:
+	var world: World3D = game.get_world_3d() if native_sight and DotSim.has(&"sight") else null
+	if world == null:
+		_sight = null
+		return
+	if _sight == null:
+		_sight = ClassDB.instantiate(&"DotSimSightRay")
+		if not _sight.has_method(&"clear_to"):
+			_sight = null
+			return
+	var physics: Object = game.get("physics")
+	var mask := 1
+	if physics != null:
+		mask = physics.layer_mask(&"world") | physics.layer_mask(&"prop") | physics.layer_mask(&"toy")
+	_sight.bind(world.direct_space_state, mask, [] as Array[RID], null, null, 0, Vector3.ZERO, 0.0, 0.0)
+
+
 func _los(a: Vector3, b: Vector3) -> bool:
-	return bool(game.call("_clear_between", a, b, true))
+	if _sight == null:
+		return bool(game.call("_clear_between", a, b, true))
+	var clear: bool = _sight.clear_to(a, b)
+	if sight_verify:
+		sight_checked += 1
+		var want := bool(game.call("_clear_between", a, b, true))
+		if want != clear:
+			sight_differ += 1
+			push_error("MmBots._los: native %s, script %s (%s to %s)" % [clear, want, a, b])
+			return want
+	return clear
 
 
 ## Sight (not walking) is refused through a smoke sphere.

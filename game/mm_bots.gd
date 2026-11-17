@@ -74,6 +74,7 @@ func drive() -> void:
 	if phase != 0:
 		_prepare()
 
+	_sight_bind()
 	_hear_steps(players)
 
 	for id: StringName in players:
