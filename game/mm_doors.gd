@@ -28,6 +28,20 @@ var tick_rate: int = 64
 ## [b]A swinging door opens away from whoever opens it[/b] unless the map says `away: false`, or none could be opened.
 var doors: Array[Dictionary] = []
 
+## [method door_for] asks dot-sim's `DotSimDoorReach` (the panels written as each door is posed) when the library has it, to the
+## script's bit (`headless_native_doors`); off, or with no library (the web), the script answers. Read when a map is built.
+static var native_reach := true
+## With the native ask, re-runs the script beside every [method door_for] and counts any difference (an error each); the parity
+## suite's live half. Costly: not for play.
+static var reach_verify := false
+## Asks checked and asks that differed under [member reach_verify].
+static var reach_checked := 0
+static var reach_differ := 0
+
+## The native panel table, null for the script; [member _reach_doors] doors long.
+var _reach: Variant = null
+var _reach_doors := 0
+
 
 func build(doc: Dictionary) -> void:
 	clear()
@@ -54,6 +68,7 @@ func build(doc: Dictionary) -> void:
 			"ticks": maxi(1, roundi(float(raw["seconds"]) * float(tick_rate))),
 		})
 
+	_reach_reset()
 	pose_at(0)
 	DotLog.debug(CHANNEL, "doors built", {"doors": doors.size()})
 
@@ -64,6 +79,7 @@ func clear() -> void:
 		child.queue_free()
 
 	doors.clear()
+	_reach_reset()
 
 
 func count() -> int:
@@ -232,6 +248,9 @@ func pose_at(tick: int) -> void:
 		door["posed"] = f
 		_place(door["body"], panel_transform(index, f))
 
+		if _reach != null:
+			_reach_pose(index)
+
 
 static func _place(body: Node3D, at: Transform3D) -> void:
 	body.transform = at
@@ -249,6 +268,25 @@ static func _place(body: Node3D, at: Transform3D) -> void:
 ## posed, is within reach and in front of them. -1 for none. [b]Where it was posed, not where the tick says[/b]: a
 ## client never ticks the world, so the HUD asking with another tick would prompt for a door that is not there.
 func door_for(eyes: Vector3, aim: Vector3, reach: float = REACH) -> int:
+	if _reach == null or not native_reach or _reach_doors != doors.size():
+		return door_for_script(eyes, aim, reach)
+
+	var index: int = _reach.door_for(eyes, aim, reach)
+
+	if reach_verify:
+		reach_checked += 1
+		var want := door_for_script(eyes, aim, reach)
+
+		if want != index:
+			reach_differ += 1
+			push_error("MmDoors.door_for: native %d, script %d (eyes %s, aim %s, reach %s)" % [index, want, eyes, aim, reach])
+			return want
+
+	return index
+
+
+## [method door_for] in script: the fallback, and what the native ask is held to.
+func door_for_script(eyes: Vector3, aim: Vector3, reach: float = REACH) -> int:
 	var best := -1
 	var closest := reach
 
@@ -275,6 +313,26 @@ func door_for(eyes: Vector3, aim: Vector3, reach: float = REACH) -> int:
 		best = index
 
 	return best
+
+
+## A native panel table for these doors, or none (no library, [member native_reach] off, no doors). Every door is unposed
+## until [method pose_at] writes it, which [method build] does at once.
+func _reach_reset() -> void:
+	_reach = null
+	_reach_doors = 0
+
+	if not native_reach or doors.is_empty() or not DotSim.has(&"doors"):
+		return
+
+	_reach = ClassDB.instantiate(&"DotSimDoorReach")
+	_reach.resize(doors.size())
+	_reach_doors = doors.size()
+
+
+## Door [param index]'s panel, as the script reads it in [method door_for_script], into the native table.
+func _reach_pose(index: int) -> void:
+	var frame := (doors[index]["body"] as Node3D).transform
+	_reach.set_door(index, frame, frame.affine_inverse(), MmMapDoc.v3((doors[index]["spec"] as Dictionary)["size"]))
 
 
 ## Whether a standing body whose feet are at [param feet] is anywhere door [param index]'s
