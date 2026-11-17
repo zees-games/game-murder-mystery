@@ -54,37 +54,7 @@ func _run() -> void:
 	var maps: Array = MAPS if linked else ["mm_practice"]
 
 	_entered += 1
-	print("seeded poses, eyes, aims and reaches on %d maps: native against the script" % maps.size())
-	var asked := 0
-	var hits := 0
-	var differ: Array[String] = []
-	var unbuilt: Array[String] = []
-	for id: String in maps:
-		var game := await _world(StringName(id))
-		var doors: MmDoors = game.map.doors if game.map != null else null
-		if doors == null or doors.count() == 0:
-			await _dispose(game)
-			continue
-		if doors._reach == null:
-			unbuilt.append(id)
-		var rng := RandomNumberGenerator.new()
-		rng.seed = hash(id) ^ 0x5eed
-		for round in range(ROUNDS):
-			_pose_randomly(doors, rng)
-			for _ask in range(ASKS):
-				var q := _question(doors, rng)
-				var native := doors.door_for(q[0], q[1], q[2])
-				var script := doors.door_for_script(q[0], q[1], q[2])
-				asked += 1
-				if native >= 0:
-					hits += 1
-				if native != script and differ.size() < 8:
-					differ.append("%s round %d: native %d script %d eyes %s aim %s reach %s" % [id, round, native, script, q[0], q[1], q[2]])
-		await _dispose(game)
-	_check(unbuilt.is_empty(), "every map with doors asks the native table", ", ".join(unbuilt))
-	_check(differ.is_empty(), "every ask gives the same door", "; ".join(differ))
-	_check(asked >= ROUNDS * ASKS and hits > asked / 10 and hits < asked, "the asks found doors and missed them", "%d asks, %d found a door" % [asked, hits])
-	print("  %d asks, %d found a door" % [asked, hits])
+	await _seeded_asks(maps)
 	_finished += 1
 
 	_entered += 1
@@ -131,6 +101,49 @@ func _run() -> void:
 	_finished += 1
 
 	_entered += 1
+	await _live_round(linked)
+	_finished += 1
+
+	_report_sections(_entered, _finished, SECTIONS, CHECKS)
+
+
+## Seeded poses, eyes, aims and reaches on every map: the native answer against the script's.
+func _seeded_asks(maps: Array) -> void:
+	print("seeded poses, eyes, aims and reaches on %d maps: native against the script" % maps.size())
+	var asked := 0
+	var hits := 0
+	var differ: Array[String] = []
+	var unbuilt: Array[String] = []
+	for id: String in maps:
+		var game := await _world(StringName(id))
+		var doors: MmDoors = game.map.doors if game.map != null else null
+		if doors == null or doors.count() == 0:
+			await _dispose(game)
+			continue
+		if doors._reach == null:
+			unbuilt.append(id)
+		var rng := RandomNumberGenerator.new()
+		rng.seed = hash(id) ^ 0x5eed
+		for round in range(ROUNDS):
+			_pose_randomly(doors, rng)
+			for _ask in range(ASKS):
+				var q := _question(doors, rng)
+				var native := doors.door_for(q[0], q[1], q[2])
+				var script := doors.door_for_script(q[0], q[1], q[2])
+				asked += 1
+				if native >= 0:
+					hits += 1
+				if native != script and differ.size() < 8:
+					differ.append("%s round %d: native %d script %d eyes %s aim %s reach %s" % [id, round, native, script, q[0], q[1], q[2]])
+		await _dispose(game)
+	_check(unbuilt.is_empty(), "every map with doors asks the native table", ", ".join(unbuilt))
+	_check(differ.is_empty(), "every ask gives the same door", "; ".join(differ))
+	_check(asked >= ROUNDS * ASKS and hits > asked / 10 and hits < asked, "the asks found doors and missed them", "%d asks, %d found a door" % [asked, hits])
+	print("  %d asks, %d found a door" % [asked, hits])
+
+
+## A bot round with reach_verify on, the script beside every live ask.
+func _live_round(linked: bool) -> void:
 	var live_map := "mm_mansion" if linked else "mm_practice"
 	print("a bot round on %s with reach_verify: the script beside every live ask" % live_map)
 	MmDoors.reach_checked = 0
@@ -141,9 +154,6 @@ func _run() -> void:
 	_check(MmDoors.reach_checked > 0, "the bots asked for doors", "%d asks" % MmDoors.reach_checked)
 	_check(MmDoors.reach_differ == 0, "no live ask differed", "%d of %d" % [MmDoors.reach_differ, MmDoors.reach_checked])
 	print("  %d live asks checked, %d differed" % [MmDoors.reach_checked, MmDoors.reach_differ])
-	_finished += 1
-
-	_report_sections(_entered, _finished, SECTIONS, CHECKS)
 
 
 ## Every door set off or left at rest, either way, then posed on a tick that leaves some part way.
