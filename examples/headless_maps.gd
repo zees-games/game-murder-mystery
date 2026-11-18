@@ -52,20 +52,45 @@ func _ready() -> void:
 	_run.call_deferred()
 
 
+## `-- --shard mN` checks every SHARDS-th own and foreign map (N of SHARDS) and the catalogue, each shard a whole run of its own;
+## `-- --merge LOG...` holds that every shard's log is there and that together they entered the catalogue once each and every own map once.
+const SHARDS := 4
+
+
+func _merge(logs: Array) -> void:
+	var absent := DotGameShardArgs.missing(PackedStringArray(logs))
+	_check(logs.size() == SHARDS and absent.is_empty(), "every shard's log is there (%d logs)" % logs.size(), "missing %s" % [absent])
+	var entered := DotGameShardArgs.sections_entered(PackedStringArray(logs))
+	var linked := DirAccess.dir_exists_absolute(ProjectSettings.globalize_path("res://maps"))
+	var want := SHARDS + (MAPS.size() if linked else 1)
+	_check(entered >= want, "the shards entered the catalogue once each and every map (%d sections, at least %d)" % [entered, want])
+	_report_sections(1, 1, 1, 2)
+
+
 func _run() -> void:
 	print("murder maps")
 	print("")
 
-	await _test_the_catalogue()
+	if DotGameShardArgs.is_merge():
+		_section("merged from the shards' logs")
+		_merge(DotGameShardArgs.merge_logs())
+		_finished()
+		_report_sections(_sections_entered, _sections_finished, 1, 2)
+		return
 
-	for id: String in _maps:
+	var shard := DotGameShardArgs.shard()
+	await _test_the_catalogue()
+	var own: Array = DotGameShardArgs.slice(_maps, shard, SHARDS)
+	var foreign: Array = DotGameShardArgs.slice(_foreign, shard, SHARDS)
+
+	for id: String in own:
 		await _test_map(StringName(id))
 
-	for id: String in _foreign:
+	for id: String in foreign:
 		await _test_foreign(StringName(id))
 
-	var sections := 1 + _maps.size() + _foreign.size()
-	var checks := 5 + CHECKS_PER_MAP * _maps.size() + CHECKS_PER_FOREIGN * _foreign.size()
+	var sections := 1 + own.size() + foreign.size()
+	var checks := 5 + CHECKS_PER_MAP * own.size() + CHECKS_PER_FOREIGN * foreign.size()
 
 	if _maps.is_empty():
 		_broken = true
