@@ -415,6 +415,9 @@ func _near_reset() -> void:
 		swing.append(1 if str(spec["motion"]) == "swing" else 0)
 
 	_near = ClassDB.instantiate(&"DotSimDoorReach")
+	if not _near.has_method(&"set_spots"):
+		_near = null	# a library older than dot-sim v0.2.9 (the pin): the script answers
+		return
 	_near.set_spots(places, swing)
 	_near_doors = int(_near.spot_count())
 
