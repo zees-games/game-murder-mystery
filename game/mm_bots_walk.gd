@@ -213,14 +213,9 @@ func _door_detour(at: Vector3, corner: Vector3, chaser: bool = false) -> Array:
 	var b := a + heading * minf(to.length(), DETOUR_LOOK)
 	var clear := MmPlayer.BODY_RADIUS + 0.08
 	var tick := int(game.get("_tick"))
-	var specs: Array = doors.get("doors")
-	for index in range(specs.size()):
-		var spec: Dictionary = (specs[index] as Dictionary)["spec"]
-		if str(spec["motion"]) != "swing":
-			continue
-		var c: Array = spec["at"]
-		if not _door_on_level(spec, at) or Vector2(float(c[0]) - at.x, float(c[2]) - at.z).length() > 3.5:
-			continue
+	# The swinging doors on this storey within reach, in document order (native when the library has it).
+	var swinging: PackedInt32Array = doors.call("near_swing", at, 3.5, MmPlayer.BODY_STEP + 0.1, MmPlayer.BODY_CROUCH)
+	for index in swinging:
 		var f: float = doors.call("fraction", index, tick)
 		# Shut or nearly: a doorway, the use key's business.
 		if f < 0.1:

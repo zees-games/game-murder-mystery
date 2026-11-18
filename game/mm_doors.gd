@@ -38,9 +38,22 @@ static var reach_verify := false
 static var reach_checked := 0
 static var reach_differ := 0
 
+## [method near_swing] asks dot-sim's `DotSimDoorReach` (each door's place, written when a map is built) when the library has it,
+## to the script's bit (`headless_native_doors`); off, or with no library (the web), the script answers.
+static var native_near := true
+## With the native ask, re-runs the script beside every [method near_swing] and counts any difference (an error each). On
+## with `MM_DOORS_VERIFY=1`. Costly: not for play.
+static var near_verify := OS.get_environment("MM_DOORS_VERIFY") == "1"
+## Asks checked and asks that differed under [member near_verify].
+static var near_checked := 0
+static var near_differ := 0
+
 ## The native panel table, null for the script; [member _reach_doors] doors long.
 var _reach: Variant = null
 var _reach_doors := 0
+## The native place table for [method near_swing], null for the script; [member _near_doors] doors long.
+var _near: Variant = null
+var _near_doors := 0
 
 
 func build(doc: Dictionary) -> void:
@@ -69,6 +82,7 @@ func build(doc: Dictionary) -> void:
 		})
 
 	_reach_reset()
+	_near_reset()
 	pose_at(0)
 	DotLog.debug(CHANNEL, "doors built", {"doors": doors.size()})
 
@@ -80,6 +94,7 @@ func clear() -> void:
 
 	doors.clear()
 	_reach_reset()
+	_near_reset()
 
 
 func count() -> int:
@@ -315,6 +330,56 @@ func door_for_script(eyes: Vector3, aim: Vector3, reach: float = REACH) -> int:
 	return best
 
 
+## The swinging doors on the storey of [param at] (their foot less than [param below] under the feet, their head more than
+## [param above] over them; see [method on_level]) whose centre is within [param radius] flat, in document order: the few
+## a walk past [param at] need asking about.
+func near_swing(at: Vector3, radius: float, below: float, above: float) -> PackedInt32Array:
+	if _near == null or not native_near or _near_doors != doors.size():
+		return near_swing_script(at, radius, below, above)
+
+	var found: PackedInt32Array = _near.near_swing(at, radius, below, above)
+
+	if near_verify:
+		near_checked += 1
+		var want := near_swing_script(at, radius, below, above)
+
+		if want != found:
+			near_differ += 1
+			push_error("MmDoors.near_swing: native %s, script %s (at %s, radius %s, below %s, above %s)" % [found, want, at, radius, below, above])
+			return want
+
+	return found
+
+
+## [method near_swing] in script: the fallback, and what the native ask is held to.
+func near_swing_script(at: Vector3, radius: float, below: float, above: float) -> PackedInt32Array:
+	var found := PackedInt32Array()
+
+	for index in range(doors.size()):
+		var spec: Dictionary = doors[index]["spec"]
+
+		if str(spec["motion"]) != "swing":
+			continue
+
+		var c: Array = spec["at"]
+
+		if not on_level(spec, at, below, above) or Vector2(float(c[0]) - at.x, float(c[2]) - at.z).length() > radius:
+			continue
+
+		found.append(index)
+
+	return found
+
+
+## Whether a door's panel is on the storey of somebody at [param at]: its foot less than [param below] under their feet
+## and its head more than [param above] over them (the bots: a step and a crouched body). A flat distance alone counted a
+## door over a bot's head (`headless_bots` round 30).
+static func on_level(spec: Dictionary, at: Vector3, below: float, above: float) -> bool:
+	var c: Array = spec["at"]
+	var half := float((spec["size"] as Array)[1]) * 0.5
+	return float(c[1]) - half - at.y < below and float(c[1]) + half - at.y > above
+
+
 ## A native panel table for these doors, or none (no library, [member native_reach] off, no doors). Every door is unposed
 ## until [method pose_at] writes it, which [method build] does at once.
 func _reach_reset() -> void:
@@ -327,6 +392,31 @@ func _reach_reset() -> void:
 	_reach = ClassDB.instantiate(&"DotSimDoorReach")
 	_reach.resize(doors.size())
 	_reach_doors = doors.size()
+
+
+## A native place table for [method near_swing], or none (no library, [member native_near] off, no doors).
+func _near_reset() -> void:
+	_near = null
+	_near_doors = 0
+
+	if not native_near or doors.is_empty() or not DotSim.has(&"doors"):
+		return
+
+	var places := PackedFloat64Array()
+	var swing := PackedByteArray()
+
+	for door in doors:
+		var spec: Dictionary = door["spec"]
+		var c: Array = spec["at"]
+		places.append(float(c[0]))
+		places.append(float(c[1]))
+		places.append(float(c[2]))
+		places.append(float((spec["size"] as Array)[1]) * 0.5)
+		swing.append(1 if str(spec["motion"]) == "swing" else 0)
+
+	_near = ClassDB.instantiate(&"DotSimDoorReach")
+	_near.set_spots(places, swing)
+	_near_doors = int(_near.spot_count())
 
 
 ## Door [param index]'s panel, as the script reads it in [method door_for_script], into the native table.
