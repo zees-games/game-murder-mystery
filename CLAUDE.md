@@ -31,7 +31,7 @@ Read the family [CLAUDE.md](../../CLAUDE.md) first; this file is only what is sp
 | `props/`, `assets/props/`, `art-src/` | `kits.json`, the measured `catalogue.json` and `pieces.json`; vendored Kenney models (CC0), seventy-four furniture and nature ones rebuilt by `art-src/build_props.py` (stock copies in `art-src/base/`, `.gdignore`d; rerun it, then `measure_props.gd -- --check`) |
 | `maps/`, `maps_extra/` | links: `../murder-mystery-maps/maps`; `hide-n-seek`, `prop-hunt`, `playlot` to those games' map packs |
 | `examples/` | `headless_run`, `headless_maps`, `headless_bots`, `headless_net`, `dedicated` |
-| `tools/` | `shot.sh` (render a view: `cover` the loading cover, `grace`, `bystander`, `murderer`, `gunner`, `stab`, `shot`, `blood`, `end`, `ragdoll`, `door`, `spots`, `overview`, `room`), `visual_qa_shot.sh` (every avatar and held weapon, first person plus outside cameras, 60 fps clips and contact sheets: `bash addons/dot_game/tools/dot_game_visual_qa.sh --shot tools/visual_qa_shot.sh --fresh all`), `camera_check.sh`, `audio_probe`, `measure_props.gd`, `load_probe.gd` |
+| `tools/` | `shot.sh` (render a view: `cover` the loading cover, `grace`, `bystander`, `murderer`, `gunner`, `stab`, `shot`, `blood`, `end`, `ragdoll`, `door`, `spots`, `overview`, `room`), `visual_qa_shot.sh` (every avatar and held weapon, first person plus outside cameras, 60 fps clips and contact sheets: `bash addons/dot_game/tools/dot_game_visual_qa.sh --shot tools/visual_qa_shot.sh --fresh all`), `camera_check.sh`, `audio_probe`, `measure_props.gd`, `load_probe.tscn` (xvfb only; dot-game's `DotLoadProbe`) |
 
 ## Running and testing
 
