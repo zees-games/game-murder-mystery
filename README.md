@@ -1,8 +1,8 @@
 Murder Mystery is a 3D multiplayer game of hidden roles. Everybody looks the same. One or two players are **murderers**. Everybody else is a **bystander**, and one or two bystanders also carry a **gun** with a single shot. Nobody knows anybody's role but their own. Find out who the murderer is before they get to you.
 
-It is built on [Godot 4](https://godotengine.org/), the [Gamespice](https://gamespice.net) platform and addon collection.
+It is built on [Godot 4](https://godotengine.org/), the [**GameSpice**](https://gamespice.net) platform and addon collection.
 
-Everything in this repository is open source under the MIT license. The only closed part is the website back-end it can sign in through. If you do not want to use Gamespice, you can plug in your own sign-in back-end.
+Everything in this repository is open source under the MIT license. The only closed part is the website back-end it can sign in through. If you do not want to use GameSpice, you can plug in your own sign-in back-end.
 
 The game was built with Claude Code and is maintained with it. It has a full automated test suite, but few real players have tried it yet, so expect rough edges. Please report what you find, and tell the maintainer if you want to help.
 
@@ -20,7 +20,7 @@ Each round starts with a short grace period (10 seconds by default). Everybody i
 
 The bystanders win if every murderer is dead, or if the clock runs out with a murderer still alive. The murderers win if nobody else is left. At the end of the round everybody is told who the murderer was.
 
-By default a win is worth 10 points to everyone on that side, a kill 5, shooting a murderer 15 and surviving 5. Kills, deaths, innocents shot and the rest go to your stats and the Gamespice leaderboards.
+By default a win is worth 10 points to everyone on that side, a kill 5, shooting a murderer 15 and surviving 5. Kills, deaths, innocents shot and the rest go to your stats and the GameSpice leaderboards.
 
 The murderer is picked at random, and never the same person twice in a row when someone else could be. Players who join during a round watch until the next one.
 
@@ -62,7 +62,7 @@ The maps of Hide & Seek, Prop Hunt and Playlot also work here. The game reads th
 
 ## Getting started
 
-You need [Godot 4.7](https://godotengine.org/download). The game uses many Gamespice addons, each in its own repository. The easiest way to get everything is [dot-bootstrap](https://github.com/gamespice-platform/bootstrap), which lists this game in its project table. It clones each project and links the addons and map packs into it. Then:
+You need [Godot 4.7](https://godotengine.org/download). The game uses many GameSpice addons, each in its own repository. The easiest way to get everything is [dot-bootstrap](https://github.com/gamespice-platform/bootstrap), which lists this game in its project table. It clones each project and links the addons and map packs into it. Then:
 
 ```bash
 cd projects/game-murder-mystery
