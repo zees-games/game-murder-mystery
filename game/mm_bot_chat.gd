@@ -31,7 +31,7 @@ var _any_at: float = -INF
 ## A line for [param moment] from [param who], with [param name] put in, or "" when the ration
 ## says not now. [param t] is the game's clock; [param stream] decides, so a seeded round says
 ## the same.
-func line(who: StringName, moment: StringName, t: float, stream: DotRandomStream, name: String = "", always: bool = false) -> String:
+func line(who: StringName, moment: StringName, t: float, stream: GSRandomStream, name: String = "", always: bool = false) -> String:
 	var pool: Array = LINES.get(moment, [])
 
 	if pool.is_empty() or t - _any_at < ANYBODY or t - float(_said_at.get(who, -INF)) < per_bot:

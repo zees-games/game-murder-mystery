@@ -50,7 +50,7 @@ func _run() -> void:
 func _fly(game: MmGame) -> void:
 	# Beside every wall, tree and piece of furniture of the house: found, not listed.
 	var mask: int = _client.game.physics.layer_mask(&"world") | _client.game.physics.layer_mask(&"prop")
-	var pivots := DotCameraCheck.pivots_near_walls(_client.get_viewport().world_3d, AABB(Vector3(-80, -10, -80), Vector3(160, 40, 160)), mask, 1.6, 2.5, 3.0, 50)
+	var pivots := GSCameraCheck.pivots_near_walls(_client.get_viewport().world_3d, AABB(Vector3(-80, -10, -80), Vector3(160, 40, 160)), mask, 1.6, 2.5, 3.0, 50)
 	var world := _client.get_viewport().world_3d
 	var cases := {
 		"third_person": Vector3(0.0, MmClient.CHASE_UP, MmClient.CHASE_BACK),
@@ -59,8 +59,8 @@ func _fly(game: MmGame) -> void:
 	for name in cases:
 		var total := {}
 		for pivot in pivots:
-			total = DotCameraCheck.add(total, DotCameraCheck.fly(world, DotCameraCheck.orbit_path(pivot), cases[name], mask))
-		_check(DotCameraCheck.passed(total), "%s round %d places in the house: %s" % [name, pivots.size(), DotCameraCheck.summary(total)])
+			total = GSCameraCheck.add(total, GSCameraCheck.fly(world, GSCameraCheck.orbit_path(pivot), cases[name], mask))
+		_check(GSCameraCheck.passed(total), "%s round %d places in the house: %s" % [name, pivots.size(), GSCameraCheck.summary(total)])
 
 
 ## Walks the player (the real input path) into another player held still, with players passing through each other and
@@ -81,7 +81,7 @@ func _bodies(game: MmGame) -> Array:
 			var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(probe + Vector3.UP, probe + Vector3.DOWN, mask))
 			if hit.is_empty() or absf((hit["position"] as Vector3).y - spot.y) > 0.3:
 				continue
-			if DotCameraProbe.is_inside(space, probe + Vector3.UP * 0.9, 0.36, mask):
+			if GSCameraProbe.is_inside(space, probe + Vector3.UP * 0.9, 0.36, mask):
 				continue
 			var from: Vector3 = hit["position"]
 			var loose: float = await _walk(game, me, other, spot, from, false)
@@ -103,7 +103,7 @@ func _walk(game: MmGame, me: MmPlayer, other: MmPlayer, spot: Vector3, from: Vec
 	# walk is the same command the sampler would make, handed to the controller each tick.
 	var saved_sampler = me.sampler
 	me.sampler = null
-	var go := DotFpsCommand.new()
+	var go := GSFpsCommand.new()
 	go.yaw = me.controller.state.yaw
 	go.move = Vector2(0, 1)
 	var closest := INF
@@ -141,7 +141,7 @@ func _views(game: MmGame) -> void:
 	# The play test's face at the lens: a stand-in on the player's eye, where walking through them put it.
 	# Before: nothing hides it. After: the fade does (and solid bodies keep it from getting there at all, which
 	# the check above measures). Re-placed every frame, because its own brain moves it on.
-	var fade: DotCameraFade = _client.get("_fade")
+	var fade: GSCameraFade = _client.get("_fade")
 	var camera: Camera3D = _client.get("camera")
 	var bot: MmPlayer = null
 	for id in game.players:

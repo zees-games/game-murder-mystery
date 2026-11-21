@@ -91,7 +91,7 @@ func drive() -> void:
 			player.wants_holster = false
 			continue
 
-		var command := DotFpsCommand.new()
+		var command := GSFpsCommand.new()
 		command.yaw = player.controller.state.yaw
 		command.pitch = player.controller.state.pitch
 		var aim := _aim_of(player)
@@ -169,8 +169,8 @@ func _sees(player: MmPlayer, other: MmPlayer) -> bool:
 
 func _sees_point(player: MmPlayer, point: Vector3) -> bool:
 	var profile := settings().profile
-	var forward := DotBotAim.direction(player.controller.state.yaw, player.controller.state.pitch)
-	return DotBotHiding.sees(player.eye_position(), forward, profile.fov, profile.sight, point, _sight_los)
+	var forward := GSBotAim.direction(player.controller.state.yaw, player.controller.state.pitch)
+	return GSBotHiding.sees(player.eye_position(), forward, profile.fov, profile.sight, point, _sight_los)
 
 
 ## Suspicion from what this bot sees now: a drawn weapon is certain, blood is close to it.
@@ -272,7 +272,7 @@ func _others(player: MmPlayer, players: Dictionary, innocent: bool = false) -> A
 
 
 ## Keeps with the nearest knot of people, runs from what it saw, fetches a gun on the floor.
-func _keep_company(player: MmPlayer, command: DotFpsCommand, state: Dictionary, players: Dictionary) -> void:
+func _keep_company(player: MmPlayer, command: GSFpsCommand, state: Dictionary, players: Dictionary) -> void:
 	if not bool(state["said_start"]):
 		state["said_start"] = true
 		_say(player, &"start")
@@ -287,7 +287,7 @@ func _keep_company(player: MmPlayer, command: DotFpsCommand, state: Dictionary, 
 
 
 ## Runs from the last threat seen, for [constant FLEE_FOR] seconds. True while it is running.
-func _flee(player: MmPlayer, command: DotFpsCommand, state: Dictionary) -> bool:
+func _flee(player: MmPlayer, command: GSFpsCommand, state: Dictionary) -> bool:
 	var threat: Vector3 = state["threat"]
 	if threat == Vector3.INF or now() - float(state["threat_at"]) > _cfg(&"bot_flee_seconds", FLEE_FOR):
 		if state["mode"] == &"fleeing":
@@ -305,7 +305,7 @@ func _flee(player: MmPlayer, command: DotFpsCommand, state: Dictionary) -> bool:
 
 
 ## Walks to a gun on the floor it can see and is allowed to take. True while it is going.
-func _fetch_gun(player: MmPlayer, command: DotFpsCommand, state: Dictionary) -> bool:
+func _fetch_gun(player: MmPlayer, command: GSFpsCommand, state: Dictionary) -> bool:
 	if player.gun_banned or player.has_gun:
 		return false
 	var drops: Dictionary = game.get("gun_drops")
@@ -334,7 +334,7 @@ func _fetch_gun(player: MmPlayer, command: DotFpsCommand, state: Dictionary) -> 
 
 
 ## Goes to where the people are and stays near them, wandering a little.
-func _loiter(player: MmPlayer, command: DotFpsCommand, state: Dictionary, players: Dictionary, apart: bool) -> void:
+func _loiter(player: MmPlayer, command: GSFpsCommand, state: Dictionary, players: Dictionary, apart: bool) -> void:
 	var at := player.controller.state.position
 	var t := now()
 	if t - float(state["picked_at"]) > REPICK or Vector3(state["goal"]) == Vector3.INF:
@@ -385,7 +385,7 @@ func _crowd(player: MmPlayer, players: Dictionary) -> Vector3:
 
 
 ## Hunts the most suspected; keeps with people otherwise.
-func _guard(player: MmPlayer, command: DotFpsCommand, state: Dictionary, players: Dictionary, phase: int) -> void:
+func _guard(player: MmPlayer, command: GSFpsCommand, state: Dictionary, players: Dictionary, phase: int) -> void:
 	if not bool(state["said_start"]):
 		state["said_start"] = true
 		_say(player, &"gun")
@@ -432,7 +432,7 @@ func _guard(player: MmPlayer, command: DotFpsCommand, state: Dictionary, players
 
 
 ## Stalks somebody alone, draws when nobody else is looking, stabs at arm's length.
-func _murder(player: MmPlayer, command: DotFpsCommand, state: Dictionary, players: Dictionary, phase: int) -> void:
+func _murder(player: MmPlayer, command: GSFpsCommand, state: Dictionary, players: Dictionary, phase: int) -> void:
 	if not bool(state["said_start"]):
 		state["said_start"] = true
 		_say(player, &"start")
@@ -547,7 +547,7 @@ func _witnesses(player: MmPlayer, target: MmPlayer, players: Dictionary) -> int:
 
 ## Steps round anybody within a metre: people pass through people here, and a bot that walks
 ## through somebody walks through their camera.
-func _step_round_people(player: MmPlayer, command: DotFpsCommand, players: Dictionary) -> void:
+func _step_round_people(player: MmPlayer, command: GSFpsCommand, players: Dictionary) -> void:
 	if command.move.length() < 0.1:
 		return
 	var at := player.controller.state.position
@@ -580,7 +580,7 @@ func _step_round_people(player: MmPlayer, command: DotFpsCommand, players: Dicti
 
 ## Opens a shut door it is walking into, and leaves open ones alone. Released between presses,
 ## so the game sees an edge.
-func _wants_door(player: MmPlayer, command: DotFpsCommand) -> bool:
+func _wants_door(player: MmPlayer, command: GSFpsCommand) -> bool:
 	var map: Node3D = game.get("map")
 	var doors: Object = map.get("doors") if map != null else null
 	if doors == null or int(doors.call("count")) == 0 or command.move.length() < 0.1 or player.wants_use:

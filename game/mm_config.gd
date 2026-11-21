@@ -1,4 +1,4 @@
-extends DotConfig
+extends GSConfig
 
 ## Everything a server owner can tune, layered as every Gamespice game does: defaults < `user://cfg/murder.json` < `MM_*`
 ## environment < `--mm-*` arguments. [b]The round[/b]: a grace while everybody scatters, then play until the clock or one
@@ -140,7 +140,7 @@ extends DotConfig
 @export var map_directory: String = "maps"
 
 ## The file that says which installed maps ROTATE: `cfg/maps.yml`, layered over the shipped `res://maps.yml`
-## (dot-map's `DotMapRotationFile`). Empty, or no file, rotates every map. A map the rotation leaves out stays installed
+## (dot-map's `GSMapRotationFile`). Empty, or no file, rotates every map. A map the rotation leaves out stays installed
 ## (`mm_map <id>` loads it) but is never drawn, balloted or nominated. `sv_map_rotation_file`.
 @export var map_rotation_file: String = "cfg/maps.yml"
 
@@ -163,8 +163,8 @@ extends DotConfig
 @export_range(0.0, 200.0, 0.5, "or_greater") var spawn_spread_min: float = 4.0
 
 ## The dot-spawn rules these make, for [method MmMap.spawn_batch].
-func spawn_rules() -> DotSpawnRules:
-	var rules := DotSpawnRules.new()
+func spawn_rules() -> GSSpawnRules:
+	var rules := GSSpawnRules.new()
 	rules.strategy = spawn_strategy
 	rules.spread_distance = spawn_spread_distance
 	rules.spread_min = spawn_spread_min
@@ -231,8 +231,8 @@ const CFG_FILES := {
 
 
 ## The binder every entry point uses: [param config] layered, one cfg file per [constant CFG_FILES] entry.
-static func make_binder(config: DotConfig, json_path := "") -> DotGameConfigBinder:
-	var b := DotGameConfigBinder.create(config, "game-murder-mystery", "mm", json_path)
+static func make_binder(config: GSConfig, json_path := "") -> GSGameConfigBinder:
+	var b := GSGameConfigBinder.create(config, "game-murder-mystery", "mm", json_path)
 	b.grouped = true
 	b.group_files = CFG_FILES
 	return b
@@ -250,24 +250,24 @@ func cli_prefix() -> String:
 func murderers_for(players: int) -> int:
 	if players < 2:
 		return 0
-	return mini(DotTeamRotation.count_for(players, players_per_murderer, min_murderers, max_murderers), players - 1)
+	return mini(GSTeamRotation.count_for(players, players_per_murderer, min_murderers, max_murderers), players - 1)
 
 
 ## How many gunners, out of the [param bystanders] who are not murderers.
 func gunners_for(players: int, bystanders: int) -> int:
 	if bystanders < 1:
 		return 0
-	return mini(DotTeamRotation.count_for(players, players_per_gunner, min_gunners, max_gunners), bystanders)
+	return mini(GSTeamRotation.count_for(players, players_per_gunner, min_gunners, max_gunners), bystanders)
 
 
-func validate() -> DotResult:
+func validate() -> GSResult:
 	if round_seconds <= 0.0:
-		return DotResult.fail(DotError.CODE_INVALID, "A round has to last some time.")
+		return GSResult.fail(GSError.CODE_INVALID, "A round has to last some time.")
 	if max_murderers > 0 and min_murderers > max_murderers:
-		return DotResult.fail(DotError.CODE_INVALID, "min_murderers is over max_murderers.")
+		return GSResult.fail(GSError.CODE_INVALID, "min_murderers is over max_murderers.")
 	if max_gunners > 0 and min_gunners > max_gunners:
-		return DotResult.fail(DotError.CODE_INVALID, "min_gunners is over max_gunners.")
-	return DotResult.success(null)
+		return GSResult.fail(GSError.CODE_INVALID, "min_gunners is over max_gunners.")
+	return GSResult.success(null)
 
 
 func describe() -> Dictionary:

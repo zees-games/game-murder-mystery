@@ -2,7 +2,7 @@ extends Node3D
 
 const MmPaths := preload("mm_paths.gd")
 
-## What somebody ELSE looks like: one of the family's people ([DotHumanoidFigure]) scaled to the hull, in this round's
+## What somebody ELSE looks like: one of the family's people ([GSHumanoidFigure]) scaled to the hull, in this round's
 ## shirt, turned where they look, with what is in their hand and the blood on them. Client side only, top level, placed by
 ## `MmClient.present_frame`. The shirt is per round, not a side; only a drawn weapon ([method hold]) and late blood ([method bleed]) show a murderer.
 
@@ -36,7 +36,7 @@ var from_art: bool = false
 var clip: StringName = &""
 
 ## The person, under this node.
-var person: DotHumanoidFigure = null
+var person: GSHumanoidFigure = null
 ## What the hand shows now (an MmPlayer ARMED_ value) and the weapon id, and the node drawn.
 var armed: int = 0
 var weapon_id: StringName = &""
@@ -67,14 +67,14 @@ func build(height: float, atlas_path: String, colour: Color) -> void:
 	atlas = atlas_path
 	team_colour = colour
 	clip = &""
-	var look := DotHumanoidLook.from_letter(atlas_path)
+	var look := GSHumanoidLook.from_letter(atlas_path)
 	if look == null:
-		DotLog.debug(CHANNEL, "no look for the atlas; stock look used", {"atlas": atlas_path})
-		look = DotHumanoidLook.stock(hash(atlas_path))
+		GSLog.debug(CHANNEL, "no look for the atlas; stock look used", {"atlas": atlas_path})
+		look = GSHumanoidLook.stock(hash(atlas_path))
 	if colour != Color.WHITE:
 		look = look.with_side(colour, TEAM_TINT)
 	if person == null:
-		person = DotHumanoidFigure.new()
+		person = GSHumanoidFigure.new()
 		person.name = "Person"
 		add_child(person)
 	person.build(look, height)
@@ -98,8 +98,8 @@ func hold(what: int, weapon: StringName) -> void:
 	_held = null
 	if person == null:
 		return
-	person.set_hold(DotHumanoidFigure.Hold.GUN if what == 2 else (
-		DotHumanoidFigure.Hold.MELEE if what == 1 else DotHumanoidFigure.Hold.NONE))
+	person.set_hold(GSHumanoidFigure.Hold.GUN if what == 2 else (
+		GSHumanoidFigure.Hold.MELEE if what == 1 else GSHumanoidFigure.Hold.NONE))
 	if what == 0:
 		return
 	var hand := person.attachment(&"right_hand")
@@ -117,7 +117,7 @@ func hold(what: int, weapon: StringName) -> void:
 ## A swing or a shot, drawn over whatever the legs do.
 func strike() -> void:
 	if person != null:
-		person.swing(DotHumanoidClips.STAB if armed == 1 else &"")
+		person.swing(GSHumanoidClips.STAB if armed == 1 else &"")
 
 
 ## Draws [param stage] blood spots, growing from the chest out.
@@ -166,7 +166,7 @@ func body_node() -> Node3D:
 
 
 ## How the player moves besides its ground speed: `on_floor`, `vertical`, `crouched` and the
-## rest [DotHumanoidFigure.set_motion] reads.
+## rest [GSHumanoidFigure.set_motion] reads.
 func set_motion(motion: Dictionary) -> void:
 	if person != null:
 		person.set_motion(motion)

@@ -139,10 +139,10 @@ func _decide(winner: int, why: String) -> void:
 	if progress != null:
 		progress.on_decided(winner)
 
-	DotLog.info(CHANNEL, "the round is decided", {"winner": winner, "why": told})
+	GSLog.info(CHANNEL, "the round is decided", {"winner": winner, "why": told})
 
 
-func _on_player_died(player: MmPlayer, damage: DotDamage) -> void:
+func _on_player_died(player: MmPlayer, damage: GSDamage) -> void:
 	var by := entities.key_for_id(damage.attacker)
 	var why: StringName = damage.context.get("why", DIED_SLAIN)
 
@@ -191,7 +191,7 @@ func _on_player_died(player: MmPlayer, damage: DotDamage) -> void:
 
 	player_died.emit(player.player_id, by, why)
 	bots.on_died(player.player_id, by, why)
-	DotLog.debug(CHANNEL, "player died", {"id": String(player.player_id), "by": String(by), "why": String(why)})
+	GSLog.debug(CHANNEL, "player died", {"id": String(player.player_id), "by": String(by), "why": String(why)})
 
 	if why != DIED_FELL:
 		_check_round()
@@ -200,12 +200,12 @@ func _on_player_died(player: MmPlayer, damage: DotDamage) -> void:
 ## The fall a death gets: dot-player-char's reaction rule over the server's weights, seeded from
 ## the player and the tick. A stab or a shot pushes the body away from whoever did it (the
 ## direction `_kill` puts on the damage, or the attacker's position), and a fall pushes nothing.
-func decide_death(player: MmPlayer, damage: DotDamage) -> DotPlayerDeath:
+func decide_death(player: MmPlayer, damage: GSDamage) -> GSPlayerDeath:
 	var direction := damage.direction
 	var attacker: MmPlayer = players.get(entities.key_for_id(damage.attacker)) if damage.attacker != 0 else null
 	if direction.length_squared() < 0.0001 and attacker != null and attacker != player:
 		direction = player.controller.state.position - attacker.controller.state.position
-	return DotPlayerDeath.decide(
+	return GSPlayerDeath.decide(
 		ragdoll_rules.reactions(), damage.is_headshot(), damage.amount, direction,
-		DotPlayerDeath.seed_of(player.entity_id, _tick)
+		GSPlayerDeath.seed_of(player.entity_id, _tick)
 	)

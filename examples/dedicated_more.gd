@@ -24,7 +24,7 @@ func _test_the_map_vote() -> void:
 
 ## Hibernation: the vote follows the server's sleep and waking starts the ballot again from the top.
 func _vote_sleeps_with_the_server(vote: Node) -> void:
-	var sleeper: DotVoteDirector = vote.get("director")
+	var sleeper: GSVoteDirector = vote.get("director")
 	_check(server.hibernation_changed.is_connected(sleeper.set_hibernating),
 		"the vote follows the server's hibernation without a line of this game's")
 	vote.set("_opened_this_map", true)
@@ -47,7 +47,7 @@ func _vote_map_menu(vote: Node) -> void:
 	vote.call("refresh_maps")
 	var ids: Array = []
 
-	for choice: DotVoteChoice in (vote.get("source") as DotVoteListSource).entries:
+	for choice: GSVoteChoice in (vote.get("source") as GSVoteListSource).entries:
 		ids.append(String(choice.id))
 
 	_check(ids.has("mm_mansion") and ids.has("mm_motel"), "it offers the delivered maps", str(ids))
@@ -59,11 +59,11 @@ func _vote_map_menu(vote: Node) -> void:
 		and server.console.find_cvar("sv_map_menu_flag").get_string() == "generic"
 		and (menu_half.get("change_fn") as Callable).is_valid(),
 		"the map menu is there, staff-only by default, changing the map now")
-	var staff := DotCmdContext.new()
-	staff.source = DotCmdContext.Source.CHAT
+	var staff := GSCmdContext.new()
+	staff.source = GSCmdContext.Source.CHAT
 	staff.permissions = PackedStringArray(["generic"])
-	var player := DotCmdContext.new()
-	player.source = DotCmdContext.Source.CHAT
+	var player := GSCmdContext.new()
+	player.source = GSCmdContext.Source.CHAT
 	var menu_offer: Dictionary = menu_half.call("offer", player)
 	_check((menu_offer["maps"] as Array).size() > 1 and not bool(menu_offer["allowed"]) and bool(menu_offer["vote"]),
 		"a player is offered every map, as a vote")
@@ -89,9 +89,9 @@ func _count_opened(_options: Array, _seconds: float, opened_count: Array) -> voi
 	opened_count[0] += 1
 
 
-func _record_applied(id: StringName, applied: Array) -> DotResult:
+func _record_applied(id: StringName, applied: Array) -> GSResult:
 	applied.append(id)
-	return DotResult.success(id)
+	return GSResult.success(id)
 
 
 func _four_players() -> int:
@@ -101,8 +101,8 @@ func _four_players() -> int:
 ## One vote decides, the round's end hands the map to the world, and rock-the-vote opens one ballot.
 func _vote_ballot_decides(vote: Node) -> void:
 	vote.set("voters_fn", _voter_seven)
-	var director: DotVoteDirector = vote.get("director")
-	var opened := director.open_vote(DotVoteClock.REASON_MANUAL)
+	var director: GSVoteDirector = vote.get("director")
+	var opened := director.open_vote(GSVoteClock.REASON_MANUAL)
 	_check(opened.ok and director.is_voting(), "a ballot opens", opened.error.message if not opened.ok else "")
 
 	# A map the ballot actually offers: it draws a handful from the server's maps, and with more
@@ -153,7 +153,7 @@ func _test_finish_round_waits_for_a_live_round() -> void:
 	_section("finish_round waits for a live round, not warmup")
 	var module := _module()
 	var vote: Node = module.get("vote") if module != null else null
-	var director: DotVoteDirector = vote.get("director") if vote != null else null
+	var director: GSVoteDirector = vote.get("director") if vote != null else null
 	var hook: Variant = director.get("round_in_progress_fn") if director != null else null
 	_check(hook is Callable and (hook as Callable).is_valid(), "the game tells its vote whether a round is live")
 
@@ -161,21 +161,21 @@ func _test_finish_round_waits_for_a_live_round() -> void:
 		_finished()
 		return
 
-	var match_node: DotMatch = game.match_node
+	var match_node: GSMatch = game.match_node
 	var was := match_node.state
-	match_node.state = DotMatch.State.WARMUP
+	match_node.state = GSMatch.State.WARMUP
 	var warm_applied := []
 	var warm := _finish_round_probe(hook, warm_applied)
 	_check(warm_applied == [&"b"] and not warm.is_finishing_round(),
 		"in warmup a time limit with finish_round changes at once", str(warm_applied))
 
-	match_node.state = DotMatch.State.LIVE
+	match_node.state = GSMatch.State.LIVE
 	var live_applied := []
 	var live := _finish_round_probe(hook, live_applied)
 	_check(live_applied.is_empty() and live.is_finishing_round(),
 		"during a live round it waits for the round", str(live_applied))
 
-	match_node.state = DotMatch.State.INTERMISSION
+	match_node.state = GSMatch.State.INTERMISSION
 	live.advance(0.1)
 	_check(live_applied == [&"b"], "and the round ending is the change", str(live_applied))
 
@@ -187,25 +187,25 @@ func _test_finish_round_waits_for_a_live_round() -> void:
 
 ## A director under `time_up: finish_round` carrying [param hook], its clock run out with a
 ## winner already decided: what dot-vote's own suite builds, with the game's answer in it.
-func _finish_round_probe(hook: Callable, applied: Array) -> DotVoteDirector:
-	var source := DotVoteListSource.new()
-	var _a := source.add(DotVoteChoice.of(&"a", "A"))
-	var _b := source.add(DotVoteChoice.of(&"b", "B"))
+func _finish_round_probe(hook: Callable, applied: Array) -> GSVoteDirector:
+	var source := GSVoteListSource.new()
+	var _a := source.add(GSVoteChoice.of(&"a", "A"))
+	var _b := source.add(GSVoteChoice.of(&"b", "B"))
 	source.apply_fn = _record_applied.bind(applied)
 
-	var rules := DotVoteRules.new()
+	var rules := GSVoteRules.new()
 	rules.apply_delay_sec = 0.0
 	rules.duration_sec = 100.0
 	rules.vote_lead_sec = 40.0
 	rules.vote_duration_sec = 5.0
 	rules.include_extend = false
-	rules.apply = DotVoteRules.Apply.END_OF_TIME
+	rules.apply = GSVoteRules.Apply.END_OF_TIME
 	rules.cooldown = 0
-	rules.time_up = DotVoteRules.TimeUp.FINISH_ROUND
+	rules.time_up = GSVoteRules.TimeUp.FINISH_ROUND
 	# For ever: only the hook may release it.
 	rules.finish_round_max_sec = 0.0
 
-	var probe := DotVoteDirector.new()
+	var probe := GSVoteDirector.new()
 	probe.rules = rules
 	probe.source = source
 	probe.register_service = false
@@ -234,7 +234,7 @@ func _finish_round_probe(hook: Callable, applied: Array) -> DotVoteDirector:
 func _test_a_reload_keeps_delivered_maps() -> void:
 	_section("a reload keeps the maps the server names")
 	var key := "dot-test/hs-delivered@1.0.0"
-	var mount := DotGameContent.mount_of(key)
+	var mount := GSGameContent.mount_of(key)
 	var dir := mount.path_join("maps")
 	var id := &"mm_delivered_check"
 	DirAccess.make_dir_recursive_absolute(dir)
@@ -248,7 +248,7 @@ func _test_a_reload_keeps_delivered_maps() -> void:
 	# `_current` is the manager's own, and nothing else in this suite should see the pack.
 	var manager: Object = server.games
 	var was: Variant = manager.get("_current")
-	var named := DotGameDescriptor.new()
+	var named := GSGameDescriptor.new()
 	named.maps = PackedStringArray([key])
 	manager.set("_current", named)
 
@@ -276,7 +276,7 @@ func _test_a_reload_keeps_delivered_maps() -> void:
 	var booted_ids: Array = []
 
 	if booted_vote != null:
-		for choice: DotVoteChoice in (booted_vote.get("source") as DotVoteListSource).entries:
+		for choice: GSVoteChoice in (booted_vote.get("source") as GSVoteListSource).entries:
 			booted_ids.append(String(choice.id))
 
 	_check(booted_ids.has(String(id)), "and on the ballot of a module that boots with it named, unrefreshed",
@@ -304,7 +304,7 @@ func _test_loading_cover() -> void:
 	_section("a client behind its loading cover cannot be killed")
 
 	var module := _module()
-	var roster: DotGameRoster = module.get("roster") if module != null else null
+	var roster: GSGameRoster = module.get("roster") if module != null else null
 
 	var known: Dictionary = {}
 	for each in server.playing_sessions():
@@ -319,7 +319,7 @@ func _test_loading_cover() -> void:
 	var mirror := Node.new()
 	mirror.name = name
 	side.add_child(mirror)
-	var link := DotClientLink.new()
+	var link := GSClientLink.new()
 	link.name = "Server"
 	link.player_name = "Cover"
 	link.transport_preference = "udp"
@@ -360,7 +360,7 @@ func _test_loading_cover() -> void:
 
 
 ## The covered seat: refused harm, not drawn, slain by an operator, then harmable once its cover report lands.
-func _cover_checks(link: DotClientLink, roster: DotGameRoster, murderer: MmPlayer, userid: int) -> void:
+func _cover_checks(link: GSClientLink, roster: GSGameRoster, murderer: MmPlayer, userid: int) -> void:
 	var key := StringName("u%d" % userid)
 	var victim: MmPlayer = game.players[key]
 	# A seat joining mid-round is benched, so every refusal below would pass for the wrong
@@ -394,7 +394,7 @@ func _cover_checks(link: DotClientLink, roster: DotGameRoster, murderer: MmPlaye
 	game.phase = MmGame.Phase.PLAY
 	game._set_side(key, MmGame.BYSTANDERS)
 	game._set_side(murderer.player_id, MmGame.MURDERERS)
-	var slay := DotDamage.make(0, victim.entity_id, victim.health.health + 1000.0, null)
+	var slay := GSDamage.make(0, victim.entity_id, victim.health.health + 1000.0, null)
 	slay.context = {"admin": true}
 	var _slain := game.combat.apply_damage(slay)
 	_check(not victim.is_alive(), "an operator's slay still lands",
@@ -402,7 +402,7 @@ func _cover_checks(link: DotClientLink, roster: DotGameRoster, murderer: MmPlaye
 	victim.health.revive()
 	game.phase = was_phase
 
-	DotGameClient.report_cover(link, false)
+	GSGameClient.report_cover(link, false)
 	var lifted := false
 	for _i in 900:
 		await get_tree().physics_frame
@@ -442,7 +442,7 @@ func _test_ambient_cvars_reach_the_client() -> void:
 	var mirror := Node.new()
 	mirror.name = name
 	side.add_child(mirror)
-	var link := DotClientLink.new()
+	var link := GSClientLink.new()
 	link.name = "Server"
 	link.player_name = "Ambient"
 	link.transport_preference = "udp"
@@ -452,8 +452,8 @@ func _test_ambient_cvars_reach_the_client() -> void:
 	var _stand_in := _seat_receiver_on_join(link, side)
 	var rules := MmAmbience.make_rules()
 	var _followed := rules.follow_cvars(link)
-	var director := DotAmbienceDirector.new()
-	director.ambient = DotAmbience.new()
+	var director := GSAmbienceDirector.new()
+	director.ambient = GSAmbience.new()
 	director.follow_settings(null, rules)
 	var joined := false
 	for _i in 1800:
@@ -518,7 +518,7 @@ func _test_no_message_preloads_itself() -> void:
 
 		var source := FileAccess.get_file_as_string("res://game/net/" + file)
 
-		if source.contains("extends DotNetMessage") and source.contains("preload(\"%s\")" % file):
+		if source.contains("extends GSNetMessage") and source.contains("preload(\"%s\")" % file):
 			offenders.append(file)
 
 	_check(offenders.is_empty(), "no message preloads itself", ", ".join(offenders))

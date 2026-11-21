@@ -1,6 +1,6 @@
-extends DotGameCheckSuite
+extends GSGameCheckSuite
 
-## MmConfig through DotGameConfigBinder: fields, cvars, strict refusal, the diff, a shipped yml loading back, and the
+## MmConfig through GSGameConfigBinder: fields, cvars, strict refusal, the diff, a shipped yml loading back, and the
 ## workbench round trip. Run: `godot --headless --path . res://examples/headless_config.tscn`
 
 const MmConfig := preload("../game/mm_config.gd")
@@ -13,7 +13,7 @@ var _sections_finished := 0
 
 
 func _ready() -> void:
-	DotLog.set_level(DotLog.Level.FATAL)
+	GSLog.set_level(GSLog.Level.FATAL)
 	_run.call_deferred()
 
 
@@ -53,9 +53,9 @@ func _run() -> void:
 			"bot_chat_chance", "bot_witness_range", "bot_flee_seconds", "death_cam_seconds", "freeze_cam_seconds"]:
 		_check(keys.has(k), "%s is exposed" % k)
 
-	var console := DotConsole.new()
+	var console := GSConsole.new()
 	add_child(console)
-	binder.bind_cvars(console.cvar, DotConVar.FLAG_ARCHIVE, console.has_name)
+	binder.bind_cvars(console.cvar, GSConVar.FLAG_ARCHIVE, console.has_name)
 	console.set_cvar("mm_hit_radius", "0.6")
 	_check(is_equal_approx(config.hit_radius, 0.6) and binder.source_of("hit_radius") == "cvar", "a cvar writes the field")
 	_check(binder.diff_yaml().contains("hit_radius: 0.6"), "the diff names the edit")
@@ -78,17 +78,17 @@ func _run() -> void:
 	_templates(binder)
 
 	_sections_entered += 1
-	var wb := DotGameWorkbench.new()
+	var wb := GSGameWorkbench.new()
 	wb.panel_mode = 1
 	wb.config = {"enabled": false}
-	for set: DotProfileSet in binder.profile_sets():
+	for set: GSProfileSet in binder.profile_sets():
 		wb.add_set(set, set.rel_path)
 	add_child(wb)
 	_check(wb.start().ok, "the workbench starts")
 	binder.attach(wb.api.runtime)
 	var listed := PackedStringArray()
 	for kind: String in wb.api.kinds():
-		var got: DotResult = wb.api.handle(DotGameWorkbench.LOCAL_ACTOR, {"op": "get", "kind": kind, "id": binder.profile_id})
+		var got: GSResult = wb.api.handle(GSGameWorkbench.LOCAL_ACTOR, {"op": "get", "kind": kind, "id": binder.profile_id})
 		if got.ok:
 			listed.append_array(PackedStringArray((got.value as Dictionary).get("values", {}).keys()))
 	var missing := PackedStringArray()
@@ -96,7 +96,7 @@ func _run() -> void:
 		if not listed.has(k):
 			missing.append(k)
 	_check(missing.is_empty() and binder.profile_sets().size() == 6, "the workbench lists all %d keys over %d files" % [keys.size(), binder.profile_sets().size()], ",".join(missing))
-	var res: DotResult = wb.api.handle(DotGameWorkbench.LOCAL_ACTOR, {"op": "set", "kind": "config_players", "id": binder.profile_id, "key": "player_health", "value": 150.0})
+	var res: GSResult = wb.api.handle(GSGameWorkbench.LOCAL_ACTOR, {"op": "set", "kind": "config_players", "id": binder.profile_id, "key": "player_health", "value": 150.0})
 	_check(res.ok and is_equal_approx(config.player_health, 150.0), "a workbench edit reaches the live config")
 	var files: Dictionary = wb.exporter.call("collect")
 	var text: String = files.get("cfg/game/game-murder-mystery/config_players/game.yml", "")
@@ -108,10 +108,10 @@ func _run() -> void:
 	_report_sections(_sections_entered, _sections_finished, SECTIONS, CHECKS)
 
 
-func _fall_rules(console: DotConsole) -> void:
+func _fall_rules(console: GSConsole) -> void:
 	_sections_entered += 1
 	var fall := MmGame.make_fall_rules()
-	var _made := fall.bind_cvars(console.cvar, DotConVar.FLAG_NOTIFY)
+	var _made := fall.bind_cvars(console.cvar, GSConVar.FLAG_NOTIFY)
 	_check(console.get_int("sv_falldamage") == 1 and fall.enabled, "fall damage is on in this game")
 	_check(fall.damage_for(20.0) > 0.0 and fall.damage_for(5.0) == 0.0, "a hard landing hurts, a small one does not")
 	_check(console.get_int("sv_falldamage_lethal") == 40 and fall.damage_for(45.0) > 1000.0, "only a very high speed kills outright")
@@ -129,9 +129,9 @@ func _probe() -> void:
 	var loaded := binder.load_layers()
 	var game := preload("../game/mm_game.gd").new()
 	game.config = config
-	var console := DotConsole.new()
+	var console := GSConsole.new()
 	add_child(console)
-	binder.bind_cvars(console.cvar, DotConVar.FLAG_ARCHIVE, console.has_name)
+	binder.bind_cvars(console.cvar, GSConVar.FLAG_ARCHIVE, console.has_name)
 	print("PROBE ok=%s round=%s murderers=%s gun=%s gun_src=%s cvar=%s blood=%s blood_src=%s range=%s reach=%s reach_src=%s round_src=%s" % [
 		loaded.ok, game.config.round_seconds, game.config.murderers_for(12), game.config.gun_cooldown, binder.source_of("gun_cooldown"),
 		console.find_cvar("mm_gun_cooldown").get_string(), game.config.blood_stages, binder.source_of("blood_stages"),
@@ -175,7 +175,7 @@ func _layers() -> void:
 
 
 ## The shipped cfg files hold every key, in step with MmConfig, and change nothing as they are.
-func _templates(binder: DotGameConfigBinder) -> void:
+func _templates(binder: GSGameConfigBinder) -> void:
 	_sections_entered += 1
 	var files := binder.template_files()
 	_check(files.size() == 6, "six shipped cfg files", str(files.size()))

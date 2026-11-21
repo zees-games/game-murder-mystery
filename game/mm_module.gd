@@ -1,8 +1,8 @@
 extends "mm_module_vote.gd"
 
 ## This game, as a module a dedicated server loads. No `class_name`: a module in a dot-cloud pack
-## cannot have one, and [method DotModuleHost.load_module] takes a PATH and constructs it.
-## [DotGameModule] declares CHANNEL, so none here.
+## cannot have one, and [method GSModuleHost.load_module] takes a PATH and constructs it.
+## [GSGameModule] declares CHANNEL, so none here.
 
 ## Seconds between checks of how many people are in the round.
 const ROSTER_INTERVAL := 2.0
@@ -12,7 +12,7 @@ const ROSTER_INTERVAL := 2.0
 static var punishments_file: String = ""
 
 ## The `mm_bots` cvar, held so the tick does not look it up sixty times a second.
-var _bots: DotConVar = null
+var _bots: GSConVar = null
 
 var _since_roster_check: float = 0.0
 
@@ -48,8 +48,8 @@ func _game_missing_hint() -> String:
 ## The netcode's numbers, which are the game's and not the addon's.
 ## Tick rate comes from the world so `sv_tickrate` reaches it; a number written here would run
 ## the netcode at a rate the operator did not choose.
-func _net_config() -> DotNetConfig:
-	var config := DotNetConfig.new()
+func _net_config() -> GSNetConfig:
+	var config := GSNetConfig.new()
 	config.tick_rate = (game as MmGame).tick_rate
 	config.snapshot_rate = MmGame.NET_SNAPSHOT_RATE
 	config.world_extent = MmGame.NET_WORLD_EXTENT
@@ -68,8 +68,8 @@ func _make_bridge() -> Node:
 	return MmNetBridge.new()
 
 
-## Chat, voice and moderation, over [DotGameServices]; the bridge is handed over as the link
-## and [DotGameModule] wires the voice relay, admission and the roster.
+## Chat, voice and moderation, over [GSGameServices]; the bridge is handed over as the link
+## and [GSGameModule] wires the voice relay, admission and the roster.
 func _make_services() -> Node:
 	var services := MmServices.new()
 	services.bridge = bridge
@@ -77,22 +77,22 @@ func _make_services() -> Node:
 	return services
 
 
-## Profiles, avatars and admission: dot-platform's [DotPlatformIdentity] over this game's
+## Profiles, avatars and admission: dot-platform's [GSPlatformIdentity] over this game's
 ## one-slot schema, built before the services. Authentication is the host's `dot_auth_server`;
 ## with it off everybody is a guest with a profile of their own.
 func _make_identity() -> Node:
-	var identity_layer := DotPlatformIdentity.new()
+	var identity_layer := GSPlatformIdentity.new()
 	identity_layer.avatar_schema = MmAvatars.schema()
 	identity_layer.stock_avatar_fn = MmAvatars.stock_avatar
 	identity_layer.avatar_translate_fn = MmAvatars.from_site
 	return identity_layer
 
 
-func _game_load() -> DotResult:
+func _game_load() -> GSResult:
 	var world := game as MmGame
 
 	if world == null:
-		return DotResult.fail(DotError.CODE_STATE, "The registered game is not an MmGame.")
+		return GSResult.fail(GSError.CODE_STATE, "The registered game is not an MmGame.")
 
 	# dot-game's "still loading": a seat behind its client's cover is neither hurt nor drawn
 	# (see MmGame.harm_gate). Asked by player id, resolved to a peer through the bridge; a bot
@@ -138,10 +138,10 @@ func _game_load() -> DotResult:
 		"Automatic stand-ins: 1 keeps as many as bot_quota and bot_quota_mode say, 0 none at all."
 	)
 
-	# [b]How many is dot-server's [DotBotQuota][/b], so `bot_quota` and `bot_quota_mode` mean the
+	# [b]How many is dot-server's [GSBotQuota][/b], so `bot_quota` and `bot_quota_mode` mean the
 	# same on every server. The default is this game's `minimum_players` in fill mode; `mm_bots`
 	# stays the switch it was.
-	_quota = DotBotQuota.install(self, world.config.minimum_players)
+	_quota = GSBotQuota.install(self, world.config.minimum_players)
 
 	# Started here, not in the world's `_ready`: `start()` builds the map, and one built before
 	# the bridge existed would have nothing listening to `world_rebuilt`, so no client would
@@ -157,7 +157,7 @@ func _game_load() -> DotResult:
 	world.start()
 
 	log_info("the map is up", world.describe())
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
 ## The map commands, renameable from maps.yml.
@@ -169,7 +169,7 @@ func _add_map_commands(world: MmGame) -> void:
 		["mm_reload", _cmd_reload, "Read the map directory again (from the next map)", null],
 		["mm_map", _cmd_map, "Play a map next: mm_map <id> (at the end of this round)", ""],
 	]:
-		var names := DotCommandNames.all_of("", _renames(world), {}, entry[0])
+		var names := GSCommandNames.all_of("", _renames(world), {}, entry[0])
 		for typed_name in names:
 			if entry[3] == null:
 				add_command(typed_name, entry[1], entry[2])
@@ -180,26 +180,26 @@ func _add_map_commands(world: MmGame) -> void:
 func _bind_rule_cvars(world: MmGame) -> void:
 	# sv_falldamage and its tunables: dot-combat's, on by default in this game. Server-side
 	# only, so no REPLICATED: the damage is the server's and arrives as health.
-	var _fall := world.fall_rules.bind_cvars(add_cvar, DotConVar.FLAG_NOTIFY)
-	var _stomp := world.stomp.rules.bind_cvars(add_cvar, DotConVar.FLAG_NOTIFY)
+	var _fall := world.fall_rules.bind_cvars(add_cvar, GSConVar.FLAG_NOTIFY)
+	var _stomp := world.stomp.rules.bind_cvars(add_cvar, GSConVar.FLAG_NOTIFY)
 
 	# sv_mobile_*, sv_aim_assist*, sv_autofire*: dot-mobile's touch controls, REPLICATED for the clients' overlay.
 	var _mobile := world.mobile_rules.bind_cvars(
-		add_cvar, DotConVar.FLAG_ARCHIVE | DotConVar.FLAG_NOTIFY | DotConVar.FLAG_REPLICATED
+		add_cvar, GSConVar.FLAG_ARCHIVE | GSConVar.FLAG_NOTIFY | GSConVar.FLAG_REPLICATED
 	)
 
 	# mp_forceview and mp_solidplayers, REPLICATED: the client places its own camera under the
 	# first and predicts its own player under the second.
 	var _views := world.view_rules.bind_cvars(
-		add_cvar, DotConVar.FLAG_ARCHIVE | DotConVar.FLAG_NOTIFY | DotConVar.FLAG_REPLICATED
+		add_cvar, GSConVar.FLAG_ARCHIVE | GSConVar.FLAG_NOTIFY | GSConVar.FLAG_REPLICATED
 	)
 	var _bodies := world.body_rules.bind_cvars(
-		add_cvar, DotConVar.FLAG_ARCHIVE | DotConVar.FLAG_NOTIFY | DotConVar.FLAG_REPLICATED
+		add_cvar, GSConVar.FLAG_ARCHIVE | GSConVar.FLAG_NOTIFY | GSConVar.FLAG_REPLICATED
 	)
 	# mm_ambient*: REPLICATED, because each client plays its own ambience under the server's intent; the directory cvar stays local.
 	var _ambient := world.ambient_rules.bind_cvars(
-		add_cvar, DotConVar.FLAG_ARCHIVE | DotConVar.FLAG_NOTIFY | DotConVar.FLAG_REPLICATED,
-		DotConVar.FLAG_ARCHIVE | DotConVar.FLAG_NOTIFY
+		add_cvar, GSConVar.FLAG_ARCHIVE | GSConVar.FLAG_NOTIFY | GSConVar.FLAG_REPLICATED,
+		GSConVar.FLAG_ARCHIVE | GSConVar.FLAG_NOTIFY
 	)
 
 
@@ -207,21 +207,21 @@ func _bind_world_cvars(world: MmGame) -> void:
 	# Dead bodies: dot-player-char's sv_ragdoll* set. The server only picks each death's reaction
 	# from them; REPLICATED, because the clients draw the bodies (see the client's netcode).
 	var _ragdolls := world.ragdoll_rules.bind_cvars(
-		add_cvar, DotConVar.FLAG_ARCHIVE | DotConVar.FLAG_NOTIFY | DotConVar.FLAG_REPLICATED
+		add_cvar, GSConVar.FLAG_ARCHIVE | GSConVar.FLAG_NOTIFY | GSConVar.FLAG_REPLICATED
 	)
 	# The map's toys: dot-props' sv_toys* set. REPLICATED, because a client hides the toys the
 	# server took away and draws the rest.
 	var _toys := world.toy_rules.bind_cvars(
-		add_cvar, DotConVar.FLAG_ARCHIVE | DotConVar.FLAG_NOTIFY | DotConVar.FLAG_REPLICATED
+		add_cvar, GSConVar.FLAG_ARCHIVE | GSConVar.FLAG_NOTIFY | GSConVar.FLAG_REPLICATED
 	)
 
 	# mp_forcecamera, mp_freeroam, mp_freeroam_speed: dot-spectate's rules, so spectators
 	# free-roam unless an operator says otherwise. REPLICATED, because each client flies its
 	# own spectator camera under them (MmClient.toggle_roam).
 	for made: Object in world.spectate_rules.bind_cvars(
-		add_cvar, DotConVar.FLAG_ARCHIVE | DotConVar.FLAG_NOTIFY | DotConVar.FLAG_REPLICATED
+		add_cvar, GSConVar.FLAG_ARCHIVE | GSConVar.FLAG_NOTIFY | GSConVar.FLAG_REPLICATED
 	):
-		if str(made.get(&"name")) == DotSpectatorRules.CVAR_FORCE_CAMERA:
+		if str(made.get(&"name")) == GSSpectatorRules.CVAR_FORCE_CAMERA:
 			_force_camera_cvar = made
 
 
@@ -241,7 +241,7 @@ func _wire_identity() -> void:
 
 ## What a session looks like: dot-platform's `player_for`, never the hub by a key made here (it
 ## keys by the scoped profile key only admission knows), or the stock person. Duck-typed.
-func _avatar_for(session_id: int) -> DotAvatar:
+func _avatar_for(session_id: int) -> GSAvatar:
 	var session := server.session_by_userid(session_id) if server != null else null
 	var platform: Object = server.modules.get_module("platform") \
 		if server != null and server.modules != null else null
@@ -249,8 +249,8 @@ func _avatar_for(session_id: int) -> DotAvatar:
 	if session != null and platform != null and platform.has_method("player_for"):
 		var player: Variant = platform.call("player_for", session)
 
-		if player is Object and (player as Object).get("avatar") is DotAvatar:
-			return (player as Object).get("avatar") as DotAvatar
+		if player is Object and (player as Object).get("avatar") is GSAvatar:
+			return (player as Object).get("avatar") as GSAvatar
 
 	if identity != null and identity.has_method("avatar_for"):
 		return identity.call("avatar_for", String(MmNetBridge.player_key(session_id)))
@@ -258,7 +258,7 @@ func _avatar_for(session_id: int) -> DotAvatar:
 	return null
 
 
-func _on_profile(event: DotEvent) -> void:
+func _on_profile(event: GSEvent) -> void:
 	var session_id := event.get_int("userid")
 	var session := server.session_by_userid(session_id) if server != null else null
 	var link := bridge as MmNetBridge
@@ -269,8 +269,8 @@ func _on_profile(event: DotEvent) -> void:
 	link.refresh_player(session_id, session.display_name, _avatar_for(session_id))
 
 
-## [b]Nothing to undo.[/b] The commands are the module's own and [DotModule] removes them; the netcode, bridge and
-## roster are [DotGameModule]'s, torn down in reverse. The world is NOT this module's to free: it was in the tree
+## [b]Nothing to undo.[/b] The commands are the module's own and [GSModule] removes them; the netcode, bridge and
+## roster are [GSGameModule]'s, torn down in reverse. The world is NOT this module's to free: it was in the tree
 ## before the module loaded, and a reload must not take the map away.
 func _game_unload() -> void:
 	if workbench != null:
@@ -292,7 +292,7 @@ func _game_unload() -> void:
 		vote = null
 
 
-## The server slept or woke. The vote's director follows it on its own (DotGameModule finds
+## The server slept or woke. The vote's director follows it on its own (GSGameModule finds
 ## it); the map ballot's timer is this game's, so it starts again here on waking.
 func _game_hibernation(hibernating: bool) -> void:
 	if not hibernating and vote != null:
@@ -379,10 +379,10 @@ func _keep_the_round_full() -> void:
 		bridge.call("remove_player", MmNetBridge.session_of(leaving))
 
 
-## A stand-in's name: the game's list through dot-bot's [DotBotNames], never one already in
+## A stand-in's name: the game's list through dot-bot's [GSBotNames], never one already in
 ## [param world], so solo and a server name them alike and a scoreboard never has two Wrens.
 static func _bot_name(world: MmGame) -> String:
 	var taken: Array = []
 	for id: StringName in world.players:
 		taken.append((world.players[id] as MmPlayer).display_name)
-	return DotBotNames.pick(taken, world.players.size(), MmGame.BOT_NAMES)
+	return GSBotNames.pick(taken, world.players.size(), MmGame.BOT_NAMES)

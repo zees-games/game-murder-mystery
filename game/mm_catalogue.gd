@@ -61,7 +61,7 @@ func load_from(directory: String) -> int:
 	loaded += _read_directory(USER_MAPS)
 	_rebuild_order()
 
-	DotLog.info(CHANNEL, "maps loaded", {"maps": maps.size(), "refused": refused.size()})
+	GSLog.info(CHANNEL, "maps loaded", {"maps": maps.size(), "refused": refused.size()})
 	return loaded
 
 
@@ -70,7 +70,7 @@ func load_from(directory: String) -> int:
 func add_directory(root: String) -> int:
 	var loaded := _read_directory(root)
 	_rebuild_order()
-	DotLog.info(CHANNEL, "maps added", {"from": root, "read": loaded, "maps": maps.size()})
+	GSLog.info(CHANNEL, "maps added", {"from": root, "read": loaded, "maps": maps.size()})
 	return loaded
 
 
@@ -96,7 +96,7 @@ func add_extra_directories(directory: String) -> int:
 	_mounted = false
 
 	_rebuild_order()
-	DotLog.info(CHANNEL, "other games' maps added", {"from": root, "read": loaded, "maps": maps.size()})
+	GSLog.info(CHANNEL, "other games' maps added", {"from": root, "read": loaded, "maps": maps.size()})
 	return loaded
 
 
@@ -104,7 +104,7 @@ func _read_directory(root: String) -> int:
 	var dir := DirAccess.open(root)
 
 	if dir == null:
-		DotLog.info(CHANNEL, "no map directory here", {"looked_at": root})
+		GSLog.info(CHANNEL, "no map directory here", {"looked_at": root})
 		return 0
 
 	var files := PackedStringArray()
@@ -127,7 +127,7 @@ func _read_directory(root: String) -> int:
 
 		if not parsed.ok:
 			refused[file] = parsed.error.message
-			DotLog.warn(CHANNEL, "a map was refused", {
+			GSLog.warn(CHANNEL, "a map was refused", {
 				"file": file, "why": parsed.error.message, "detail": parsed.error.detail,
 			})
 			continue
@@ -185,7 +185,7 @@ func doc(id: StringName) -> Dictionary:
 		return _last_doc
 	var parsed := MmMapDoc.parse_json(FileAccess.get_file_as_string(path), path)
 	if not parsed.ok or StringName(str(parsed.value["id"])) != id:
-		DotLog.error(CHANNEL, "a map's file no longer reads; playing practice", {"id": String(id), "path": path})
+		GSLog.error(CHANNEL, "a map's file no longer reads; playing practice", {"id": String(id), "path": path})
 		return _built_in if not _built_in.is_empty() else practice()
 	_last_id = id
 	_last_doc = parsed.value
@@ -238,7 +238,7 @@ func playable(allowed: PackedStringArray) -> Array[StringName]:
 ## The next map: drawn from [param stream] when shuffling, in order otherwise, never the same twice running if there is a choice.
 ## [param pool] is maps.yml's rotation (ids, file order): when it holds anything playable only those are drawn from;
 ## empty, or nothing in it playable, draws from every playable map, so a rotation never leaves the server stuck.
-func next_map(allowed: PackedStringArray, shuffle: bool, stream: DotRandomStream,
+func next_map(allowed: PackedStringArray, shuffle: bool, stream: GSRandomStream,
 		previous: StringName, pool: Array[StringName] = []) -> Dictionary:
 	var ids := playable(allowed)
 
@@ -253,7 +253,7 @@ func next_map(allowed: PackedStringArray, shuffle: bool, stream: DotRandomStream
 			ids = kept
 
 	if ids.is_empty():
-		DotLog.warn(CHANNEL, "no map matches the allowed list; playing practice", {
+		GSLog.warn(CHANNEL, "no map matches the allowed list; playing practice", {
 			"allowed": ",".join(allowed),
 		})
 		return doc(PRACTICE) if maps.has(PRACTICE) else practice()

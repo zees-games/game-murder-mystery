@@ -147,62 +147,62 @@ signal achievement_earned(player_id: StringName, title: String, points: int)
 var map: MmMap = null
 var catalogue: MmCatalogue = null
 var props_catalogue: MmProps = null
-var combat: DotCombatManager = null
-var match_node: DotMatch = null
-var random: DotRandomManager = null
-var physics: DotPhysicsLayout = null
+var combat: GSCombatManager = null
+var match_node: GSMatch = null
+var random: GSRandomManager = null
+var physics: GSPhysicsLayout = null
 
 ## How a body falls when somebody dies: dot-player-char's rules, `mp_ragdoll*`.
-var ragdoll_rules: DotPlayerRagdollRules = DotPlayerRagdollRules.new()
+var ragdoll_rules: GSPlayerRagdollRules = GSPlayerRagdollRules.new()
 
 ## Playlot's toys' rules, when a Playlot map is played: dot-props'.
-var toy_rules: DotPropBodyRules = DotPropBodyRules.new()
+var toy_rules: GSPropBodyRules = GSPropBodyRules.new()
 
 ## A person's weight on a toy, in kilograms.
 const PERSON_MASS := 70.0
-var effects: DotFxManager = null
+var effects: GSFxManager = null
 var spectate: MmSpectate = null
 ## dot-spectate's `mp_forcecamera`, `mp_freeroam` and `mp_freeroam_speed`: one object shared with
 ## [MmSpectate]'s manager, bound by the module (REPLICATED) and followed by a client.
-var spectate_rules: DotSpectatorRules = DotSpectatorRules.new()
+var spectate_rules: GSSpectatorRules = GSSpectatorRules.new()
 var progress: MmProgress = null
 
 ## Everybody in the world, by player id.
 var players: Dictionary = {}
 
 ## dot-player-char's `mp_*` view and body rules.
-var view_rules: DotPlayerViewRules = DotPlayerViewRules.new()
-var body_rules: DotPlayerBodyRules = DotPlayerBodyRules.new()
+var view_rules: GSPlayerViewRules = GSPlayerViewRules.new()
+var body_rules: GSPlayerBodyRules = GSPlayerBodyRules.new()
 
 ## dot-mobile's touch, aim assist and auto-fire cvars (`sv_mobile_*`, `sv_aim_assist*`, `sv_autofire*`): bound by the module
 ## (REPLICATED), followed by the client's overlay. Auto-fire is off: nobody is known to be an enemy (mm_touch.gd).
-var mobile_rules: DotMobileRules = MmTouch.make_rules()
+var mobile_rules: GSMobileRules = MmTouch.make_rules()
 
 ## `sv_falldamage*`: landing hard hurts. On in this game (dot-combat's default is off); the
 ## server applies it through [member combat], a client never does.
-var fall_rules: DotFallDamageRules = make_fall_rules()
+var fall_rules: GSFallDamageRules = make_fall_rules()
 ## `sv_stomp*`: landing on a head hurts. Off by default (dot-combat's); the server applies it through [member combat].
-var stomp: DotStomp = DotStomp.new()
+var stomp: GSStomp = GSStomp.new()
 ## Each player's vertical speed going into this tick's movement, for [method _resolve_stomps].
 var _pre_vy: Dictionary = {}
 ## The ambience cvars (`mm_ambient*`): bound by the module (REPLICATED), followed by a client through its link.
-var ambient_rules: DotAmbienceRules = MmAmbience.make_rules()
+var ambient_rules: GSAmbienceRules = MmAmbience.make_rules()
 
 ## The flashlight's config and binder, made on first use so a suite that builds a game by hand still has one; the map id the lights were last set for.
-var flashlight_config: DotFlashlightConfig = null
-var flashlight_binder: DotGameConfigBinder = null
+var flashlight_config: GSFlashlightConfig = null
+var flashlight_binder: GSGameConfigBinder = null
 var _flashlight_map: String = ""
 
 ## Binds [member config] to cvars, the cfg/ yml layers and the workbench; made by whoever builds the config.
-var config_binder: DotGameConfigBinder = null
+var config_binder: GSGameConfigBinder = null
 
 ## The workbench's profile rows, made on first ask: the bridge's profile link must exist before the netcode seals, the workbench after.
-var profile_runtime: DotProfileRuntime = null
+var profile_runtime: GSProfileRuntime = null
 
 
-func ensure_runtime() -> DotProfileRuntime:
+func ensure_runtime() -> GSProfileRuntime:
 	if profile_runtime == null:
-		profile_runtime = DotProfileRuntime.new()
+		profile_runtime = GSProfileRuntime.new()
 		# A method, not a lambda: a static may keep the runtime past the tree, and a lambda holds this script.
 		profile_runtime.permit = _local_permit
 	return profile_runtime
@@ -210,7 +210,7 @@ func ensure_runtime() -> DotProfileRuntime:
 func _local_permit(actor: Variant, _flag: String) -> bool:
 	return typeof(actor) == TYPE_STRING_NAME and actor == &"local"
 
-## dot-team's block rules (`!block`, `!noblock`, `mp_teamblock`), set by the server module or `DotGameClient.add_noblock`. They feed [member body_rules]'s `pair_fn`.
+## dot-team's block rules (`!block`, `!noblock`, `mp_teamblock`), set by the server module or `GSGameClient.add_noblock`. They feed [member body_rules]'s `pair_fn`.
 var block_rules: Object = null:
 	set(value):
 		if block_rules != null and block_rules.is_connected(&"changed", body_rules.refresh):
@@ -234,7 +234,7 @@ var phase: int = Phase.IDLE
 
 var map_doc: Dictionary = {}
 
-var entities := DotEntityTable.new()
+var entities := GSEntityTable.new()
 
 ## What a client is told of the round: how many are alive, and how many murderers.
 var remote_alive: int = -1
@@ -279,14 +279,14 @@ func _init() -> void:
 
 
 ## The server's maps.yml, or null when there is none (every map rotates, as it always did).
-var rotation_file: DotMapRotationFile = null
+var rotation_file: GSMapRotationFile = null
 
-## The catalogue as dot-map sees it (one [DotMapDef] per document, rebuilt by
+## The catalogue as dot-map sees it (one [GSMapDef] per document, rebuilt by
 ## [method apply_rotation]) and the rotation over it. This game's own [MmCatalogue] holds
-## documents, not defs; [DotMapRotationFile] marks defs, so the marks live here.
-var map_rotation_defs: DotMapCatalogue = null
+## documents, not defs; [GSMapRotationFile] marks defs, so the marks live here.
+var map_rotation_defs: GSMapCatalogue = null
 
-var map_rotation: DotMapRotation = null
+var map_rotation: GSMapRotation = null
 
 ## `func(player_id: StringName) -> bool`: whether a player may be hurt now, assigned by the
 ## module from dot-game's `can_peer_be_harmed`. Unset offline, in a suite and for a bot, so
@@ -294,8 +294,8 @@ var map_rotation: DotMapRotation = null
 var harm_gate: Callable = Callable()
 
 
-static func make_fall_rules() -> DotFallDamageRules:
-	var rules := DotFallDamageRules.new()
+static func make_fall_rules() -> GSFallDamageRules:
+	var rules := GSFallDamageRules.new()
 	rules.enabled = true
 	# Mild for a light-footed game: only a very long drop (about 40 m/s) kills outright.
 	rules.lethal_speed = 40.0

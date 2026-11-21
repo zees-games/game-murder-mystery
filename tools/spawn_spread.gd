@@ -15,7 +15,7 @@ func _init() -> void:
 		players = int(args[0])
 
 	for strategy in ["map", "spread"]:
-		var rules := DotSpawnRules.new()
+		var rules := GSSpawnRules.new()
 		rules.strategy = strategy
 		var worst_all := INF
 		var sum := 0.0

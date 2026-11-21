@@ -8,7 +8,7 @@ const MmBotChat := preload("mm_bot_chat.gd")
 
 const CHANNEL := "mm.bots"
 
-var _smoke := DotBotWorld.new()
+var _smoke := GSBotWorld.new()
 var _blind: Dictionary = {}
 
 
@@ -75,7 +75,7 @@ const FLEE_CLEAR := 12.0
 
 var game: Node = null
 
-var nav: DotBotNav = DotBotNav.new()
+var nav: GSBotNav = GSBotNav.new()
 
 ## Places on the map: the annotator's hiding spots, each `{at, ...}`. Where bots wander.
 var spots: Array[Dictionary] = []
@@ -83,14 +83,14 @@ var spots: Array[Dictionary] = []
 ## Open floor places, the random survey's.
 var sweep: Array[Dictionary] = []
 
-var annotations: DotNpcAiNavAnnotations = null
+var annotations: GSNpcAiNavAnnotations = null
 var annotate_ms: float = 0.0
 var annotate_cached: bool = false
 var links_used: int = 0
 
-var _annotator: DotNpcAiNavAnnotator = null
-var _cached: DotNpcAiNavAnnotations = null
-var _job: DotJob = null
+var _annotator: GSNpcAiNavAnnotator = null
+var _cached: GSNpcAiNavAnnotations = null
+var _job: GSJob = null
 var _job_done: bool = false
 var _job_steps: int = 0
 var _jump_feet: PackedVector3Array = PackedVector3Array()
@@ -126,8 +126,8 @@ func _init(p_game: Node = null) -> void:
 	game = p_game
 
 
-func settings() -> DotBotSettings:
-	return DotBotSettings.of(game)
+func settings() -> GSBotSettings:
+	return GSBotSettings.of(game)
 
 
 func now() -> float:
@@ -161,12 +161,12 @@ func _prepare() -> void:
 		# a bot never paths across one. The loose toys are not in it; a bot walks through a
 		# ball and pushes it, as anybody does.
 		var toys: Variant = map.get("toys")
-		if toys is DotPropBodyBox:
-			still.append_array((toys as DotPropBodyBox).nav_bodies())
+		if toys is GSPropBodyBox:
+			still.append_array((toys as GSPropBodyBox).nav_bodies())
 		var baked := nav.bake(map, {"radius": MmPlayer.BODY_RADIUS, "height": MmPlayer.BODY_CROUCH, "climb": MmPlayer.BODY_STEP}, 0, still)
 		if not baked.ok:
 			_surveyed = key
-			DotLog.warn(CHANNEL, "no walkable mesh for the bots; they walk straight", {"map": str(doc.get("id", "")), "why": baked.error.message})
+			GSLog.warn(CHANNEL, "no walkable mesh for the bots; they walk straight", {"map": str(doc.get("id", "")), "why": baked.error.message})
 		# The navigation server takes the mesh in on a later frame; survey a quarter of a second
 		# of game time on, always the same tick, so a round plays the same however the frames
 		# fall (and later still only when the server is that slow).
@@ -188,12 +188,12 @@ func _prepare() -> void:
 			if not _job.step():
 				break
 		annotate_ms += (Time.get_ticks_usec() - stepped) / 1000.0
-		if _job.state == DotJob.State.RUNNING or _job.state == DotJob.State.PENDING:
+		if _job.state == GSJob.State.RUNNING or _job.state == GSJob.State.PENDING:
 			return
 
 	_surveyed = key
 	var started := Time.get_ticks_usec()
-	var random: DotRandomManager = game.get("random")
+	var random: GSRandomManager = game.get("random")
 	var stream := random.stream_for(&"bot_survey", hash(str(doc.get("id", ""))) % 65536)
 
 	annotations = _finish_annotation(doc)
@@ -205,7 +205,7 @@ func _prepare() -> void:
 		spots = _random_survey(map, stream, SURVEY_POINTS, SURVEY_PROPS)
 		sweep = []
 	survey_ms = (Time.get_ticks_usec() - started) / 1000.0 + nav.bake_ms + annotate_ms
-	DotLog.debug(CHANNEL, "surveyed the map for the bots", {
+	GSLog.debug(CHANNEL, "surveyed the map for the bots", {
 		"map": str(doc.get("id", "")), "spots": spots.size(), "nav_ms": snappedf(nav.bake_ms, 0.1), "ms": snappedf(survey_ms, 0.1),
 		"links": links_used, "chokepoints": annotations.chokepoints.size() if annotations != null else 0, "cached": annotate_cached,
 		"steps": _job_steps,
@@ -215,7 +215,7 @@ func _prepare() -> void:
 ## The old survey: random points over the mesh and points beside props, each scored by the
 ## share of random watchers that see it. Kept as the sweep's open-floor places and as the fallback
 ## when a map has no annotations.
-func _random_survey(map: Node3D, stream: DotRandomStream, points: int, prop_count: int) -> Array[Dictionary]:
+func _random_survey(map: Node3D, stream: GSRandomStream, points: int, prop_count: int) -> Array[Dictionary]:
 	var candidates := PackedVector3Array()
 
 	for _i in range(points):
@@ -239,13 +239,13 @@ func _random_survey(map: Node3D, stream: DotRandomStream, points: int, prop_coun
 	for _i in range(WATCHERS):
 		watchers.append(nav.random_point(stream) + Vector3(0.0, MmPlayer.EYE_HEIGHT, 0.0))
 
-	return DotBotHiding.survey(candidates, watchers, _los)
+	return GSBotHiding.survey(candidates, watchers, _los)
 
 
 ## Annotates the baked mesh for walking (spawn-seeded, doors left out of its rays, cached under
 ## `user://nav`). Returns the job to step, or null when the cache had it or there is no mesh;
 ## [method _finish_annotation] hands the drop and jump-up links to the mesh.
-func _begin_annotation(map: Node3D, doc: Dictionary) -> DotJob:
+func _begin_annotation(map: Node3D, doc: Dictionary) -> GSJob:
 	annotate_cached = false
 	annotate_ms = 0.0
 	links_used = 0
@@ -255,7 +255,7 @@ func _begin_annotation(map: Node3D, doc: Dictionary) -> DotJob:
 	if nav.mesh == null or not nav.is_ready():
 		return null
 
-	var annotator := DotNpcAiNavAnnotator.new(nav.mesh, map.get_world_3d())
+	var annotator := GSNpcAiNavAnnotator.new(nav.mesh, map.get_world_3d())
 	annotator.agent_radius = MmPlayer.BODY_RADIUS
 	annotator.stand_height = MmPlayer.BODY_HEIGHT
 	annotator.crouch_height = MmPlayer.BODY_CROUCH
@@ -280,7 +280,7 @@ func _begin_annotation(map: Node3D, doc: Dictionary) -> DotJob:
 	annotator.seeds = seeds
 	_annotator = annotator
 
-	var loaded := DotNpcAiNavAnnotations.load_file(_cache_path(), annotator.cache_key())
+	var loaded := GSNpcAiNavAnnotations.load_file(_cache_path(), annotator.cache_key())
 	if loaded.ok:
 		_cached = loaded.value
 		annotate_cached = true
@@ -292,13 +292,13 @@ func _cache_path() -> String:
 	return "user://nav/%s.json" % _annotator.cache_key()
 
 
-func _finish_annotation(doc: Dictionary) -> DotNpcAiNavAnnotations:
+func _finish_annotation(doc: Dictionary) -> GSNpcAiNavAnnotations:
 	if _annotator == null:
 		return null
-	var found: DotNpcAiNavAnnotations = _cached
+	var found: GSNpcAiNavAnnotations = _cached
 	if found == null:
-		if _annotator.state != DotJob.State.DONE or _annotator.result == null or not _annotator.result.ok:
-			DotLog.warn(CHANNEL, "the map could not be annotated; the bots use a random survey", {"map": str(doc.get("id", ""))})
+		if _annotator.state != GSJob.State.DONE or _annotator.result == null or not _annotator.result.ok:
+			GSLog.warn(CHANNEL, "the map could not be annotated; the bots use a random survey", {"map": str(doc.get("id", ""))})
 			return null
 		found = _annotator.annotations
 		var _saved := found.save(_cache_path())
@@ -310,20 +310,20 @@ func _finish_annotation(doc: Dictionary) -> DotNpcAiNavAnnotations:
 	nav.begin_batch()
 	for link in found.links:
 		var kind := int(link["kind"])
-		if kind == DotNpcAiNavAnnotations.LINK_DROP or kind == DotNpcAiNavAnnotations.LINK_JUMP_UP:
+		if kind == GSNpcAiNavAnnotations.LINK_DROP or kind == GSNpcAiNavAnnotations.LINK_JUMP_UP:
 			# Both ends on the mesh itself: a link end off it made the engine's path query fail.
 			if nav.closest(link["from"]).distance_to(link["from"]) > 0.3 or nav.closest(link["to"]).distance_to(link["to"]) > 0.3:
 				continue
 			nav.add_ride(link["from"], link["to"], ride, 1.5)
 			ride += 1
-			if kind == DotNpcAiNavAnnotations.LINK_JUMP_UP:
+			if kind == GSNpcAiNavAnnotations.LINK_JUMP_UP:
 				_jump_feet.append(link["from"])
 	nav.end_batch()
 	links_used = ride
 	return found
 
 
-## The bots' rays ask dot-sim's `DotSimSightRay` (bound in [method _sight_bind] each tick) when the library has it, to the
+## The bots' rays ask dot-sim's `GSSimSightRay` (bound in [method _sight_bind] each tick) when the library has it, to the
 ## script's bit (`headless_native_sight`); off, or with no library (the web), the game's `_clear_between` answers.
 static var native_sight := true
 ## With the native ray, re-runs the script beside every [method _los] and counts any difference (an error each); the
@@ -340,12 +340,12 @@ var _sight: Variant = null
 ## Binds the native ray to the game's world with `_clear_between`'s furniture mask, or drops it (no library, no world,
 ## [member native_sight] off). Each tick, before any bot asks.
 func _sight_bind() -> void:
-	var world: World3D = game.get_world_3d() if native_sight and DotSim.has(&"sight") else null
+	var world: World3D = game.get_world_3d() if native_sight and GSSim.has(&"sight") else null
 	if world == null:
 		_sight = null
 		return
 	if _sight == null:
-		_sight = ClassDB.instantiate(&"DotSimSightRay")
+		_sight = ClassDB.instantiate(&"GSSimSightRay")
 		if not _sight.has_method(&"clear_to"):
 			_sight = null
 			return
@@ -393,8 +393,8 @@ func _state_of(player: MmPlayer) -> Dictionary:
 	if not _state.has(player.player_id):
 		var seed := hash(String(player.player_id))
 		_state[player.player_id] = {
-			"aim": DotBotAim.new(seed, settings()),
-			"stream": DotRandomStream.new(seed, &"mm_bot"),
+			"aim": GSBotAim.new(seed, settings()),
+			"stream": GSRandomStream.new(seed, &"mm_bot"),
 			"goal": Vector3.INF, "path": PackedVector3Array(), "corner": 0, "path_at": -INF,
 			"mode": &"", "since": now(), "stuck": [player.controller.state.position, now()],
 			"spot": {}, "threat": Vector3.INF, "threat_at": -INF, "moved_at": -INF,
@@ -404,7 +404,7 @@ func _state_of(player: MmPlayer) -> Dictionary:
 	return _state[player.player_id]
 
 
-func _aim_of(player: MmPlayer) -> DotBotAim:
+func _aim_of(player: MmPlayer) -> GSBotAim:
 	return _state_of(player)["aim"]
 
 
@@ -414,7 +414,7 @@ func _cfg(key: StringName, fallback: float) -> float:
 	return float(config.get(key)) if config != null and config.get(key) != null else fallback
 
 
-func _stream(state: Dictionary) -> DotRandomStream:
+func _stream(state: Dictionary) -> GSRandomStream:
 	return state["stream"]
 
 
@@ -478,7 +478,7 @@ func _before(state: Dictionary, key: String) -> bool:
 
 
 ## Moves along [param world_dir] (flat) whatever way the view is turned.
-static func _walk(command: DotFpsCommand, world_dir: Vector3) -> void:
+static func _walk(command: GSFpsCommand, world_dir: Vector3) -> void:
 	var flat := Vector3(world_dir.x, 0.0, world_dir.z)
 	if flat.length() < 0.01:
 		command.move = Vector2.ZERO
@@ -503,7 +503,7 @@ static func _pass_within(path: PackedVector3Array, i: int) -> float:
 
 
 ## Turns toward [param point] at the bot's turn rate.
-func _look(player: MmPlayer, command: DotFpsCommand, point: Vector3) -> void:
+func _look(player: MmPlayer, command: GSFpsCommand, point: Vector3) -> void:
 	var view := _aim_of(player).look_at_point(player.eye_position(), point, dt())
 	command.yaw = view.x
 	command.pitch = clampf(view.y, -60.0, 60.0)

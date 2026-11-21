@@ -12,11 +12,11 @@ func _test_the_flashlight() -> void:
 	var bystander := _p(game, &"u3b")
 	_check(cfg.key == "F" and game.flashlight_binder != null, "the key is F and the config has a binder", cfg.key)
 
-	cfg.default_state = DotFlashlightConfig.START_ON
+	cfg.default_state = GSFlashlightConfig.START_ON
 	murderer.flashlight_ready = false
 	await _step(game, 2)
 	_check(murderer.flashlight, "a map that starts lit lights the player")
-	cfg.default_state = DotFlashlightConfig.START_OFF
+	cfg.default_state = GSFlashlightConfig.START_OFF
 	murderer.flashlight_ready = false
 	await _step(game, 2)
 	_check(not murderer.flashlight, "and one that starts dark does not")
@@ -32,5 +32,5 @@ func _test_the_flashlight() -> void:
 	cfg.allowed_maps = PackedStringArray(["no_such_map"])
 	_check(not game.toggle_flashlight(gunner.player_id) and gunner.flashlight, "a map outside allowed_maps has no light")
 	cfg.allowed_maps = PackedStringArray()
-	cfg.default_state = DotFlashlightConfig.START_DARK
+	cfg.default_state = GSFlashlightConfig.START_DARK
 	_finished()

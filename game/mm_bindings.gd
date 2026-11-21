@@ -1,6 +1,6 @@
 extends RefCounted
 
-## Every key this game reads, as one [DotMenuBindings] table: the action, its setting, the words
+## Every key this game reads, as one [GSMenuBindings] table: the action, its setting, the words
 ## a player sees, the default and the card. The client, settings, Controls page and help read it.
 ## H is help in every game (dot-menu adds the row), so nothing here defaults to it.
 
@@ -17,8 +17,8 @@ const FLASHLIGHT := &"mm_flashlight"
 const CHAT := &"chat_open"
 
 
-static func make() -> DotMenuBindings:
-	var keys := DotMenuBindings.new()
+static func make() -> GSMenuBindings:
+	var keys := GSMenuBindings.new()
 	keys.add_movement("Movement", "Ctrl", "Crouch")
 	# dot-player-controller's own sprint and walk actions, as rows so the Controls page and the
 	# help screen have them.

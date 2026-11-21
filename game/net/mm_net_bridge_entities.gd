@@ -3,8 +3,8 @@ extends "mm_net_bridge_state.gd"
 ## The entities and toy mirrors of [code]mm_net_bridge.gd[/code]: one behaviour per player, one per toy.
 ## Path-based base, no class_name.
 
-func _build_entity(player: MmPlayer, peer_id: int) -> DotNetIdentity:
-	# The behaviour is added BEFORE the identity: [DotNetIdentity] collects behaviours in
+func _build_entity(player: MmPlayer, peer_id: int) -> GSNetIdentity:
+	# The behaviour is added BEFORE the identity: [GSNetIdentity] collects behaviours in
 	# `_ready` by walking the subtree, and one added afterwards would never be found.
 	var behaviour := MmPlayerNet.new()
 	behaviour.name = "Net"
@@ -12,13 +12,13 @@ func _build_entity(player: MmPlayer, peer_id: int) -> DotNetIdentity:
 	behaviour.bridge = self
 	player.add_child(behaviour)
 
-	var identity := DotNetIdentity.new()
+	var identity := GSNetIdentity.new()
 	identity.name = "Identity"
 	identity.owner_peer_id = peer_id
 	# SHARED: the server corrects, the owner predicts. SERVER would put a player's own
 	# movement a round trip behind their keys, and somebody running from a knife would arrive
 	# a round trip after the murderer turned the corner.
-	identity.authority = DotNetIdentity.Authority.SHARED
+	identity.authority = GSNetIdentity.Authority.SHARED
 	# Relevant to everybody: a map is a few rooms, and nobody here is hidden from anybody on the
 	# wire. What is secret is a role, which no snapshot carries at all.
 	identity.always_relevant = true
@@ -65,7 +65,7 @@ func _register_toys() -> void:
 
 ## A toy's behaviour and identity under [param parent], registered under [param net_id] (0 allocates one). Null when refused.
 # The behaviour goes before the identity, which collects behaviours in its `_ready`.
-func _toy_entity(toy: DotPropBody, parent: Node, net_id: int) -> MmToyNet:
+func _toy_entity(toy: GSPropBody, parent: Node, net_id: int) -> MmToyNet:
 	var behaviour := MmToyNet.new()
 	behaviour.name = "Net"
 	behaviour.toy = toy
@@ -78,16 +78,16 @@ func _toy_entity(toy: DotPropBody, parent: Node, net_id: int) -> MmToyNet:
 	if net.is_server:
 		behaviour.pull()
 
-	var identity := DotNetIdentity.new()
+	var identity := GSNetIdentity.new()
 	identity.name = "Identity"
 	identity.owner_peer_id = 0
-	identity.authority = DotNetIdentity.Authority.SERVER
+	identity.authority = GSNetIdentity.Authority.SERVER
 	identity.always_relevant = true
 	at.add_child(identity)
 
 	var registered := net.registry.register(identity, net_id, net.clock.tick, net.config)
 	if not registered.ok:
-		DotLog.warn(CHANNEL, "could not replicate a toy", {"toy": _toy_nets.size(), "error": str(registered.error)})
+		GSLog.warn(CHANNEL, "could not replicate a toy", {"toy": _toy_nets.size(), "error": str(registered.error)})
 		for node: Node in [behaviour, identity]:
 			at.remove_child(node)
 			node.queue_free()
@@ -124,7 +124,7 @@ func _release_toys() -> void:
 
 ## Client: TOYS. A mirror for every id at once, whether this end has built that map or not.
 # dot-net stops reading a snapshot at the first entity it does not know, so a client without the map would freeze every player listed after the toys.
-func _apply_toys(reader: DotNetReader) -> void:
+func _apply_toys(reader: GSNetReader) -> void:
 	var told := MmEvents.read_toys(reader)
 	if not bool(told["ok"]) or net == null or net.is_server:
 		return
@@ -148,7 +148,7 @@ func _pair_pending_toys() -> void:
 	var same_map := game.map != null and (_toys_map == &"" or game.map.id() == _toys_map)
 	var box := game.map.toys if same_map and game.map.toys != null else null
 	if box != null and box.count() != _toy_nets.size():
-		DotLog.warn(CHANNEL, "the server's map has a different number of toys", {"server": _toy_nets.size(), "here": box.count()})
+		GSLog.warn(CHANNEL, "the server's map has a different number of toys", {"server": _toy_nets.size(), "here": box.count()})
 	for i in range(_toy_nets.size()):
 		var behaviour: MmToyNet = _toy_nets[i]
 		if is_instance_valid(behaviour):

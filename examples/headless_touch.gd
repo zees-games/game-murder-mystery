@@ -1,16 +1,16 @@
-extends DotGameCheckSuite
+extends GSGameCheckSuite
 
 const MmTouch := preload("../game/mm_touch.gd")
 const MmHud := preload("../game/mm_hud.gd")
 
-## The touch layout: dot-mobile's overlay drives the sampler and never auto-fires; the buttons fit a phone at three sizes without overlapping, and each DotTouchButtons is freed.
+## The touch layout: dot-mobile's overlay drives the sampler and never auto-fires; the buttons fit a phone at three sizes without overlapping, and each GSTouchButtons is freed.
 ## Run: `godot --headless --path . res://examples/headless_touch.tscn`
 
 const CHECKS := 25
 
 
 func _ready() -> void:
-	DotLog.set_level(DotLog.Level.ERROR)
+	GSLog.set_level(GSLog.Level.ERROR)
 	_run.call_deferred()
 
 
@@ -23,9 +23,9 @@ func _run() -> void:
 		for b: Dictionary in layout:
 			ids.append(b["id"])
 		_check(ids.size() >= 4, "%s: the layout has its buttons" % label)
-		_check(ids.has(MmTouch.HOLSTER) and ids.has(DotGameTouchLayout.FIRE) and ids.has(DotGameTouchLayout.USE) and ids.has(DotGameTouchLayout.JUMP) and ids.has(DotGameTouchLayout.CROUCH), "%s: fire, use, holster, jump and crouch are laid out" % label, str(ids))
+		_check(ids.has(MmTouch.HOLSTER) and ids.has(GSGameTouchLayout.FIRE) and ids.has(GSGameTouchLayout.USE) and ids.has(GSGameTouchLayout.JUMP) and ids.has(GSGameTouchLayout.CROUCH), "%s: fire, use, holster, jump and crouch are laid out" % label, str(ids))
 		for size: Vector2 in [Vector2(844, 390), Vector2(667, 375), Vector2(932, 430)]:
-			var buttons := DotTouchButtons.new()
+			var buttons := GSTouchButtons.new()
 			buttons.margin = MmTouch.EDGE_MARGIN
 			buttons.size = size
 			buttons.set_buttons(layout)
@@ -43,18 +43,18 @@ func _run() -> void:
 			buttons.free()
 	_overlay()
 	await _check_chat_clear_of_role()
-	DotPlatform.touch_override = 0
-	var off := DotTouchButtons.new()
+	GSPlatform.touch_override = 0
+	var off := GSTouchButtons.new()
 	add_child(off)
 	_check(not off.visible, "no touch: the buttons are hidden")
 	off.free()
-	DotPlatform.touch_override = -1
+	GSPlatform.touch_override = -1
 	_report(CHECKS)
 
 
 ## The chat log and the role block (disc, weapon, words, cooldown) share the bottom left; at the phone size they must not meet.
 func _check_chat_clear_of_role() -> void:
-	DotPlatform.touch_override = 1
+	GSPlatform.touch_override = 1
 	var vp := SubViewport.new()
 	vp.size = Vector2i(844, 390)
 	add_child(vp)
@@ -87,13 +87,13 @@ func _check_chat_clear_of_role() -> void:
 ## dot-mobile's overlay on the client's own sampler: touches, a menu, the buttons' actions, and auto-fire held off.
 func _overlay() -> void:
 	var rules := MmTouch.make_rules()
-	_check(not rules.resolve(DotMobilePrefs.new(), true).autofire, "auto-fire is off for a touch player by default")
-	_check(MmTouch.crosshair_kind() != DotMobileAutoFire.TARGET_ENEMY, "the crosshair is never an enemy: nobody is known to be one")
-	DotPlatform.touch_override = 1
+	_check(not rules.resolve(GSMobilePrefs.new(), true).autofire, "auto-fire is off for a touch player by default")
+	_check(MmTouch.crosshair_kind() != GSMobileAutoFire.TARGET_ENEMY, "the crosshair is never an enemy: nobody is known to be one")
+	GSPlatform.touch_override = 1
 	var host := Control.new()
 	host.size = Vector2(844, 390)
 	add_child(host)
-	var sampler := DotFpsTouchSampler.new(DotFpsTunables.new())
+	var sampler := GSFpsTouchSampler.new(GSFpsTunables.new())
 	var touch := MmTouch.new()
 	touch.build(sampler, null, rules)
 	host.add_child(touch)
@@ -102,7 +102,7 @@ func _overlay() -> void:
 	var ids: Array[StringName] = []
 	for b: Dictionary in MmTouch.layout():
 		ids.append(b["id"])
-	_check(ids.has(MmTouch.HOLSTER) and ids.has(DotGameTouchLayout.FIRE) and ids.has(DotGameTouchLayout.USE), "the game's hit, use and draw buttons are declared")
+	_check(ids.has(MmTouch.HOLSTER) and ids.has(GSGameTouchLayout.FIRE) and ids.has(GSGameTouchLayout.USE), "the game's hit, use and draw buttons are declared")
 	var tap := InputEventScreenTouch.new()
 	tap.pressed = true
 	var fake := InputEventMouseMotion.new()
@@ -111,20 +111,20 @@ func _overlay() -> void:
 	var pressed: Array[StringName] = []
 	controls.button_pressed.connect(func(id: StringName) -> void: pressed.append(id))
 	controls.buttons.button_down.emit(MmTouch.HOLSTER)
-	controls.buttons.button_down.emit(DotGameTouchLayout.USE)
-	_check(pressed.has(MmTouch.HOLSTER) and pressed.has(DotGameTouchLayout.USE), "draw and use reach the game's one-shot handlers", str(pressed))
+	controls.buttons.button_down.emit(GSGameTouchLayout.USE)
+	_check(pressed.has(MmTouch.HOLSTER) and pressed.has(GSGameTouchLayout.USE), "draw and use reach the game's one-shot handlers", str(pressed))
 	var jump_bit := 0
 	for b: Dictionary in MmTouch.layout():
-		if b["id"] == DotGameTouchLayout.JUMP:
+		if b["id"] == GSGameTouchLayout.JUMP:
 			jump_bit = int(b.get("hold", 0))
-	_check(jump_bit == DotFpsCommand.BUTTON_JUMP, "the jump button holds the sampler's jump bit", str(jump_bit))
+	_check(jump_bit == GSFpsCommand.BUTTON_JUMP, "the jump button holds the sampler's jump bit", str(jump_bit))
 	controls.buttons.button_up.emit(MmTouch.HOLSTER)
-	controls.buttons.button_up.emit(DotGameTouchLayout.USE)
+	controls.buttons.button_up.emit(GSGameTouchLayout.USE)
 	touch.sync(true)
 	_check(not controls.visible and not touch.active(), "a menu pauses it")
-	_check(not touch.is_held(DotGameTouchLayout.FIRE), "auto-fire never holds the hit button")
+	_check(not touch.is_held(GSGameTouchLayout.FIRE), "auto-fire never holds the hit button")
 	touch.sync(false)
 	_check(touch.active(), "and closing the menu brings it back")
 	_check(controls.buttons.margin == MmTouch.EDGE_MARGIN, "the buttons keep their edge margin")
 	host.free()
-	DotPlatform.touch_override = -1
+	GSPlatform.touch_override = -1

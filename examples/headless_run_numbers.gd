@@ -10,7 +10,7 @@ const MmProgress := preload("../game/mm_progress.gd")
 func _test_bot_chat() -> void:
 	_section("the bots' chat is rationed")
 	var chat := MmBotChat.new()
-	var stream := DotRandomStream.new(7, &"chat_test")
+	var stream := GSRandomStream.new(7, &"chat_test")
 	var first := chat.line(&"a", &"body", 0.0, stream, "", true)
 	_check(first != "" and (MmBotChat.LINES[&"body"] as Array).has(first), "a line from the moment's pool", first)
 	_check(chat.line(&"b", &"body", 1.0, stream, "", true) == "", "nobody else straight after it")
@@ -57,10 +57,10 @@ func _test_progress() -> void:
 	_check(of.call(b.player_id, MmProgress.PICKUPS) == 1.0 and of.call(b.player_id, MmProgress.HEROICS) == 1.0,
 		"and the gun picked up and the murderer shot", "%s %s (hit %s, murderer alive %s, gun %s, phase %s)" % [of.call(b.player_id, MmProgress.PICKUPS), of.call(b.player_id, MmProgress.HEROICS), _hit, m.is_alive(), b.has_gun, game.phase])
 
-	var _held := DotStatsValues.new()
+	var _held := GSStatsValues.new()
 	_held.values = {String(MmProgress.KILLS): 10.0}
 	game.progress.rank.seed_baseline(&"rank-probe", _held)
-	var _life: float = game.progress.rank.publish_lifetime(&"rank-probe", DotStatsValues.new(), game.progress.stats.schema)
+	var _life: float = game.progress.rank.publish_lifetime(&"rank-probe", GSStatsValues.new(), game.progress.stats.schema)
 	_check(game.progress.stats.schema.has(MmProgress.RANK_SCORE) and _life == 10.0,
 		"rank_score is declared and ranks on a stored lifetime baseline", "%.1f" % _life)
 	game.progress.rank.forget(&"rank-probe")

@@ -1,6 +1,6 @@
 # Bot soak
 
-`./game.sh soak [map] [minutes]` runs `tools/soak.tscn`: eight stand-ins (`game/mm_bots.gd`) play rounds on one map of a real `MmGame` (round 150 s, grace 8 s, 32 Hz), driven by dot-bot's `DotBotSoak` with dot-spawn's `DotSpawnWatch` for stuck and fell-out verdicts. The report is `.godot/test-logs/soak-<map>.json` and one `SOAK {...}` line; the exit code is 1 on failure. It needs the gitignored `addons/dot_spawn` link and a `godot --import`.
+`./game.sh soak [map] [minutes]` runs `tools/soak.tscn`: eight stand-ins (`game/mm_bots.gd`) play rounds on one map of a real `MmGame` (round 150 s, grace 8 s, 32 Hz), driven by dot-bot's `GSBotSoak` with dot-spawn's `GSSpawnWatch` for stuck and fell-out verdicts. The report is `.godot/test-logs/soak-<map>.json` and one `SOAK {...}` line; the exit code is 1 on failure. It needs the gitignored `addons/dot_spawn` link and a `godot --import`.
 
 A bot counts as moving for the watch only in PLAY, alive, with a goal more than 1.5 m away: one standing about at its goal (loitering, a murderer waiting for a clean moment) is not stuck. There is no navigation query here, so off-nav and unreachable are off. Kills are the murderers' (a fall is a respawn, never a death) and the harness's "zero kills" check stays on after 120 s.
 

@@ -40,53 +40,53 @@ var player: MmPlayer = null
 var camera: Camera3D = null
 
 ## The flashlight on the eye and the others' beams (dot-flashlight); the server owns on/off.
-var flash: DotFlashlight = null
-var flash_crowd: DotFlashlightCrowd = null
+var flash: GSFlashlight = null
+var flash_crowd: GSFlashlightCrowd = null
 var _flash_msec := -100000
 var _flash_retain := 0.0
 
 ## Keeps the screen covered, and the local body and the input still, until the level, the
-## player and the camera are all in. It is [member DotGameClient.gate].
-var gate: DotLoadGate = null
+## player and the camera are all in. It is [member GSGameClient.gate].
+var gate: GSLoadGate = null
 
 ## dot-game's client platform: the cover, settings and menu, console, HUD theme, Tab, M, the
-## pointer and the input block. See [DotGameClient].
-var platform: DotGameClient = null
+## pointer and the input block. See [GSGameClient].
+var platform: GSGameClient = null
 var hud: MmHud = null
 
-## The final killcam ([DotKillcamHost]); null without dot-replay API 6.
-var killcam: DotKillcamHost = null
-var board: DotMenuScoreboard = null
-var chat: DotGameChatClient = null
+## The final killcam ([GSKillcamHost]); null without dot-replay API 6.
+var killcam: GSKillcamHost = null
+var board: GSMenuScoreboard = null
+var chat: GSGameChatClient = null
 var audio: MmAudio = null
 var settings: MmSettings = null
 ## Maps dropped on the window or the executable (MmMapDrop); null on dot-map older than API 26.
 var map_drop: Node = null
 
 ## The player's console (the platform's).
-var console: DotConsoleController = null
+var console: GSConsoleController = null
 
-var net: DotNetManager = null
+var net: GSNetManager = null
 var bridge: MmNetBridge = null
 var link: Node = null
 ## Asks a server whether this player may edit it (sv_workbench_remote); null offline.
-var workbench_remote: DotGameWorkbenchRemoteClient = null
+var workbench_remote: GSGameWorkbenchRemoteClient = null
 ## The tuning panel's host: F9 solo or hosting, the admin's remote panel on a server that allows it.
-var workbench: DotGameWorkbench = null
+var workbench: GSGameWorkbench = null
 
 ## Whether the camera hangs behind the player. F5 swaps it.
 var third_person: bool = false
 
 var _offline: bool = true
-var _sampler: DotFpsSampler = null
+var _sampler: GSFpsSampler = null
 ## The on-screen buttons, only where a finger is the input (see MmTouch.wanted).
 var touch: MmTouch = null
 var _watch_id: int = -1
 ## The spectator's free camera while roaming, and the mouse motion not yet turned into a look.
-var _free_cam: DotSpectatorFreeCam = null
+var _free_cam: GSSpectatorFreeCam = null
 var _roam_look: Vector2 = Vector2.ZERO
-var _arm: DotCameraBoom = null
-var _fade: DotCameraFade = null
+var _arm: GSCameraBoom = null
+var _fade: GSCameraFade = null
 var _rig_height: float = 0.0
 var _started_msec: int = Time.get_ticks_msec()
 
@@ -95,7 +95,7 @@ var _beeped: int = -1
 
 
 ## Where the dead lie: dot-player-char's ragdolls under the game's (the server's) rules.
-var ragdolls: DotPlayerRagdolls = null
+var ragdolls: GSPlayerRagdolls = null
 
 
 ## Blood on the wall behind a shot or the floor under a stab (see mm_blood.gd).

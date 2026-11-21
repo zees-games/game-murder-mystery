@@ -4,11 +4,11 @@ extends "mm_game_world.gd"
 ## compensation read. Path-based base, no class_name.
 
 ## The flashlight config, made on first use.
-func flashlight_conf() -> DotFlashlightConfig:
+func flashlight_conf() -> GSFlashlightConfig:
 	if flashlight_config == null:
 		flashlight_config = MmFlashlight.make_config()
 		flashlight_binder = MmFlashlight.make_binder(flashlight_config)
-		DotLog.result(CHANNEL, "flashlight config", flashlight_binder.load_layers())
+		GSLog.result(CHANNEL, "flashlight config", flashlight_binder.load_layers())
 	return flashlight_config
 
 
@@ -37,7 +37,7 @@ func toggle_flashlight(id: StringName) -> bool:
 	var cfg := flashlight_conf()
 
 	if player == null or not player.is_alive() or player.watching \
-			or not DotFlashlightRules.allowed_on(cfg, str(map_doc.get("id", ""))):
+			or not GSFlashlightRules.allowed_on(cfg, str(map_doc.get("id", ""))):
 		return false
 
 	player.flashlight = not player.flashlight
@@ -85,7 +85,7 @@ func _advance_toys(delta: float) -> void:
 		var state := player.controller.state
 		var _pushed := map.toys.push_from(state.position, state.velocity, MmPlayer.BODY_RADIUS, player.hull_height())
 
-		if state.mode == DotFpsState.Mode.GROUND:
+		if state.mode == GSFpsState.Mode.GROUND:
 			var _bore := map.toys.stand_on(state.position, PERSON_MASS)
 
 	map.toys.advance(delta)
@@ -267,7 +267,7 @@ func use_door(index: int, by: StringName) -> bool:
 	if progress != null and players.has(by):
 		progress.on_door(by)
 
-	DotLog.debug(CHANNEL, "a door was used", {
+	GSLog.debug(CHANNEL, "a door was used", {
 		"door": map.doors.name_of(index), "open": open, "by": String(by), "tick": _tick,
 	})
 	return true

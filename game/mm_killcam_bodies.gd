@@ -1,6 +1,6 @@
 extends RefCounted
 
-## MmPlayer hooks for dot-replay's [DotKillcamHost]: how a drawn body is read and posed.
+## MmPlayer hooks for dot-replay's [GSKillcamHost]: how a drawn body is read and posed.
 
 const MmFigure := preload("mm_figure.gd")
 const MmPlayer := preload("mm_player.gd")
@@ -10,7 +10,7 @@ const SKIP_ACTIONS: PackedStringArray = ["dot_fps_jump", "mm_attack", "ui_cancel
 
 
 ## Gives [param host] the skip keys and body hooks.
-static func configure(host: DotKillcamHost) -> void:
+static func configure(host: GSKillcamHost) -> void:
 	host.log_channel = "mm.killcam"
 	host.skip_actions = SKIP_ACTIONS
 	host.skip_hint = "Jump or Attack to skip"

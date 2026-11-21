@@ -1,4 +1,4 @@
-extends DotGameCheckSuite
+extends GSGameCheckSuite
 
 const MmMapConfig := preload("../game/mm_map_config.gd")
 
@@ -14,7 +14,7 @@ var _sections_finished := 0
 
 
 func _ready() -> void:
-	DotLog.set_level(DotLog.Level.ERROR)
+	GSLog.set_level(GSLog.Level.ERROR)
 	_run.call_deferred()
 
 
@@ -25,12 +25,12 @@ func _run() -> void:
 		get_tree().quit(0)
 		return
 	_sections_entered += 1
-	var console := DotConsole.new()
+	var console := GSConsole.new()
 	add_child(console)
-	console.cvar("mm_round_seconds", "300", "", DotConVar.FLAG_ARCHIVE)
-	console.cvar("mm_doors", "1", "", DotConVar.FLAG_ARCHIVE)
-	console.cvar("mm_bots", "1", "", DotConVar.FLAG_ARCHIVE)
-	var cfg := DotGameMapConfig.for_console(MmMapConfig.GAME_ID, console, MmMapConfig.KEYS)
+	console.cvar("mm_round_seconds", "300", "", GSConVar.FLAG_ARCHIVE)
+	console.cvar("mm_doors", "1", "", GSConVar.FLAG_ARCHIVE)
+	console.cvar("mm_bots", "1", "", GSConVar.FLAG_ARCHIVE)
+	var cfg := GSGameMapConfig.for_console(MmMapConfig.GAME_ID, console, MmMapConfig.KEYS)
 
 	var dir := "res://cfg/server/game/%s/dot_map/map" % MmMapConfig.GAME_ID
 	var real := ProjectSettings.globalize_path(dir)

@@ -4,7 +4,7 @@ const MmConfig := preload("../game/mm_config.gd")
 const MmGame := preload("../game/mm_game.gd")
 
 ## Bot soak on the real game: N stand-ins play rounds back to back on one map for M simulated
-## minutes through dot-bot's DotBotSoak (`./game.sh soak [map] [minutes]`). Writes
+## minutes through dot-bot's GSBotSoak (`./game.sh soak [map] [minutes]`). Writes
 ## `.godot/test-logs/soak-<map>.json`, prints the SOAK line, exits 1 when the run fails.
 
 const DEFAULT_MAP := "mm_mansion"
@@ -20,7 +20,7 @@ var _trace := OS.get_cmdline_user_args().has("--trace")
 
 
 func _ready() -> void:
-	DotLog.set_level(DotLog.Level.ERROR)
+	GSLog.set_level(GSLog.Level.ERROR)
 	_run.call_deferred()
 
 
@@ -34,7 +34,7 @@ func _arg(name: String, fallback: String) -> String:
 
 func _run() -> void:
 	var map_id := _arg("map", DEFAULT_MAP)
-	var cfg := DotBotSoakConfig.new()
+	var cfg := GSBotSoakConfig.new()
 	cfg.minutes = DEFAULT_MINUTES
 	cfg.bots = DEFAULT_BOTS
 	cfg.apply_cli()
@@ -69,11 +69,11 @@ func _run() -> void:
 	_game.round_over.connect(func(_n: int, _w: int, _s: String) -> void: _rounds += 1)
 	_game.start()
 
-	var watch := DotSpawnWatch.new()
+	var watch := GSSpawnWatch.new()
 	watch.rules.enabled = true
 	watch.rules.kill_y = -200.0
 
-	var soak := DotBotSoak.new(cfg)
+	var soak := GSBotSoak.new(cfg)
 	soak.watch = watch
 	soak.movers_fn = _movers
 	soak.stats_fn = func() -> Dictionary: return {"kills": _kills, "deaths": _deaths, "damage": 0.0}
@@ -92,8 +92,8 @@ func _run() -> void:
 	var counts: Dictionary = _game.bots.counts
 	report["bot_counts"] = counts.duplicate()
 	report["longest_stuck"] = {"seconds": _game.bots.longest_stuck, "who": String(_game.bots.longest_stuck_who)}
-	print(DotBotSoak.summary(report))
-	print(DotBotSoak.report_line(report))
+	print(GSBotSoak.summary(report))
+	print(GSBotSoak.report_line(report))
 	var path := ProjectSettings.globalize_path("res://.godot/test-logs/soak-%s.json" % map_id)
 	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
 	if soak.write_report(report, path) != OK:

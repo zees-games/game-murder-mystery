@@ -1,4 +1,4 @@
-extends DotFxBlood
+extends GSFxBlood
 ## Blood from the SHOT and DEATH events every client already gets, so the server sends nothing extra.
 
 

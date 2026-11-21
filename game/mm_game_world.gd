@@ -40,7 +40,7 @@ func apply_pass_through() -> void:
 ## Three layers: the building, the people, and the furniture. `mp_solidplayers` is 0 by default
 ## (`_init`): a murderer's body pinning somebody in a corner would be a different game.
 func _build_physics() -> void:
-	physics = DotPhysicsLayout.custom(&"murder", [&"world", &"player", &"prop", &"toy", &"footprint"])
+	physics = GSPhysicsLayout.custom(&"murder", [&"world", &"player", &"prop", &"toy", &"footprint"])
 
 	for layer in physics.layers:
 		match layer.id:
@@ -59,7 +59,7 @@ func _build_physics() -> void:
 	var built := physics.build()
 
 	if not built.ok:
-		DotLog.error(CHANNEL, "the collision layout would not build", {"why": built.error.message})
+		GSLog.error(CHANNEL, "the collision layout would not build", {"why": built.error.message})
 		physics = null
 
 
@@ -75,7 +75,7 @@ func _apply_gravity() -> void:
 
 
 func _build_random() -> void:
-	random = DotRandomManager.new()
+	random = GSRandomManager.new()
 	random.name = "Random"
 	random.register_as_service = false
 	add_child(random)
@@ -88,7 +88,7 @@ func _build_props() -> void:
 	var count := props_catalogue.load_file()
 
 	if count == 0:
-		DotLog.error(CHANNEL, "no props: every map will be empty rooms", {})
+		GSLog.error(CHANNEL, "no props: every map will be empty rooms", {})
 
 
 func _build_map() -> void:
@@ -108,32 +108,32 @@ func _build_map() -> void:
 ## [method _advance_weapons]) and arrive at dot-combat as damage, so dot-moderation's god and
 ## buddha work as they do everywhere.
 func _build_combat() -> void:
-	combat = DotCombatManager.new()
+	combat = GSCombatManager.new()
 	combat.name = "Combat"
 	combat.is_authority = authoritative
 	combat.register_service = false
 
-	var damage_rules := DotDamageRules.new()
+	var damage_rules := GSDamageRules.new()
 	# Everybody is one team as dot-combat sees it, and the gunner shooting an innocent is the
 	# rule working, so friendly fire is on.
 	damage_rules.friendly_fire = true
 	damage_rules.self_damage = true
 	combat.rules = damage_rules
 
-	var settings := DotCombatConfig.new()
+	var settings := GSCombatConfig.new()
 	settings.lag_compensation = false
 	combat.config = settings
-	var trace := DotTracePhysics.for_world(get_world_3d())
+	var trace := GSTracePhysics.for_world(get_world_3d())
 
 	if physics != null:
 		trace.collision_mask = physics.layer_mask(&"world") | physics.layer_mask(&"prop")
 
 	combat.trace = trace
-	combat.resolver = DotDamageResolver.with_rules(damage_rules)
+	combat.resolver = GSDamageResolver.with_rules(damage_rules)
 	# dot-game's "still loading": every kill passes here, so a seat behind its client's cover is
 	# neither stabbed, shot nor eliminated, and a round counts the living from health. An
 	# admin's slay or slap is the operator's word, and a fall is a respawn, not a death.
-	combat.resolver.adjust = func(damage: DotDamage) -> void:
+	combat.resolver.adjust = func(damage: GSDamage) -> void:
 		if damage.context.get("admin", false) or damage.context.get("why", &"") == DIED_FELL:
 			return
 
@@ -146,31 +146,31 @@ func _build_effects() -> void:
 	if authoritative and not draw_world:
 		return
 
-	var fx := DotFxCatalogue.new()
+	var fx := GSFxCatalogue.new()
 
-	var go := DotFxDef.new()
+	var go := GSFxDef.new()
 	go.id = &"go"
-	go.kind = DotFxDef.Kind.SCREEN
+	go.kind = GSFxDef.Kind.SCREEN
 	go.flash_peak = 0.18
 	go.flash_colour = Color(0.98, 0.86, 0.35, 1.0)
 	go.flash_decay_ms = 380
 	fx.add(go)
 
-	var hurt := DotFxDef.new()
+	var hurt := GSFxDef.new()
 	hurt.id = &"killed"
-	hurt.kind = DotFxDef.Kind.SCREEN
+	hurt.kind = GSFxDef.Kind.SCREEN
 	hurt.flash_peak = 0.45
 	hurt.flash_colour = TEAM_COLOURS[1]
 	hurt.flash_decay_ms = 700
 	fx.add(hurt)
 
-	effects = DotFxManager.new()
+	effects = GSFxManager.new()
 	effects.name = "Effects"
 	effects.catalogue = fx
-	effects.config = DotFxConfig.new()
+	effects.config = GSFxConfig.new()
 	effects.register_as_service = false
 	add_child(effects)
-	DotLog.result(CHANNEL, "the effects layer", effects.setup())
+	GSLog.result(CHANNEL, "the effects layer", effects.setup())
 
 
 func _build_spectate() -> void:
@@ -190,7 +190,7 @@ func _build_spectate() -> void:
 	var ready_now := spectate.setup()
 
 	if not ready_now.ok:
-		DotLog.warn(CHANNEL, "spectating is off", {"why": ready_now.error.message})
+		GSLog.warn(CHANNEL, "spectating is off", {"why": ready_now.error.message})
 		remove_child(spectate)
 		spectate.queue_free()
 		spectate = null
@@ -209,7 +209,7 @@ func _build_progress() -> void:
 	var ready_now := progress.setup(config.progress_directory, config.report_progress)
 
 	if not ready_now.ok:
-		DotLog.warn(CHANNEL, "progress is off", {"why": ready_now.error.message})
+		GSLog.warn(CHANNEL, "progress is off", {"why": ready_now.error.message})
 		remove_child(progress)
 		progress.queue_free()
 		progress = null
@@ -229,15 +229,15 @@ func can_be_harmed(player_id: StringName) -> bool:
 ## Reads maps.yml (the shipped `res://maps.yml` under [member MmConfig.map_rotation_file], also
 ## looked for in the `--config` directory) and applies it. A present but unreadable file is an
 ## ERROR and changes nothing: rotating every map beats rotating none.
-func load_rotation() -> DotResult:
+func load_rotation() -> GSResult:
 	var stem := config.map_rotation_file if config != null else ""
-	var dir := DotMapRotationFile.config_dir_arg()
-	var found := DotMapRotationFile.find(stem, dir)
+	var dir := GSMapRotationFile.config_dir_arg()
+	var found := GSMapRotationFile.find(stem, dir)
 
 	if found == "" and stem != "" and (dir != "" or stem != MmConfig.new().map_rotation_file):
 		# The default name being absent is an install with no maps.yml; a name or a directory
 		# somebody chose that finds nothing is a typo they would otherwise never hear about.
-		DotLog.warn(CHANNEL, "the map rotation file was not found; every map rotates", {
+		GSLog.warn(CHANNEL, "the map rotation file was not found; every map rotates", {
 			"file": stem, "config_dir": dir,
 		})
 
@@ -246,10 +246,10 @@ func load_rotation() -> DotResult:
 		if candidate != "" and not paths.has(candidate) and FileAccess.file_exists(candidate):
 			paths.append(candidate)
 
-	var read := DotMapRotationFile.load_files(paths, "game-murder-mystery")
+	var read := GSMapRotationFile.load_files(paths, "game-murder-mystery")
 
 	if not read.ok:
-		DotLog.error(CHANNEL, "the map rotation file could not be read; every map rotates", {
+		GSLog.error(CHANNEL, "the map rotation file could not be read; every map rotates", {
 			"why": read.error.message,
 		})
 		rotation_file = null
@@ -258,7 +258,7 @@ func load_rotation() -> DotResult:
 
 	rotation_file = read.value
 	if rotation_file.has_rotations():
-		DotLog.info(CHANNEL, "the map rotation file", {
+		GSLog.info(CHANNEL, "the map rotation file", {
 			"paths": ", ".join(rotation_file.sources), "active": rotation_file.active_name(),
 		})
 
@@ -273,21 +273,21 @@ func apply_rotation() -> void:
 	if catalogue == null:
 		return
 
-	map_rotation_defs = DotMapCatalogue.new()
+	map_rotation_defs = GSMapCatalogue.new()
 	for id in catalogue.maps:
 		var doc: Dictionary = catalogue.maps[id]
-		var def := DotMapDef.new()
+		var def := GSMapDef.new()
 		def.id = id
 		def.display_name = str(doc.get("name", id))
 		def.scene_path = "doc:%s" % id
 		var _added := map_rotation_defs.add(def)
 
-	map_rotation = DotMapRotation.of(map_rotation_defs)
+	map_rotation = GSMapRotation.of(map_rotation_defs)
 	map_rotation.cooldown = 1
 
 	if rotation_file != null and rotation_file.has_rotations():
 		# An empty rotation plays every installed map: the same set as having no file.
-		rotation_file.fallback_in = func(_map: DotMapDef) -> bool: return true
+		rotation_file.fallback_in = func(_map: GSMapDef) -> bool: return true
 		var _applied := rotation_file.apply(map_rotation)
 
 
@@ -297,7 +297,7 @@ func in_rotation(id: StringName) -> bool:
 	if rotation_file == null or not rotation_file.has_rotations():
 		return true
 
-	var def: DotMapDef = map_rotation_defs.get_map(id) if map_rotation_defs != null else null
+	var def: GSMapDef = map_rotation_defs.get_map(id) if map_rotation_defs != null else null
 
 	return def != null and def.in_rotation
 

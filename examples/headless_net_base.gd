@@ -1,4 +1,4 @@
-extends DotGameCheckSuite
+extends GSGameCheckSuite
 
 const MmCatalogue := preload("../game/mm_catalogue.gd")
 const MmConfig := preload("../game/mm_config.gd")
@@ -28,8 +28,8 @@ var _sections_entered := 0
 var _sections_finished := 0
 var _server_game: MmGame = null
 var _client_game: MmGame = null
-var _server_net: DotNetManager = null
-var _client_net: DotNetManager = null
+var _server_net: GSNetManager = null
+var _client_net: GSNetManager = null
 var _server_bridge: MmNetBridge = null
 var _client_bridge: MmNetBridge = null
 var _stand_in: MmPlayer = null
@@ -78,7 +78,7 @@ func _build() -> bool:
 	# The harness stamps every command itself, so the client must not ask for dot-net's input-lead
 	# report (it would steer the clock off commands it never stamped). Read by constant map so
 	# this parses against a dot-net from before the report.
-	var lead_bit := int((DotNetMessageRegistry as Script).get_script_constant_map().get("FEATURE_INPUT_LEAD", 0))
+	var lead_bit := int((GSNetMessageRegistry as Script).get_script_constant_map().get("FEATURE_INPUT_LEAD", 0))
 	_client_net.messages.features &= ~lead_bit
 
 	_wire_bridges(server_side, client_side)
@@ -151,7 +151,7 @@ func _listen_to_server() -> void:
 
 func _look(player: MmPlayer, target: Vector3) -> void:
 	var look := target - player.eye_position()
-	var command := DotFpsCommand.new()
+	var command := GSFpsCommand.new()
 	command.yaw = rad_to_deg(atan2(-look.x, -look.z))
 	command.pitch = clampf(rad_to_deg(asin(clampf(look.normalized().y, -1.0, 1.0))), -89.0, 89.0)
 	player.controller.state.yaw = command.yaw
@@ -172,9 +172,9 @@ func _server_me() -> MmPlayer:
 
 
 ## A command that looks from [param player]'s eye at [param target].
-func _aim_at(player: MmPlayer, target: Vector3) -> DotFpsCommand:
+func _aim_at(player: MmPlayer, target: Vector3) -> GSFpsCommand:
 	var look := target - player.eye_position()
-	var command := DotFpsCommand.new()
+	var command := GSFpsCommand.new()
 	command.yaw = rad_to_deg(atan2(-look.x, -look.z))
 	command.pitch = clampf(rad_to_deg(asin(clampf(look.normalized().y, -1.0, 1.0))), -89.0, 89.0)
 	return command
@@ -225,8 +225,8 @@ func _make_game(server: bool, parent: Node) -> MmGame:
 	return game
 
 
-func _make_manager(server: bool, scope: StringName, peer_id: int, parent: Node, tick_rate: int) -> DotNetManager:
-	var manager := DotNetManager.new()
+func _make_manager(server: bool, scope: StringName, peer_id: int, parent: Node, tick_rate: int) -> GSNetManager:
+	var manager := GSNetManager.new()
 	manager.name = "Server" if server else "Client"
 	manager.is_server = server
 	manager.local_peer_id = peer_id
@@ -234,7 +234,7 @@ func _make_manager(server: bool, scope: StringName, peer_id: int, parent: Node, 
 	manager.auto_tick = false
 	manager.config_file = ""
 
-	var config := DotNetConfig.new()
+	var config := GSNetConfig.new()
 	config.tick_rate = tick_rate
 	config.snapshot_rate = SNAPSHOT_RATE
 	config.enable_prediction = true
@@ -278,17 +278,17 @@ func _exchange() -> void:
 
 
 ## One tick on both ends, with a real physics frame between them.
-func _step(command: DotFpsCommand = null) -> void:
+func _step(command: GSFpsCommand = null) -> void:
 	_tick += 1
 	var _ticks := _client_net.clock.advance(1.0 / float(maxi(_client_game.tick_rate, 1)))
 	_server_bridge.server_tick(_tick)
 	_flush()
-	_client_bridge.client_tick(_tick + INPUT_LEAD, command if command != null else DotFpsCommand.new())
+	_client_bridge.client_tick(_tick + INPUT_LEAD, command if command != null else GSFpsCommand.new())
 	_flush()
 	await get_tree().physics_frame
 
 
-func _steps(count: int, command: DotFpsCommand = null) -> void:
+func _steps(count: int, command: GSFpsCommand = null) -> void:
 	for _i in range(count):
 		await _step(command)
 

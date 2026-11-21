@@ -1,6 +1,6 @@
 extends "mm_net_bridge_events.gd"
 
-## Joins an [MmGame] to a [DotNetManager]: the netcode seam, and the only file here that names both. The map crosses
+## Joins an [MmGame] to a [GSNetManager]: the netcode seam, and the only file here that names both. The map crosses
 ## once in `MAP`; per tick only who is alive and what is in a hand ([MmPlayerNet]); no message carries anybody's role
 ## but its owner's (docs/design.md). The world ticks once per tick, in the first behaviour through ([method ensure_game_ticked]).
 
@@ -12,16 +12,16 @@ func _exit_tree() -> void:
 		profile_link = null
 
 
-## [param p_game] and [param p_net], in the shape [DotGameNetcode] calls it.
-func attach(p_game: Object, p_net: DotNetManager) -> DotResult:
+## [param p_game] and [param p_net], in the shape [GSGameNetcode] calls it.
+func attach(p_game: Object, p_net: GSNetManager) -> GSResult:
 	var world := p_game as MmGame
 
 	if world == null or p_net == null:
-		return DotResult.fail(DotError.CODE_INVALID, "A bridge needs a world and a manager.")
+		return GSResult.fail(GSError.CODE_INVALID, "A bridge needs a world and a manager.")
 
 	if world.authoritative != p_net.is_server:
-		return DotResult.fail(
-			DotError.CODE_STATE,
+		return GSResult.fail(
+			GSError.CODE_STATE,
 			"The world and the manager disagree about who is authoritative.",
 			"world=%s net.is_server=%s" % [world.authoritative, p_net.is_server]
 		)
@@ -37,7 +37,7 @@ func attach(p_game: Object, p_net: DotNetManager) -> DotResult:
 
 	var event := net.messages.register(
 		MmEvent.NAME, MmEvent,
-		DotNetMessage.Delivery.RELIABLE, DotNetMessage.Direction.TO_CLIENT
+		GSNetMessage.Delivery.RELIABLE, GSNetMessage.Direction.TO_CLIENT
 	)
 
 	if not event.ok:
@@ -45,7 +45,7 @@ func attach(p_game: Object, p_net: DotNetManager) -> DotResult:
 
 	var request := net.messages.register(
 		MmRequest.NAME, MmRequest,
-		DotNetMessage.Delivery.RELIABLE, DotNetMessage.Direction.TO_SERVER
+		GSNetMessage.Delivery.RELIABLE, GSNetMessage.Direction.TO_SERVER
 	)
 
 	if not request.ok:
@@ -55,7 +55,7 @@ func attach(p_game: Object, p_net: DotNetManager) -> DotResult:
 	net.messages.on(MmRequest.NAME, _on_request)
 
 	# Edited profiles reach every client, so a remote admin's panel shows what the server holds; edits themselves go through the remote workbench.
-	profile_link = DotNetProfileLink.attach(net, world.ensure_runtime())
+	profile_link = GSNetProfileLink.attach(net, world.ensure_runtime())
 
 	# Both ends. The server's tick is `server_tick` and the client's is `client_tick`, which
 	# simulates what it predicts and leaves the rest to interpolation. A world still running
@@ -73,7 +73,7 @@ func attach(p_game: Object, p_net: DotNetManager) -> DotResult:
 	if net.is_server:
 		_connect_server_signals()
 
-	return DotResult.success(true)
+	return GSResult.success(true)
 
 
 func _connect_server_signals() -> void:
@@ -106,8 +106,8 @@ func _connect_server_signals() -> void:
 		game.spectate.view_changed.connect(_on_spectate_changed)
 
 
-## Opens the link under [param parent], whose NAME is half the RPC routing: a [DotServer] on one end and a
-## [DotClientLink] on the other, both called `Server`, with this node under each. A link opened anywhere else is
+## Opens the link under [param parent], whose NAME is half the RPC routing: a [GSServer] on one end and a
+## [GSClientLink] on the other, both called `Server`, with this node under each. A link opened anywhere else is
 ## addressed by a path the other end does not have, and every message lands nowhere with no error.
 func open_link(parent: Node) -> void:
 	if parent == null or link != null:
@@ -115,9 +115,9 @@ func open_link(parent: Node) -> void:
 
 	link = MmNetLink.attached_to(parent, self, net != null and net.is_server)
 	# Not parent.add_child: the link must sit under `Server` (RPCs route by path) yet die with this bridge. A bare
-	# add_child left a second link after every module reload and RPCs to real clients were lost silently. DotGameLink
+	# add_child left a second link after every module reload and RPCs to real clients were lost silently. GSGameLink
 	# frees it with the bridge, and without remove_child, which errors while the server tree tears down.
-	DotGameLink.attach(link, parent, self, MmNetLink.NODE_NAME)
+	GSGameLink.attach(link, parent, self, MmNetLink.NODE_NAME)
 
 
 func _on_player_added(id: StringName) -> void:
@@ -133,7 +133,7 @@ func _on_player_added(id: StringName) -> void:
 	# replicate under session 0, dot-net's broadcast address, and a second would replace the first in this table.
 	# Refused with a line rather than accepted quietly: otherwise one stand-in plays and the other stands still for ever.
 	if player_key(session_id) != id:
-		DotLog.warn(CHANNEL, "a player whose id is not a session key is not replicated", {
+		GSLog.warn(CHANNEL, "a player whose id is not a session key is not replicated", {
 			"id": String(id), "hint": "use add_bot() or MmNetBridge.player_key()",
 		})
 		return
@@ -147,13 +147,13 @@ func _on_player_added(id: StringName) -> void:
 	var registered := net.registry.register(identity, 0, net.clock.tick, net.config)
 
 	if not registered.ok:
-		DotLog.warn(CHANNEL, "could not replicate a player", {"error": str(registered.error)})
+		GSLog.warn(CHANNEL, "could not replicate a player", {"error": str(registered.error)})
 		return
 
 	# Before the JOIN, so the first thing anybody hears about this person is their face.
 	if player.avatar == null and avatar_fn.is_valid():
 		var avatar: Variant = avatar_fn.call(session_id)
-		player.avatar = avatar as DotAvatar if avatar is DotAvatar else null
+		player.avatar = avatar as GSAvatar if avatar is GSAvatar else null
 
 	_broadcast(MmEvents.Kind.JOIN, _join_body(session_id))
 	roster_changed.emit(session_id)
@@ -181,7 +181,7 @@ func _on_world_rebuilt() -> void:
 	_map_messages = MmEvents.write_map_parts(encoded, MmMapDoc.PART_BYTES)
 
 	if _map_messages.size() > 1:
-		DotLog.info(CHANNEL, "a large map goes in pieces", {
+		GSLog.info(CHANNEL, "a large map goes in pieces", {
 			"map": String(game.map.id()), "bytes": encoded.size(), "pieces": _map_messages.size(),
 		})
 
@@ -304,7 +304,7 @@ func view_lag_q(tick: int) -> int:
 	return clampi(int(roundf((float(tick) - drawn) * 4.0)), 0, MmNetCommand.MAX_VIEW_LAG_Q)
 
 
-func client_tick(tick: int, command: DotFpsCommand) -> void:
+func client_tick(tick: int, command: GSFpsCommand) -> void:
 	if net == null or net.is_server or game == null:
 		return
 
@@ -313,7 +313,7 @@ func client_tick(tick: int, command: DotFpsCommand) -> void:
 	var packet := MmNetCommand.new()
 	packet.tick = tick
 	packet.delta = net.clock.tick_duration()
-	packet.move = command if command != null else DotFpsCommand.new()
+	packet.move = command if command != null else GSFpsCommand.new()
 	packet.view_lag_q = view_lag_q(tick)
 
 	# Into the local history BEFORE predicting: reconciliation replays it.
@@ -329,8 +329,8 @@ func client_tick(tick: int, command: DotFpsCommand) -> void:
 
 	if link != null:
 		var payload := net.encode_ack()
-		var writer := DotNetWriter.new()
-		DotNetInput.write_batch(writer, _input_copies(packet))
+		var writer := GSNetWriter.new()
+		GSNetInput.write_batch(writer, _input_copies(packet))
 		payload.append_array(writer.to_bytes())
 		link.send_input(payload)
 
@@ -356,37 +356,37 @@ func client_tick(tick: int, command: DotFpsCommand) -> void:
 
 ## [param packet] and the commands before it from the local replay history, oldest first,
 ## for one input packet. See [constant INPUT_COPIES].
-func _input_copies(packet: DotNetInput) -> Array:
+func _input_copies(packet: GSNetInput) -> Array:
 	var batch: Array = Array(net.local_inputs().recent(INPUT_COPIES, packet.tick - 1))
 	batch = batch.slice(maxi(0, batch.size() - (INPUT_COPIES - 1)))
 	batch.append(packet)
 	return batch
 
 
-func receive_input(peer_id: int, payload: PackedByteArray) -> DotResult:
+func receive_input(peer_id: int, payload: PackedByteArray) -> GSResult:
 	if net == null or not net.is_server:
-		return DotResult.fail(DotError.CODE_FORBIDDEN, "Only the server takes input.")
+		return GSResult.fail(GSError.CODE_FORBIDDEN, "Only the server takes input.")
 
 	if not _player_of_peer.has(peer_id):
-		return DotResult.fail(DotError.CODE_FORBIDDEN, "That peer has no player.")
+		return GSResult.fail(GSError.CODE_FORBIDDEN, "That peer has no player.")
 
 	if payload.size() <= ACK_BYTES:
-		return DotResult.fail(DotError.CODE_PARSE, "Input packet is too short.")
+		return GSResult.fail(GSError.CODE_PARSE, "Input packet is too short.")
 
 	net.receive_ack_payload(peer_id, payload.slice(0, ACK_BYTES))
 
 	# A batch: this tick's command and the ones before it (see [constant INPUT_COPIES]).
 	# Copies of ticks already simulated are skipped rather than pushed, or each would count
 	# as a late input; the packet's own tick is always pushed, so a late one still counts.
-	var batch := DotNetInput.read_batch(
-		DotNetReader.new(payload.slice(ACK_BYTES)),
-		func() -> DotNetInput: return MmNetCommand.new()
+	var batch := GSNetInput.read_batch(
+		GSNetReader.new(payload.slice(ACK_BYTES)),
+		func() -> GSNetInput: return MmNetCommand.new()
 	)
 	if batch.is_empty():
-		return DotResult.fail(DotError.CODE_PARSE, "Input packet carries no command.")
+		return GSResult.fail(GSError.CODE_PARSE, "Input packet carries no command.")
 	var buffer := net.input_buffer_for(peer_id)
 	var newest := batch[batch.size() - 1]
-	var pushed := DotResult.success(false)
+	var pushed := GSResult.success(false)
 	for input in batch:
 		if input != newest and input.tick <= buffer.last_consumed_tick():
 			continue
@@ -394,28 +394,28 @@ func receive_input(peer_id: int, payload: PackedByteArray) -> DotResult:
 	return pushed
 
 
-## One routed line to one peer. What [DotGameServices] sends through, via the link.
+## One routed line to one peer. What [GSGameServices] sends through, via the link.
 func send_chat(peer_id: int, wire: Dictionary) -> void:
 	_tell(peer_id, MmEvents.Kind.CHAT, MmEvents.write_chat(wire))
 
 
 ## A voice frame, in whichever direction. [b]Not a [MmEvent][/b]: voice is fifty packets a second and every event is
-## reliable, so a talk spurt would queue a hundred retransmittable messages before a shot. It also skips [DotNetManager]
-## (its registry seals and hashes a message set); the packet has its own header, sequence and validation in [DotVoicePacket].
-func receive_voice(peer_id: int, payload: PackedByteArray) -> DotResult:
+## reliable, so a talk spurt would queue a hundred retransmittable messages before a shot. It also skips [GSNetManager]
+## (its registry seals and hashes a message set); the packet has its own header, sequence and validation in [GSVoicePacket].
+func receive_voice(peer_id: int, payload: PackedByteArray) -> GSResult:
 	if payload.is_empty():
-		return DotResult.fail(DotError.CODE_INVALID, "An empty voice frame.")
+		return GSResult.fail(GSError.CODE_INVALID, "An empty voice frame.")
 
 	if net != null and net.is_server:
 		if peer_id <= 0 or player_for_peer(peer_id) == 0:
 			# A peer with nobody in the world. Refused rather than relayed: the router
 			# stamps the speaker from this id, so relaying one that belongs to nobody puts
 			# a voice in the game with no name on it.
-			return DotResult.fail(
-				DotError.CODE_FORBIDDEN, "That peer has nobody in the world."
+			return GSResult.fail(
+				GSError.CODE_FORBIDDEN, "That peer has nobody in the world."
 			)
 
-		# [b]One path or the other, never both.[/b] [DotGameModule] assigns `voice_relay_fn` to the services layer's
+		# [b]One path or the other, never both.[/b] [GSGameModule] assigns `voice_relay_fn` to the services layer's
 		# `relay_voice`; a game that ALSO connected `voice_requested` to the same router would relay every frame twice
 		# — a doubled talk spurt, a doubled rate limit, and a sequence number the jitter buffer sees go backwards.
 		if voice_relay_fn.is_valid():
@@ -423,13 +423,13 @@ func receive_voice(peer_id: int, payload: PackedByteArray) -> DotResult:
 		else:
 			voice_requested.emit(peer_id, payload)
 
-		return DotResult.success(null)
+		return GSResult.success(null)
 
 	voice_arrived.emit(payload)
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
-func _on_request(message: DotNetMessage) -> void:
+func _on_request(message: GSNetMessage) -> void:
 	var ask := message as MmRequest
 
 	if ask == null or net == null or not net.is_server:
@@ -448,7 +448,7 @@ func _on_request(message: DotNetMessage) -> void:
 
 			if bool(said["ok"]):
 				# Emitted rather than acted on: everything about what a line means is
-				# [DotChatRouter]'s, and the router is the module's.
+				# [GSChatRouter]'s, and the router is the module's.
 				say_requested.emit(
 					peer_id, StringName(str(said["channel"])), str(said["text"])
 				)
@@ -472,7 +472,7 @@ func _spectate_step(peer_id: int, direction: int) -> void:
 	if session_id == 0 or game.spectate == null:
 		return
 
-	var moved: DotResult = game.spectate.step(player_key(session_id), direction)
+	var moved: GSResult = game.spectate.step(player_key(session_id), direction)
 
 	if not moved.ok:
 		notice(peer_id, moved.error.message)
@@ -486,7 +486,7 @@ func _spectate_roam(peer_id: int) -> void:
 	if session_id == 0 or game.spectate == null:
 		return
 
-	var toggled: DotResult = game.spectate.toggle_roam(player_key(session_id))
+	var toggled: GSResult = game.spectate.toggle_roam(player_key(session_id))
 
 	if not toggled.ok:
 		notice(peer_id, toggled.error.message)
@@ -495,7 +495,7 @@ func _spectate_roam(peer_id: int) -> void:
 ## Tells everybody who somebody is now: a late profile, a wardrobe change, an operator's rename. Server only. [b]Through
 ## JOIN, which a client already applies to a player it has[/b]: a second message would be a second thing a joiner is told
 ## and a second order to arrive in. An empty [param display_name] keeps the one they have.
-func refresh_player(session_id: int, display_name: String, avatar: DotAvatar) -> bool:
+func refresh_player(session_id: int, display_name: String, avatar: GSAvatar) -> bool:
 	if net == null or not net.is_server or game == null:
 		return false
 

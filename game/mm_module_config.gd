@@ -1,4 +1,4 @@
-extends DotGameModule
+extends GSGameModule
 
 const MmNetBridge := preload("net/mm_net_bridge.gd")
 const MmServices := preload("mm_services.gd")
@@ -14,7 +14,7 @@ const AMBIENT_KIND := "ambience"
 const MAP_BALLOT_TOPIC := &"map_ballot"
 
 ## dot-workbench over the config; the F9 panel off a dedicated server, the HTTP page only with `workbench.enabled`.
-var workbench: DotGameWorkbench = null
+var workbench: GSGameWorkbench = null
 
 ## The bounds a cvar's value must lie in, [least, most]. INF is no most. Out of them a value is
 ## refused (see [method _refusal]), never clamped.
@@ -35,13 +35,13 @@ var _force_camera_cvar: Object = null
 
 ## How many stand-ins, from how many people: dot-server's one rule for every game. See
 ## [method _keep_the_round_full].
-var _quota: DotBotQuota = null
+var _quota: GSBotQuota = null
 
 ## The players' vote for the next map; null when it could not be built.
 var vote: MmVote = null
 
 
-## The maps the SERVER names (via [DotGameContent]) added to the catalogue; returns how many
+## The maps the SERVER names (via [GSGameContent]) added to the catalogue; returns how many
 ## documents. Server-only, and called after EVERY catalogue load, which forgets what it read.
 func _add_delivered_maps(world: MmGame) -> int:
 	if server == null or world.catalogue == null:
@@ -49,7 +49,7 @@ func _add_delivered_maps(world: MmGame) -> int:
 
 	var read := 0
 
-	for root in await DotGameContent.map_dirs(server, "maps"):
+	for root in await GSGameContent.map_dirs(server, "maps"):
 		read += world.catalogue.add_directory(root)
 
 	return read
@@ -64,7 +64,7 @@ func _add_tunables(world: MmGame) -> void:
 	# [b]How the stand-ins see, hear, turn and know a map is dot-bot's[/b]: `bot_difficulty`
 	# (easy, medium, hard, nightmare; medium by default) and every `bot_*` setting it bundles,
 	# the names every game in the family uses. On the game as metadata, never the registry.
-	var _bot_cvars := DotBotSettings.of(world).bind_cvars(add_cvar, DotConVar.FLAG_NOTIFY, add_command)
+	var _bot_cvars := GSBotSettings.of(world).bind_cvars(add_cvar, GSConVar.FLAG_NOTIFY, add_command)
 	_tunable("mm_max_unlag_ms", world.max_unlag_ms,
 		"How far back a stab or shot looks at the other players for the shooter's latency, in ms (0 off)",
 		func(value: float) -> void: world.max_unlag_ms = value)
@@ -205,16 +205,16 @@ func _hand_cvar(key: String) -> String:
 
 
 ## Every config field as an `mm_<field>` cvar (the hand-written ones keep their handlers and follow workbench edits), the cfg/ diff commands, the workbench and dot-team's block rules.
-func _bind_config(world: MmGame) -> DotResult:
+func _bind_config(world: MmGame) -> GSResult:
 	var _fl := world.flashlight_conf()
 	if world.flashlight_binder != null:
-		var _flash_cvars := world.flashlight_binder.bind_cvars(add_cvar, DotConVar.FLAG_ARCHIVE,
+		var _flash_cvars := world.flashlight_binder.bind_cvars(add_cvar, GSConVar.FLAG_ARCHIVE,
 			func(name: String) -> bool: return console.has_name(name))
 		world.flashlight_binder.bind_commands(add_command)
 	var binder := world.config_binder
 	if binder == null:
-		return DotResult.success(null)
-	workbench = DotGameWorkbench.new()
+		return GSResult.success(null)
+	workbench = GSGameWorkbench.new()
 	workbench.name = "Workbench"
 	workbench.lazy_panel = true
 	workbench.dedicated = DisplayServer.get_name() == "headless"
@@ -222,12 +222,12 @@ func _bind_config(world: MmGame) -> DotResult:
 	workbench.permit_fn = func(actor: Variant, flag: String) -> bool:
 		return server != null and server.admins != null and actor is String \
 			and bool(server.admins.uid_has_permission(actor, flag))
-	for set: DotProfileSet in binder.profile_sets():
+	for set: GSProfileSet in binder.profile_sets():
 		workbench.add_set(set, "Game settings: %s" % set.rel_path.trim_prefix("config_"))
 	if world.flashlight_binder != null:
-		for set: DotProfileSet in world.flashlight_binder.profile_sets():
+		for set: GSProfileSet in world.flashlight_binder.profile_sets():
 			workbench.add_set(set, "Flashlight")
-	var ambient_set := DotGameWorkbench.cvar_set(console, MmAmbience.cvar_types(), AMBIENT_KIND)
+	var ambient_set := GSGameWorkbench.cvar_set(console, MmAmbience.cvar_types(), AMBIENT_KIND)
 	if ambient_set != null:
 		workbench.add_set(ambient_set, "Ambience (mm_ambient*)")
 	add_child(workbench)
@@ -235,22 +235,22 @@ func _bind_config(world: MmGame) -> DotResult:
 	# Off until the owner sets sv_workbench_remote 1; then flagged admins edit from a client.
 	if started.ok and net != null:
 		var _served := workbench.serve_remote(net)
-	var runtime: DotProfileRuntime = workbench.api.runtime if started.ok and workbench.api != null else null
+	var runtime: GSProfileRuntime = workbench.api.runtime if started.ok and workbench.api != null else null
 	if not started.ok:
 		log_warn("the workbench did not start", {"why": started.error.message})
 
-	binder.bind_cvars(add_cvar, DotConVar.FLAG_ARCHIVE,
+	binder.bind_cvars(add_cvar, GSConVar.FLAG_ARCHIVE,
 		func(name: String) -> bool: return console.has_name(name))
 	binder.bind_commands(add_command)
 	if ambient_set != null:
-		DotGameWorkbench.bind_cvar_set(ambient_set, runtime, console)
+		GSGameWorkbench.bind_cvar_set(ambient_set, runtime, console)
 	binder.field_changed.connect(_on_config_field)
 	if runtime != null:
 		binder.attach(runtime)
 		if world.flashlight_binder != null:
 			world.flashlight_binder.attach(runtime)
 
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
 ## Everybody is one side (see [method MmGame.team_of_side]).
@@ -264,7 +264,7 @@ func _noblock_runtime() -> Object:
 
 
 ## The block commands are keyed by the player ids the world uses (`u<userid>`), not the bare userid.
-func _build_noblock() -> DotResult:
+func _build_noblock() -> GSResult:
 	var built := super()
 	if built.ok and noblock != null and noblock.commands != null:
 		noblock.commands.set(&"key_fn", func(ctx: Object) -> Variant:

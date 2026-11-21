@@ -23,7 +23,7 @@ const HIT_MARGIN := 0.06
 
 signal built()
 
-var physics: DotPhysicsLayout = null
+var physics: GSPhysicsLayout = null
 
 ## The catalogue every prop's size and model come from.
 var catalogue: MmProps = null
@@ -44,16 +44,16 @@ var doors: MmDoors = null
 ## The tick rate a door's seconds are counted in. Set by the game before it builds.
 var tick_rate: int = 64
 
-## The map's toys (dot-props' [DotPropBodyBox]): balls, swings, see-saws, switches. Simulated
+## The map's toys (dot-props' [GSPropBodyBox]): balls, swings, see-saws, switches. Simulated
 ## where [member authoritative], posed from snapshots elsewhere; under the game's `sv_toys*`
 ## [member toy_rules]. Set by the game before it builds.
-var toys: DotPropBodyBox = null
+var toys: GSPropBodyBox = null
 var authoritative: bool = true
-var toy_rules: DotPropBodyRules = null
+var toy_rules: GSPropBodyRules = null
 var gravity: float = 20.0
 
 ## The converted map's displacement ground (the document's `terrain`), or null.
-var terrain: DotMapTerrain = null
+var terrain: GSMapTerrain = null
 var _solid: StaticBody3D = null
 var _furniture: StaticBody3D = null
 var _drawn: Node3D = null
@@ -62,7 +62,7 @@ var _shade_boxes: Array = []
 var _environment: WorldEnvironment = null
 var _sun: DirectionalLight3D = null
 ## The map's snow or rain (a dot-weather node), when its document has a `weather` block.
-var _weather: DotWeather = null
+var _weather: GSWeather = null
 
 ## Source units to metres, which dot-lighting's fog distances are written in.
 const METRES_PER_UNIT := 0.01905
@@ -75,7 +75,7 @@ func id() -> StringName:
 
 
 ## Builds [param p_doc], which [MmMapDoc.validate] has already normalised.
-func build(p_doc: Dictionary) -> DotResult:
+func build(p_doc: Dictionary) -> GSResult:
 	clear()
 	doc = p_doc
 
@@ -115,15 +115,15 @@ func build(p_doc: Dictionary) -> DotResult:
 		_build_environment()
 
 	if not _missing.is_empty():
-		DotLog.warn(CHANNEL, "a map names props this server's catalogue does not have; they are left out", {
+		GSLog.warn(CHANNEL, "a map names props this server's catalogue does not have; they are left out", {
 			"map": String(id()), "missing": ", ".join(_missing),
 		})
 
-	DotLog.debug(CHANNEL, "built a map", {
+	GSLog.debug(CHANNEL, "built a map", {
 		"id": String(id()), "boxes": (doc["boxes"] as Array).size(), "props": props.size(),
 	})
 	built.emit()
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
 func clear() -> void:
@@ -149,7 +149,7 @@ func clear() -> void:
 ## (`MmGame._advance_toys`); one somebody stands on (see-saw, roundabout) on `prop`, a wall to a person; and their
 ## footprints on `footprint`, which nothing collides with and a bot's walkable mesh is baked round.
 func _build_toys() -> void:
-	toys = DotPropBodyBox.new()
+	toys = GSPropBodyBox.new()
 	toys.name = "Toys"
 	toys.authoritative = authoritative
 	toys.draw = draw_world
@@ -167,7 +167,7 @@ func _build_toys() -> void:
 	add_child(toys)
 	var built := toys.build(doc.get("toys", []))
 	if not built.ok:
-		DotLog.warn(CHANNEL, "a map's toys would not build", {"map": String(id()), "why": built.error.message})
+		GSLog.warn(CHANNEL, "a map's toys would not build", {"map": String(id()), "why": built.error.message})
 
 
 func _put_on(body: CollisionObject3D, layer: StringName) -> void:
@@ -177,7 +177,7 @@ func _put_on(body: CollisionObject3D, layer: StringName) -> void:
 	var applied := physics.apply_to(body, layer)
 
 	if not applied.ok:
-		DotLog.warn(CHANNEL, "a map body could not be put on its layer", {"layer": String(layer)})
+		GSLog.warn(CHANNEL, "a map body could not be put on its layer", {"layer": String(layer)})
 
 
 # Building
@@ -186,9 +186,9 @@ func _put_on(body: CollisionObject3D, layer: StringName) -> void:
 func _build_terrain() -> void:
 	if not doc.has("terrain"):
 		return
-	var res := DotMapTerrain.from_dict(doc["terrain"])
+	var res := GSMapTerrain.from_dict(doc["terrain"])
 	if not res.ok:
-		DotLog.warn(CHANNEL, "a map's terrain would not read; it has no ground there", {"map": String(id()), "error": str(res)})
+		GSLog.warn(CHANNEL, "a map's terrain would not read; it has no ground there", {"map": String(id()), "error": str(res)})
 		return
 	terrain = res.value
 	var shape := CollisionShape3D.new()
@@ -226,7 +226,7 @@ func _build_boxes() -> void:
 			cube.size = size
 			shape.shape = cube
 			shape.transform = frame
-			# What a footstep on it sounds like (dot-audio's DotAudioFootsteps reads the hit
+			# What a footstep on it sounds like (dot-audio's GSAudioFootsteps reads the hit
 			# shape's meta; "stone", "hedge", "fabric" and the rest fold onto its surfaces).
 			shape.set_meta(&"surface", str(box.get("mat", "")))
 			_solid.add_child(shape)
@@ -257,7 +257,7 @@ func _build_boxes() -> void:
 		mesh.name = "Boxes"
 		if not bool(batch["solid"]):
 			# Floor paint, water, a light fitting, embers in a hearth: drawn on purpose and
-			# walked over or through (dot-core DotCollisionAudit).
+			# walked over or through (dot-core GSCollisionAudit).
 			mesh.set_meta(&"dot_no_collision", true)
 		mesh.mesh = tool.commit()
 		mesh.material_override = MmMaterials.material(batch["mat"], batch["tint"])
@@ -309,7 +309,7 @@ func _shades_floor(prop_id: StringName, raw: Dictionary) -> bool:
 ## renderer has no ambient occlusion. Glass and water neither cast nor take one; doors and secret panels are not boxes
 ## here. By path, behind the level, so a client shell older than the helper still runs the map without it.
 func _add_contact_shade(boxes: Array) -> void:
-	if boxes.is_empty() or _drawn == null or DotAddonApi.build_level("dot_lighting") < 4 \
+	if boxes.is_empty() or _drawn == null or GSAddonApi.build_level("dot_lighting") < 4 \
 			or not ResourceLoader.exists(CONTACT_SHADE_SCRIPT):
 		return
 	var shade: Variant = (load(CONTACT_SHADE_SCRIPT) as GDScript).call(&"node", boxes)
@@ -410,7 +410,7 @@ func _build_environment() -> void:
 	var lighting := Node3D.new()
 	lighting.name = "Lighting"
 	add_child(lighting)
-	_sun = DotLightRig.apply(lighting, DotLightDocument.from_dictionary(light_document(env_doc)),
+	_sun = GSLightRig.apply(lighting, GSLightDocument.from_dictionary(light_document(env_doc)),
 		light_profile(float(env_doc["ambient_energy"])))
 
 	if _sun != null:
@@ -421,7 +421,7 @@ func _build_environment() -> void:
 		# lights the faces the sun already does.
 		var fill := lighting.get_node_or_null("Fill") as DirectionalLight3D
 		if fill != null:
-			var aimed := DotLightRig.fill(DotLightDocument.from_dictionary(light_document(env_doc)), _sun.rotation,
+			var aimed := GSLightRig.fill(GSLightDocument.from_dictionary(light_document(env_doc)), _sun.rotation,
 				light_profile(float(env_doc["ambient_energy"])))
 			fill.rotation = aimed.rotation
 			aimed.free()
@@ -442,12 +442,12 @@ func _build_environment() -> void:
 
 	# Weather is dot-weather's, on the lighting's own Environment (it never makes a second one).
 	if doc.has("weather"):
-		_weather = DotWeather.new()
+		_weather = GSWeather.new()
 		_weather.name = "Weather"
 		add_child(_weather)
 		var applied := _weather.apply(doc["weather"])
 		if not applied.ok:
-			DotLog.warn(CHANNEL, "the map's weather was refused", {"map": String(id()), "why": applied.error.message})
+			GSLog.warn(CHANNEL, "the map's weather was refused", {"map": String(id()), "why": applied.error.message})
 
 
 ## The weather's frame: a map that has some advances it from the viewport's camera.
@@ -496,8 +496,8 @@ static func light_document(env_doc: Dictionary) -> Dictionary:
 ## What this machine draws of a map's light: dot-lighting's `painted()` with the map's fill.
 ## Shadows stay on in the browser, since the boxes are batched into few meshes. The ambient is
 ## 4 times the map's `ambient_energy` and the fill 2.8, keeping rooms light and the ground dim.
-static func light_profile(ambient_energy: float = 0.5) -> DotLightProfile:
-	var p := DotLightProfile.painted()
+static func light_profile(ambient_energy: float = 0.5) -> GSLightProfile:
+	var p := GSLightProfile.painted()
 	p.sun_shadows = true
 	p.sky_below_horizon = true
 	p.ambient_energy *= ambient_energy * 4.0
@@ -546,31 +546,31 @@ func spawn(side: String, seat: int) -> Array:
 ## Starts for [param count] people at once, as `[position, yaw]` each, spread by [param rules] (dot-spawn). More people
 ## than spawns fall back to [method spawn]'s rings for the rest. [param offset] is the round's shuffle: the seat to
 ## start from, and the tick that varies the pick.
-func spawn_batch(side: String, count: int, rules: DotSpawnRules, offset: int) -> Array:
+func spawn_batch(side: String, count: int, rules: GSSpawnRules, offset: int) -> Array:
 	var list: Array = (doc.get("spawns", {}) as Dictionary).get(side, [])
 	var out: Array = []
 
 	if rules != null and not list.is_empty() and rules.strategies() != PackedStringArray(["map"]):
-		var director := DotSpawnDirector.new()
+		var director := GSSpawnDirector.new()
 		director.rules = rules
 		director.register_service = false
 
 		for i in range(list.size()):
-			var site := DotSpawnSite.new()
+			var site := GSSpawnSite.new()
 			site.id = StringName("s%03d" % i)
 			site.position = MmMapDoc.v3(list[i]["at"])
 			site.yaw = float(list[i].get("yaw", 0.0))
 			director.add_site(site)
 
-		var requests: Array[DotSpawnRequest] = []
+		var requests: Array[GSSpawnRequest] = []
 
 		for i in range(mini(count, list.size())):
-			requests.append(DotSpawnRequest.make("p%d" % i, &"", &"", offset))
+			requests.append(GSSpawnRequest.make("p%d" % i, &"", &"", offset))
 
 		var res := director.choose_batch(requests)
 
 		if res.ok:
-			for choice: DotSpawnChoice in res.value:
+			for choice: GSSpawnChoice in res.value:
 				out.append([choice.site.position, choice.site.yaw])
 
 		director.free()
@@ -614,7 +614,7 @@ func prop_containing(point: Vector3) -> int:
 		var pieces := catalogue.pieces_of(prop["id"]) if catalogue != null else []
 
 		if not pieces.is_empty():
-			if DotPropPieces.contains(pieces, local, HIT_MARGIN):
+			if GSPropPieces.contains(pieces, local, HIT_MARGIN):
 				return index
 			continue
 

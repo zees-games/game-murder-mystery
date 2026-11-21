@@ -17,7 +17,7 @@ func _ragdoll_sound(id: StringName, at: Vector3, volume: float) -> void:
 
 
 func _build_ragdolls() -> void:
-	ragdolls = DotPlayerRagdolls.new()
+	ragdolls = GSPlayerRagdolls.new()
 	ragdolls.name = "Ragdolls"
 	ragdolls.rules = game.ragdoll_rules
 	ragdolls.sound_fn = _ragdoll_sound
@@ -34,7 +34,7 @@ func _build_hud() -> void:
 ## The phone's buttons, on a layer of their own under the menu's. The sampler is the touch one
 ## [method _ready] made, so a finger on a button is not also a finger on the stick or the look.
 func _build_touch() -> void:
-	if not (_sampler is DotFpsTouchSampler):
+	if not (_sampler is GSFpsTouchSampler):
 		return
 	var layer := CanvasLayer.new()
 	layer.name = "TouchLayer"
@@ -42,13 +42,13 @@ func _build_touch() -> void:
 	add_child(layer)
 	touch = MmTouch.new()
 	touch.name = "Touch"
-	touch.build(_sampler as DotFpsTouchSampler, platform, game.mobile_rules, platform as Node)
+	touch.build(_sampler as GSFpsTouchSampler, platform, game.mobile_rules, platform as Node)
 	layer.add_child(touch)
 
 
 ## dot-game's chat box and microphone, with this game's channels and voice format.
 func _build_chat() -> void:
-	chat = DotGameChatClient.new()
+	chat = GSGameChatClient.new()
 	chat.name = "Chat"
 	chat.channels = [
 		{"id": MmServices.CH_ALL, "label": "All", "colour": Color(0.93, 0.94, 0.96)},
@@ -71,7 +71,7 @@ func _build_audio() -> void:
 	var ready_now := audio.setup()
 
 	if not ready_now.ok:
-		DotLog.warn(CHANNEL, "no sound", {"why": ready_now.error.message})
+		GSLog.warn(CHANNEL, "no sound", {"why": ready_now.error.message})
 		remove_child(audio)
 		audio.queue_free()
 		audio = null
@@ -83,18 +83,18 @@ func _build_audio() -> void:
 func _bind_bot_console() -> void:
 	if console != null:
 		var local: Array = console.sources()
-		if not local.is_empty() and local[0] is DotConsoleLocal:
+		if not local.is_empty() and local[0] is GSConsoleLocal:
 			var _icons := MmWeaponIcons.shared.bind_console(local[0])
 	if not _offline or console == null or game == null:
 		return
 	var sources: Array = console.sources()
-	if sources.is_empty() or not (sources[0] is DotConsoleLocal):
+	if sources.is_empty() or not (sources[0] is GSConsoleLocal):
 		return
-	var _bound := DotBotSettings.of(game).bind_console(sources[0])
+	var _bound := GSBotSettings.of(game).bind_console(sources[0])
 	var args := OS.get_cmdline_user_args()
 	var index := args.find("--bot_difficulty")
 	if index >= 0 and index + 1 < args.size():
-		DotLog.result(CHANNEL, "bot difficulty from the command line", DotBotSettings.of(game).set_difficulty(args[index + 1]))
+		GSLog.result(CHANNEL, "bot difficulty from the command line", GSBotSettings.of(game).set_difficulty(args[index + 1]))
 
 
 ## The figure an avatar action plays on (the drawn person): that peer's player, or the local one offline.

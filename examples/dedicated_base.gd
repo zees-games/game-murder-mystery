@@ -1,4 +1,4 @@
-extends DotGameCheckSuite
+extends GSGameCheckSuite
 const MmTestPorts := preload("test_ports.gd")
 
 const MmConfig := preload("../game/mm_config.gd")
@@ -26,11 +26,11 @@ const EXIT_PROBE_SECONDS := 300
 var _sections_entered := 0
 var _sections_finished := 0
 
-var server: DotServer = null
+var server: GSServer = null
 var game: MmGame = null
 
 
-## Takes the server down before quitting: a booted [DotServer]'s listener holds the main loop,
+## Takes the server down before quitting: a booted [GSServer]'s listener holds the main loop,
 ## and a run that only called `quit()` prints its results and hangs. See mg-smash-copter.
 func _shut_down() -> void:
 	if server == null:
@@ -68,7 +68,7 @@ func _boot() -> void:
 	cfg.store_line("sv_tickrate %d" % TICK_RATE)
 	cfg.close()
 
-	var config := DotServerConfig.new()
+	var config := GSServerConfig.new()
 	config.startup_config = cfg_path
 	config.autoexec_config = ""
 	config.hostname = "murder test"
@@ -84,7 +84,7 @@ func _boot() -> void:
 	# exit without.
 	config.stdin_console_enabled = false
 
-	server = DotServer.new()
+	server = GSServer.new()
 	server.name = "Server"
 	server.config = config
 	add_child(server)
@@ -92,22 +92,22 @@ func _boot() -> void:
 	for _i in range(120):
 		await get_tree().process_frame
 
-		if server.state == DotServer.State.RUNNING:
+		if server.state == GSServer.State.RUNNING:
 			break
 
-	_check(server.state == DotServer.State.RUNNING, "the server boots", DotServer.State.keys()[server.state])
+	_check(server.state == GSServer.State.RUNNING, "the server boots", GSServer.State.keys()[server.state])
 	_check(Engine.physics_ticks_per_second == TICK_RATE, "and sv_tickrate reached the engine",
 		"%d" % Engine.physics_ticks_per_second)
 	_finished()
 
 
-func _module() -> DotModule:
+func _module() -> GSModule:
 	return server.modules.get_module("murder") if server != null and server.modules != null else null
 
 
 func _run_command(line: String) -> PackedStringArray:
 	var captured: Array[String] = []
-	var context := DotCmdContext.console("", PackedStringArray())
+	var context := GSCmdContext.console("", PackedStringArray())
 	context.reply_sink = _capture_reply.bind(captured)
 	server.console.execute(line, context)
 	return PackedStringArray(captured)
@@ -218,16 +218,16 @@ func _last_lines(text: String, count: int) -> String:
 ## A stand-in for the game's receiving half, seated the moment the client joins. The server
 ## routes by node path, so without it every server RPC to this bare client logs "Node not found".
 ## The client link retires what the game left under it on a game change, so it goes in after that.
-func _seat_receiver_on_join(client: DotClientLink, side: Node) -> MmNetLink:
+func _seat_receiver_on_join(client: GSClientLink, side: Node) -> MmNetLink:
 	var receiver := MmNetLink.attached_to(client, null, false)
 	client.game_changed.connect(_on_client_game_changed.bind(receiver, client, side), CONNECT_ONE_SHOT)
 	return receiver
 
 
-func _on_client_game_changed(_g: String, _c: String, _n: String, receiver: MmNetLink, client: DotClientLink, side: Node) -> void:
+func _on_client_game_changed(_g: String, _c: String, _n: String, receiver: MmNetLink, client: GSClientLink, side: Node) -> void:
 	_seat_after_retire.call_deferred(receiver, client, side)
 
 
-func _seat_after_retire(receiver: MmNetLink, client: DotClientLink, side: Node) -> void:
+func _seat_after_retire(receiver: MmNetLink, client: GSClientLink, side: Node) -> void:
 	if is_instance_valid(client) and is_instance_valid(receiver) and not receiver.is_inside_tree():
-		DotGameLink.attach(receiver, client, side, MmNetLink.NODE_NAME)
+		GSGameLink.attach(receiver, client, side, MmNetLink.NODE_NAME)

@@ -1,9 +1,9 @@
-extends DotMenuGameSettings
+extends GSMenuGameSettings
 
 const MmBindings := preload("mm_bindings.gd")
 
 ## A player's own settings and the menu that changes them: view turn rate, field of view,
-## volumes, the window and the menu's look. dot-menu's `DotMenuGameSettings` with this game's spec:
+## volumes, the window and the menu's look. dot-menu's `GSMenuGameSettings` with this game's spec:
 ## `sensitivity` is ACCOUNT, `field_of_view` SERVER_CLAMPED, the volumes this machine's.
 
 const SCHEMA_VERSION := 1
@@ -29,8 +29,8 @@ func _init() -> void:
 
 
 ## The game's settings as data: names, field of view, extra settings, keys and the help screen's goal and rules.
-static func spec_for() -> DotMenuGameSpec:
-	var s := DotMenuGameSpec.new()
+static func spec_for() -> GSMenuGameSpec:
+	var s := GSMenuGameSpec.new()
 	s.schema_version = SCHEMA_VERSION
 	s.brand_name = "Murder Mystery"
 	s.settings_dir = SETTINGS_DIR
@@ -41,7 +41,7 @@ static func spec_for() -> DotMenuGameSpec:
 	s.not_applied = NOT_APPLIED
 	# The touch Menu button sits top right, clear of the thumbs.
 	s.menu_button_corner = &"top_right"
-	s.bindings_maker = func() -> DotMenuBindings: return MmBindings.make()
+	s.bindings_maker = func() -> GSMenuBindings: return MmBindings.make()
 	s.help_about = "Somebody here is a murderer, and only they know it. One bystander has the gun. Everybody else has nothing but their eyes. The murderer wins when nobody else is left; the bystanders win when the murderer is dead or the clock runs out."
 	s.help_cards = [
 		["Bystander", "Stay with other people: the murderer wants you alone. Watch for a weapon in somebody's hand, and for blood on a shirt near the end of the round. If the gun is dropped, walk over it to pick it up."],

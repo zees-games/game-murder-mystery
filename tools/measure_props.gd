@@ -86,9 +86,9 @@ func _measure_kit(kit: Dictionary, titles: Dictionary, props: Array, shaped: Dic
 		# 0.725000023841858); the Vector3 only for the pieces' frame.
 		var offset_xyz := [_r(-centre.x), _r(-box.position.y * scale), _r(-centre.z)]
 		var offset := Vector3(offset_xyz[0], offset_xyz[1], offset_xyz[2])
-		# Collision shaped like the model (dot-props' DotPropPieces): a trunk and its
+		# Collision shaped like the model (dot-props' GSPropPieces): a trunk and its
 		# branches, a table's top and legs. Empty for a prop one box fits.
-		var pieces := DotPropPieces.measure(node, Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * scale), offset))
+		var pieces := GSPropPieces.measure(node, Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * scale), offset))
 		node.free()
 
 		var entry := {
@@ -109,7 +109,7 @@ func _measure_kit(kit: Dictionary, titles: Dictionary, props: Array, shaped: Dic
 		props.append(entry)
 
 		if not pieces.is_empty():
-			shaped[id] = DotPropPieces.encode(pieces)
+			shaped[id] = GSPropPieces.encode(pieces)
 			tops[id] = _tops(pieces, size)
 
 
@@ -146,7 +146,7 @@ func _report(props: Array, shaped: Dictionary) -> void:
 
 
 
-## The part-shaped collision (dot-props' DotPropPieces), one prop a line so a re-measure's diff reads by prop: `pieces`
+## The part-shaped collision (dot-props' GSPropPieces), one prop a line so a re-measure's diff reads by prop: `pieces`
 ## is `{id: [[x, y, z, ...] per convex piece]}` in the prop's frame, `tops` is `{id: [TOPS x TOPS heights]}` for resting
 ## things across a footprint (x, then z; null where nothing is). A prop not listed collides as its catalogue box.
 static func _pieces_text(shaped: Dictionary, tops: Dictionary) -> String:
@@ -157,7 +157,7 @@ static func _pieces_text(shaped: Dictionary, tops: Dictionary) -> String:
 	for id: String in ids:
 		lines.append("    %s: %s" % [JSON.stringify(id), JSON.stringify(shaped[id])])
 		top_lines.append("    %s: %s" % [JSON.stringify(id), JSON.stringify(tops[id])])
-	return "{\n  \"format\": 1,\n  \"comment\": \"Written by tools/measure_props.gd with dot-props' DotPropPieces. Do not edit by hand. A prop not listed collides as its catalogue box.\",\n  \"tops_grid\": %d,\n  \"pieces\": {\n%s\n  },\n  \"tops\": {\n%s\n  }\n}\n" % [TOPS, ",\n".join(lines), ",\n".join(top_lines)]
+	return "{\n  \"format\": 1,\n  \"comment\": \"Written by tools/measure_props.gd with dot-props' GSPropPieces. Do not edit by hand. A prop not listed collides as its catalogue box.\",\n  \"tops_grid\": %d,\n  \"pieces\": {\n%s\n  },\n  \"tops\": {\n%s\n  }\n}\n" % [TOPS, ",\n".join(lines), ",\n".join(top_lines)]
 
 
 ## Cells a side of a prop's `tops` grid.
@@ -170,7 +170,7 @@ static func _tops(pieces: Array, size: Vector3) -> Array:
 		for i in range(TOPS):
 			var x := -size.x * 0.5 + (i + 0.5) * size.x / TOPS
 			var z := -size.z * 0.5 + (k + 0.5) * size.z / TOPS
-			var top := DotPropPieces.top_at(pieces, x, z)
+			var top := GSPropPieces.top_at(pieces, x, z)
 			out.append(null if top == -INF else snappedf(top, 0.001))
 	return out
 

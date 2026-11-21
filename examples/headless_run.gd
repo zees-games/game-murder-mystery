@@ -17,7 +17,7 @@ const CHAIR_AT := Vector3(3.6, 0.0, 1.2)
 
 
 func _ready() -> void:
-	DotLog.set_level(DotLog.Level.ERROR)
+	GSLog.set_level(GSLog.Level.ERROR)
 	_run.call_deferred()
 
 
@@ -116,7 +116,7 @@ func _test_catalogue() -> void:
 			bad += 1
 	_check(bad == 0, "every prop's model is in the game", "%d missing" % bad)
 
-	# Part-shaped collision (props/pieces.json, dot-props' DotPropPieces): a tree is pieces, a
+	# Part-shaped collision (props/pieces.json, dot-props' GSPropPieces): a tree is pieces, a
 	# fridge stays its box, and no piece reaches outside the prop's measured box by more than
 	# the decomposition's slack, or a player would bump into air beside the model.
 	var outside := PackedStringArray()
@@ -128,7 +128,7 @@ func _test_catalogue() -> void:
 		shaped += 1
 		var size := props.size_of(id)
 		var box := AABB(Vector3(-size.x * 0.5, 0.0, -size.z * 0.5), size).grow(0.08)
-		var inner := DotPropPieces.bounds(pieces)
+		var inner := GSPropPieces.bounds(pieces)
 		if not box.encloses(inner):
 			outside.append(String(id))
 	_check(not props.pieces_of(&"nature_tree_default").is_empty() and props.pieces_of(&"furniture_kitchen_fridge").is_empty()
@@ -406,10 +406,10 @@ func _test_free_roam() -> void:
 	_check(game.spectate_rules.roaming_permitted() and game.spectate.manager.rules == game.spectate_rules,
 		"the game's rules allow roaming and are the manager's own")
 	game._kill(b, m, MmGame.DIED_STABBED)
-	game.spectate.manager.set_mode(String(id), DotSpectatorView.Mode.CHASE)
+	game.spectate.manager.set_mode(String(id), GSSpectatorView.Mode.CHASE)
 	_check(not b.is_alive() and game.spectate.can_roam(id), "somebody stabbed sits out, and may roam")
 	_check(game.spectate.toggle_roam(id).ok and game.spectate.is_roaming(id), "the key enters the free camera")
-	var cam := DotSpectatorFreeCam.new()
+	var cam := GSSpectatorFreeCam.new()
 	cam.rules = game.spectate_rules
 	cam.seed_from(Transform3D(Basis.IDENTITY, Vector3(0, 2, 0)))
 	var pose := cam.step(Vector3(0, 0, 1), false, false, 0.5)
@@ -420,7 +420,7 @@ func _test_free_roam() -> void:
 
 	var _off := game.spectate_rules.set_cvar("mp_freeroam", "0")
 	var refused := game.spectate.toggle_roam(id)
-	_check(not refused.ok and refused.error.code == DotError.CODE_FORBIDDEN and not game.spectate.is_roaming(id),
+	_check(not refused.ok and refused.error.code == GSError.CODE_FORBIDDEN and not game.spectate.is_roaming(id),
 		"mp_freeroam 0 refuses it")
 	var _on := game.spectate_rules.set_cvar("mp_freeroam", "1")
 	var _own := game.spectate_rules.set_cvar("mp_forcecamera", "1")
@@ -431,9 +431,9 @@ func _test_free_roam() -> void:
 	var _gone := game.spectate_rules.set_cvar("mp_freeroam", "0")
 	game.spectate.advance(game._tick + 1)
 	_check(not game.spectate.is_roaming(id), "switching mp_freeroam off mid-roam puts the roamer back on a player")
-	_check(game.spectate is DotSpectatorHost and game.spectate.guard_roam, "spectating is dot-spectate's host, roaming guarded")
+	_check(game.spectate is GSSpectatorHost and game.spectate.guard_roam, "spectating is dot-spectate's host, roaming guarded")
 	var playing := StringName("nobody-out")
-	_check(not game.spectate.can_roam(playing) and game.spectate.toggle_roam(playing).error.code == DotError.CODE_STATE,
+	_check(not game.spectate.can_roam(playing) and game.spectate.toggle_roam(playing).error.code == GSError.CODE_STATE,
 		"somebody who is playing may not roam, and is told they are playing")
 
 	var restricted := await _world(func(c: MmConfig) -> void:
@@ -541,11 +541,11 @@ func _test_joiners() -> void:
 
 
 func _death_sounds_listed() -> bool:
-	var catalogue: DotAudioCatalogue = (load("res://game/mm_audio.gd") as GDScript).call("sound_catalogue")
-	for row: Dictionary in DotPlayerDeathSounds.rows():
+	var catalogue: GSAudioCatalogue = (load("res://game/mm_audio.gd") as GDScript).call("sound_catalogue")
+	for row: Dictionary in GSPlayerDeathSounds.rows():
 		if catalogue.find(row["id"]) == null:
 			return false
-	return not DotPlayerDeathSounds.rows().is_empty()
+	return not GSPlayerDeathSounds.rows().is_empty()
 
 
 ## The practice house's garden door: shut, in the east wall, swinging out into the garden.
@@ -694,9 +694,9 @@ func _test_toys() -> void:
 
 	await _toy_rides(game, toys, walker)
 
-	var _off := game.toy_rules.set_cvar(DotPropBodyRules.CVAR_ENABLED, "0")
+	var _off := game.toy_rules.set_cvar(GSPropBodyRules.CVAR_ENABLED, "0")
 	_check(not toys.toy(0).visible and toys.toy(0).process_mode == Node.PROCESS_MODE_DISABLED, "sv_toys 0 takes the toys away")
-	var _on := game.toy_rules.set_cvar(DotPropBodyRules.CVAR_ENABLED, "1")
+	var _on := game.toy_rules.set_cvar(GSPropBodyRules.CVAR_ENABLED, "1")
 
 	await _end_round(game)
 	var home := toys.toy(1)
@@ -706,7 +706,7 @@ func _test_toys() -> void:
 
 
 ## A trampoline and a roundabout added to the garden: the bounce and the carry.
-func _toy_rides(game: MmGame, toys: DotPropBodyBox, walker: MmPlayer) -> void:
+func _toy_rides(game: MmGame, toys: GSPropBodyBox, walker: MmPlayer) -> void:
 	# A trampoline throws a person up from inside their movement (a predicting client agrees) and counts each bounce.
 	var placements: Array = (game.map_doc["toys"] as Array).duplicate()
 	placements.append({"toy": "trampoline", "at": [19.5, 0.0, 0.0]})

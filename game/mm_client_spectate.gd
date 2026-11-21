@@ -9,7 +9,7 @@ func _watched_through_eyes() -> MmPlayer:
 
 	var mode := game.spectate.mode_of(player.player_id)
 
-	if mode != DotSpectatorView.Mode.FIRST_PERSON and mode != DotSpectatorView.Mode.FREEZE_CAM:
+	if mode != GSSpectatorView.Mode.FIRST_PERSON and mode != GSSpectatorView.Mode.FREEZE_CAM:
 		return null
 
 	return game.players.get(StringName(game.spectate.watching(player.player_id)))
@@ -20,7 +20,7 @@ func _watched_through_eyes() -> MmPlayer:
 ## looked. The pose is kept in the manager too, so a later hand-over starts from it.
 func _fly_free_camera() -> Transform3D:
 	if _free_cam == null:
-		_free_cam = DotSpectatorFreeCam.new()
+		_free_cam = GSSpectatorFreeCam.new()
 		_free_cam.rules = game.spectate_rules
 		_free_cam.seed_from(camera.global_transform)
 
@@ -68,7 +68,7 @@ func _drive_spectator_camera() -> bool:
 			_arm = null
 
 	# Chase and death cameras pulled out of the house by dot-spectate, given the level.
-	var manager: DotSpectatorManager = game.spectate.manager
+	var manager: GSSpectatorManager = game.spectate.manager
 	if manager != null and manager.camera_world == null and game.physics != null:
 		manager.camera_world = camera.get_world_3d()
 		manager.camera_mask = game.physics.layer_mask(&"world") | game.physics.layer_mask(&"prop")
@@ -169,7 +169,7 @@ func spectate_step(direction: int) -> void:
 ## their shirt (never a side's colour, which would be the secret), every admin beacon. Returns
 ## how many are shown; static so the net suite drives exactly this. [param first_person] hides [param own]'s body.
 static func present_frame(
-	p_net: DotNetManager,
+	p_net: GSNetManager,
 	p_game: MmGame,
 	own: MmPlayer,
 	first_person: bool,

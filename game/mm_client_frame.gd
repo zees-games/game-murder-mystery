@@ -6,7 +6,7 @@ extends "mm_client_platform.gd"
 func _ready() -> void:
 	# First, before anything can be drawn: the platform puts the loading cover up, held until the
 	# player exists and the camera is current, finds the link and reports the cover to the server.
-	platform = DotGameClient.new()
+	platform = GSGameClient.new()
 	platform.name = "Platform"
 	platform.force_offline = force_offline
 	platform.spawned_fn = func() -> bool: return player != null and camera != null and camera.is_inside_tree()
@@ -19,7 +19,7 @@ func _ready() -> void:
 	var loaded := binder.load_layers()
 
 	if not loaded.ok:
-		DotLog.warn(CHANNEL, "falling back to defaults", {"why": loaded.error.message})
+		GSLog.warn(CHANNEL, "falling back to defaults", {"why": loaded.error.message})
 
 	link = platform.link as Node
 	_offline = platform.offline
@@ -39,9 +39,9 @@ func _ready() -> void:
 	_build_blood()
 
 	if MmTouch.wanted():
-		_sampler = DotFpsTouchSampler.new(MmPlayer.tunables_for(config))
+		_sampler = GSFpsTouchSampler.new(MmPlayer.tunables_for(config))
 	else:
-		_sampler = DotFpsSampler.new(MmPlayer.tunables_for(config))
+		_sampler = GSFpsSampler.new(MmPlayer.tunables_for(config))
 	MmPlayer.register_actions(_sampler)
 
 	_build_hud()
@@ -56,12 +56,12 @@ func _ready() -> void:
 		_start_offline()
 	else:
 		var netted := _build_netcode()
-		DotLog.result(CHANNEL, "the netcode", netted)
+		GSLog.result(CHANNEL, "the netcode", netted)
 		if netted.ok and link != null:
 			_start_remote_workbench()
 
 
-## The load gate is [member DotGameClient.gate]: covered, and the local body and the input still,
+## The load gate is [member GSGameClient.gate]: covered, and the local body and the input still,
 ## until the level is built and the local player and its camera exist. A frozen player is also
 ## skipped by [method MmPlayer.simulate], which `process_mode` does not stop.
 
@@ -138,7 +138,7 @@ func _physics_process(delta: float) -> void:
 	if _covered():
 		return
 
-	var move := _sampler.sample(delta) if _sampler != null else DotFpsCommand.new()
+	var move := _sampler.sample(delta) if _sampler != null else GSFpsCommand.new()
 	move.set_button(MmPlayer.USE_BUTTON, use)
 	move.set_button(MmPlayer.ATTACK_BUTTON, attack)
 	move.set_button(MmPlayer.HOLSTER_BUTTON, holster)

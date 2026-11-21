@@ -5,53 +5,53 @@ extends "headless_net_base.gd"
 func _test_the_codec() -> void:
 	_section("every event decodes to what was encoded")
 
-	var hello := MmEvents.read_hello(DotNetReader.new(MmEvents.write_hello(SESSION, 64, 1234, 10.0, 240.0, 3.0, 0.9)))
+	var hello := MmEvents.read_hello(GSNetReader.new(MmEvents.write_hello(SESSION, 64, 1234, 10.0, 240.0, 3.0, 0.9)))
 	_check(bool(hello["ok"]) and int(hello["player_id"]) == SESSION and int(hello["tick_rate"]) == 64
 		and absf(float(hello["round_seconds"]) - 240.0) < 0.1 and absf(float(hello["grace_seconds"]) - 10.0) < 0.05
 		and absf(float(hello["gun_cooldown"]) - 3.0) < 0.05 and absf(float(hello["melee_cooldown"]) - 0.9) < 0.02,
 		"HELLO", str(hello))
 
 	var doc := MmCatalogue.practice()
-	var sent := MmEvents.read_map(DotNetReader.new(MmEvents.write_map(MmMapDoc.encode(doc))))
-	var decoded := MmMapDoc.decode(sent["encoded"]) if bool(sent["ok"]) else DotResult.fail(DotError.CODE_PARSE, "no map")
+	var sent := MmEvents.read_map(GSNetReader.new(MmEvents.write_map(MmMapDoc.encode(doc))))
+	var decoded := MmMapDoc.decode(sent["encoded"]) if bool(sent["ok"]) else GSResult.fail(GSError.CODE_PARSE, "no map")
 	_check(decoded.ok and MmMapDoc.digest(decoded.value) == MmMapDoc.digest(doc), "MAP carries the document whole")
 
-	var join := MmEvents.read_join(DotNetReader.new(MmEvents.write_join(SESSION, 9, "Ada", MmGame.BYSTANDERS, null)))
+	var join := MmEvents.read_join(GSNetReader.new(MmEvents.write_join(SESSION, 9, "Ada", MmGame.BYSTANDERS, null)))
 	_check(bool(join["ok"]) and int(join["team"]) == MmGame.BYSTANDERS and str(join["name"]) == "Ada",
 		"JOIN carries the name and the public side", str(join.get("team")))
 
-	var round_info := MmEvents.read_round(DotNetReader.new(MmEvents.write_round(3, false, MmGame.MURDERERS, "time; Ada was the murderer")))
+	var round_info := MmEvents.read_round(GSNetReader.new(MmEvents.write_round(3, false, MmGame.MURDERERS, "time; Ada was the murderer")))
 	_check(bool(round_info["ok"]) and int(round_info["winner"]) == MmGame.MURDERERS and not bool(round_info["began"])
 		and str(round_info["why"]) == "time; Ada was the murderer", "ROUND carries the winning side and the sentence")
 
-	var killed := MmEvents.read_round(DotNetReader.new(MmEvents.write_round(3, false, 1, "x", 7)))
+	var killed := MmEvents.read_round(GSNetReader.new(MmEvents.write_round(3, false, 1, "x", 7)))
 	_check(int(killed["killer"]) == 7 and int(round_info["killer"]) == 0, "ROUND carries the last killer only when given one (0 otherwise)")
 
-	var role := MmEvents.read_role(DotNetReader.new(MmEvents.write_role(MmGame.MURDERERS, false, &"cleaver")))
-	var gunner := MmEvents.read_role(DotNetReader.new(MmEvents.write_role(MmGame.BYSTANDERS, true, &"knife")))
+	var role := MmEvents.read_role(GSNetReader.new(MmEvents.write_role(MmGame.MURDERERS, false, &"cleaver")))
+	var gunner := MmEvents.read_role(GSNetReader.new(MmEvents.write_role(MmGame.BYSTANDERS, true, &"knife")))
 	_check(bool(role["ok"]) and int(role["side"]) == MmGame.MURDERERS and not bool(role["gun"]) and role["weapon_id"] == &"cleaver"
 		and bool(gunner["ok"]) and int(gunner["side"]) == MmGame.BYSTANDERS and bool(gunner["gun"]),
 		"ROLE carries the side, the gun and the weapon", "%s, %s" % [role, gunner])
 
 	var from := Vector3(1.25, 1.6, -3.5)
 	var to := Vector3(9.0, 1.2, -3.25)
-	var fired := MmEvents.read_shot(DotNetReader.new(MmEvents.write_shot(SESSION, from, to, true)))
+	var fired := MmEvents.read_shot(GSNetReader.new(MmEvents.write_shot(SESSION, from, to, true)))
 	_check(bool(fired["ok"]) and int(fired["player_id"]) == SESSION and (fired["from"] as Vector3).distance_to(from) < 0.001
 		and (fired["to"] as Vector3).distance_to(to) < 0.001 and bool(fired["hit"]), "SHOT carries who, both ends and whether it hit", str(fired))
 
-	var gun := MmEvents.read_gun(DotNetReader.new(MmEvents.write_gun(3, true, to)))
+	var gun := MmEvents.read_gun(GSNetReader.new(MmEvents.write_gun(3, true, to)))
 	_check(bool(gun["ok"]) and int(gun["drop_id"]) == 3 and bool(gun["down"]) and (gun["at"] as Vector3).distance_to(to) < 0.001,
 		"GUN carries the drop, whether it lies there and where", str(gun))
 
-	var death := MmEvents.read_death(DotNetReader.new(MmEvents.write_death(SESSION, 0, MmGame.DIED_STABBED)))
+	var death := MmEvents.read_death(GSNetReader.new(MmEvents.write_death(SESSION, 0, MmGame.DIED_STABBED)))
 	_check(bool(death.get("ok", true)) and int(death["player_id"]) == SESSION and int(death["by"]) == 0
 		and death["why"] == MmGame.DIED_STABBED, "DEATH carries who and how, and nobody as the killer", str(death))
 
-	var toys := MmEvents.read_toys(DotNetReader.new(MmEvents.write_toys(&"hs_camp", PackedInt64Array([7, 300, 9001]))))
+	var toys := MmEvents.read_toys(GSNetReader.new(MmEvents.write_toys(&"hs_camp", PackedInt64Array([7, 300, 9001]))))
 	_check(bool(toys["ok"]) and toys["map_id"] == &"hs_camp" and toys["ids"] == PackedInt64Array([7, 300, 9001]),
 		"TOYS carries the map and its toys' ids in order", str(toys))
 
-	var clock := MmEvents.read_clock(DotNetReader.new(MmEvents.write_clock(2, 12.5, 40.25, MmGame.Phase.PLAY, 5, 1, true)))
+	var clock := MmEvents.read_clock(GSNetReader.new(MmEvents.write_clock(2, 12.5, 40.25, MmGame.Phase.PLAY, 5, 1, true)))
 	_check(bool(clock["ok"]) and int(clock["phase"]) == MmGame.Phase.PLAY and int(clock["round"]) == 2
 		and absf(float(clock["play_elapsed"]) - 40.25) < 0.1 and int(clock["alive"]) == 5
 		and int(clock["murderers"]) == 1 and bool(clock["playable"]), "CLOCK", str(clock))
@@ -63,7 +63,7 @@ func _test_the_codec() -> void:
 	_check(MmRequest.fits(), "every request kind fits the request's kind field",
 		"%d kinds in %d bits" % [MmEvents.Ask.size(), MmRequest.KIND_BITS])
 	_check(MmEvents.chat_kinds_fit(), "every chat kind fits the chat line's kind field",
-		"%d kinds in %d bits" % [DotChatMessage.KIND_NAMES.size(), MmEvents.CHAT_KIND_BITS])
+		"%d kinds in %d bits" % [GSChatMessage.KIND_NAMES.size(), MmEvents.CHAT_KIND_BITS])
 
 	_finished()
 
@@ -76,10 +76,10 @@ func _codec_map_sizes() -> void:
 	var biggest := PackedByteArray()
 	biggest.resize(MmEvents.MAP_BYTES)
 	var outgoing := MmEvent.new(MmEvents.Kind.MAP, MmEvents.write_map(biggest))
-	var wire := DotNetWriter.new()
+	var wire := GSNetWriter.new()
 	outgoing._write(wire)
 	var incoming := MmEvent.new()
-	incoming._read(DotNetReader.new(wire.to_bytes()))
+	incoming._read(GSNetReader.new(wire.to_bytes()))
 	var carried := MmEvents.read_map(incoming.reader())
 	_check(bool(carried["ok"]) and (carried["encoded"] as PackedByteArray).size() == MmEvents.MAP_BYTES,
 		"a MAP as large as a reader accepts fits in an event", "%d of %d bytes" % [(carried["encoded"] as PackedByteArray).size(), MmEvents.MAP_BYTES])
@@ -94,10 +94,10 @@ func _codec_map_sizes() -> void:
 	var parts_ok := parts.size() == 4
 	for part in parts:
 		var sent_part := MmEvent.new(part[0], part[1])
-		var part_wire := DotNetWriter.new()
+		var part_wire := GSNetWriter.new()
 		sent_part._write(part_wire)
 		var got_part := MmEvent.new()
-		got_part._read(DotNetReader.new(part_wire.to_bytes()))
+		got_part._read(GSNetReader.new(part_wire.to_bytes()))
 		var piece := MmEvents.read_map_part(got_part.reader())
 		parts_ok = parts_ok and got_part.kind == MmEvents.Kind.MAP_PART and bool(piece["ok"]) and int(piece["total"]) == large.size()
 		joined.append_array(piece["chunk"])
@@ -317,20 +317,20 @@ func _test_a_shot_is_rewound() -> void:
 	_section("a shot is rewound to what the shooter saw, and no further than the limit")
 
 	var sent := MmNetCommand.new()
-	sent.move = DotFpsCommand.new()
+	sent.move = GSFpsCommand.new()
 	sent.move.buttons = MmPlayer.ATTACK_BUTTON
 	sent.view_lag_q = 25
-	var writer := DotNetWriter.new()
+	var writer := GSNetWriter.new()
 	sent._write(writer)
 	var got := MmNetCommand.new()
-	got._read(DotNetReader.new(writer.to_bytes()))
+	got._read(GSNetReader.new(writer.to_bytes()))
 	_check(got.view_lag_q == 25 and absf(got.view_lag_ticks() - 6.25) < 0.001, "the view lag crosses with a button down")
 	var idle := MmNetCommand.new()
 	idle.view_lag_q = 25
-	var idle_writer := DotNetWriter.new()
+	var idle_writer := GSNetWriter.new()
 	idle._write(idle_writer)
 	var idle_got := MmNetCommand.new()
-	idle_got._read(DotNetReader.new(idle_writer.to_bytes()))
+	idle_got._read(GSNetReader.new(idle_writer.to_bytes()))
 	_check(idle_got.view_lag_q == -1, "and is not sent when nothing is pressed")
 
 	# Two murderers, so a kill does not end the round before the section does.
@@ -522,7 +522,7 @@ func _test_the_local_player_is_predicted() -> void:
 	server_me.place_at(Vector3(-2.0, 0.05, 0.0), 0.0)
 	await _steps(20)
 	var before := mine.controller.state.position
-	var forward := DotFpsCommand.new()
+	var forward := GSFpsCommand.new()
 	forward.move = Vector2(0.0, 1.0)
 	await _step(forward)
 	_check(mine.controller.state.position.distance_to(before) > 0.01,
@@ -560,7 +560,7 @@ func _test_a_door_crosses() -> void:
 
 	var _shut := _server_game.use_door(1, _me())
 	await _steps(SERVER_TICK_RATE)
-	var east := DotFpsCommand.new()
+	var east := GSFpsCommand.new()
 	east.yaw = -90.0
 	east.move = Vector2(0.0, 1.0)
 	await _steps(SERVER_TICK_RATE * 2, east)
@@ -595,7 +595,7 @@ func _test_a_client_without_the_map() -> void:
 	await _steps(8)
 	var ids: Array = []
 	for behaviour: Node in (_server_bridge.get("_toy_nets") as Array):
-		ids.append((behaviour.get("identity") as DotNetIdentity).net_id)
+		ids.append((behaviour.get("identity") as GSNetIdentity).net_id)
 	var known := ids.filter(func(id: int) -> bool: return _client_net.registry.has(id)).size()
 	_check(built.ok and ids.size() == 5 and known == ids.size() and _client_bridge.toy_count() == 0,
 		"the client registers the new map's toys at once, paired with nothing", "%d of %d known, %d paired" % [known, ids.size(), _client_bridge.toy_count()])

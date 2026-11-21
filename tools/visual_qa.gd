@@ -1,4 +1,4 @@
-extends DotGameVisualQaCapture
+extends GSGameVisualQaCapture
 
 ## Visual QA for the people and what they hold (dot-game docs/visual-qa.md): one item per person
 ## (the six atlases, empty-handed) and per held thing (each melee weapon and the gun, on a person),
@@ -61,7 +61,7 @@ func _build() -> void:
 	first_person.cull_mask = 0xFFFFF & ~BODY_LAYER
 
 
-func _stage(item: String, clip: String) -> DotResult:
+func _stage(item: String, clip: String) -> GSResult:
 	_clear()
 	_clip = clip
 	_speed = float(SPEEDS.get(clip, 0.0))
@@ -73,7 +73,7 @@ func _stage(item: String, clip: String) -> DotResult:
 	root.add_child(_figure)
 	_figure.build(MmPlayer.BODY_HEIGHT, atlas_path, Color(0.55, 0.62, 0.85))
 	if not _figure.from_art:
-		return DotResult.fail(DotError.CODE_INVALID, "the people's art did not load")
+		return GSResult.fail(GSError.CODE_INVALID, "the people's art did not load")
 	var what := &""
 	if item == "gun":
 		what = &"gun"
@@ -82,10 +82,10 @@ func _stage(item: String, clip: String) -> DotResult:
 		what = StringName(item)
 		_figure.hold(MmPlayer.ARMED_WEAPON, what)
 	_figure.global_position = _start
-	DotGameVisualQaViews.tag_layers(_figure, BODY_LAYER)
+	GSGameVisualQaViews.tag_layers(_figure, BODY_LAYER)
 	if what != &"":
 		_hold_in_view(what)
-	return DotResult.success(clip)
+	return GSResult.success(clip)
 
 
 func _hold_in_view(what: StringName) -> void:
@@ -100,8 +100,8 @@ func _hold_in_view(what: StringName) -> void:
 	# The arms blend in from an unposed state over their first ticks; let that finish before the first frame.
 	for _i in 30:
 		_arms.follow(_figure.global_position + Vector3(0.0, EYE_HEIGHT, 0.0), 0.0, 0.0, 1.0 / 60.0)
-	DotGameVisualQaViews.tag_layers(_arms, 1 << 17)
-	DotGameVisualQaViews.tag_layers(_view_model, 1 << 17)
+	GSGameVisualQaViews.tag_layers(_arms, 1 << 17)
+	GSGameVisualQaViews.tag_layers(_view_model, 1 << 17)
 
 
 func _clear() -> void:
@@ -134,7 +134,7 @@ func _drive(_item: String, clip: String, t: float, frame: int) -> void:
 	_figure.person.animate(_speed, 1.0 / float(fps))
 	_figure.clip = _figure.person.clip
 	# A swing can add nodes (trails) after the first tagging; keep them off the first-person camera.
-	DotGameVisualQaViews.tag_layers(_figure, BODY_LAYER)
+	GSGameVisualQaViews.tag_layers(_figure, BODY_LAYER)
 
 
 func _place_first_person(_item: String) -> void:

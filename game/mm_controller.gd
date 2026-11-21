@@ -1,4 +1,4 @@
-extends DotFpsController
+extends GSFpsController
 
 ## The first-person controller, with this game's modifier: somebody held still ([member MmPlayer.held_until]) cannot walk,
 ## jump or crouch. [b]A modifier, not a check in the game's loop[/b]: it travels in the snapshot so a predicting client
@@ -9,7 +9,7 @@ const HOLD := &"mm_hold"
 
 
 func _register_extensions() -> void:
-	var held := DotFpsModifier.make(HOLD)
+	var held := GSFpsModifier.make(HOLD)
 	held.deny_move = true
 	held.deny_jump = true
 	held.deny_crouch = true
@@ -30,13 +30,13 @@ var launcher: Callable = Callable()
 ## every end that simulates this person, so a predicting client is thrown on the very tick the
 ## server throws it. AIR at once, as a jump leaves the ground, or the motor snaps them back.
 func _on_pre_simulate(_tick: int, _delta: float) -> void:
-	if not launcher.is_valid() or state.mode != DotFpsState.Mode.GROUND:
+	if not launcher.is_valid() or state.mode != GSFpsState.Mode.GROUND:
 		return
 	var thrown: Dictionary = launcher.call(state.position, state.velocity)
 	if thrown.is_empty():
 		return
 	state.velocity = thrown["velocity"]
-	state.mode = DotFpsState.Mode.AIR
+	state.mode = GSFpsState.Mode.AIR
 	state.time_since_grounded = 1000.0
 	if not is_replaying():
 		bounced.emit(int(thrown["index"]))

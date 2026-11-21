@@ -3,7 +3,7 @@ extends Control
 const MmPlayer := preload("mm_player.gd")
 
 ## The on-screen buttons a phone needs: attack, use, draw or put away, and jump, through dot-mobile's
-## [DotMobileControls]: a stick, drag-look and those buttons, driving the client's own [DotFpsTouchSampler]. Never auto-fires (see [method crosshair_kind]).
+## [GSMobileControls]: a stick, drag-look and those buttons, driving the client's own [GSFpsTouchSampler]. Never auto-fires (see [method crosshair_kind]).
 
 const EDGE_MARGIN := 24.0
 
@@ -21,7 +21,7 @@ const ROLE_DROP := 104.0
 ## Chat lines kept on a phone: the log is bottom left under the role block, and a tall one climbs into it.
 const CHAT_LINES := 3
 
-## Where the chat log goes on a phone, in the phone canvas's units (short side 720, see DotGameScreenFit): right of the stick and
+## Where the chat log goes on a phone, in the phone canvas's units (short side 720, see GSGameScreenFit): right of the stick and
 ## left of the buttons in landscape, above the stick in portrait where the buttons leave no room beside it.
 const CANVAS_SHORT := 720.0
 const CHAT_STICK_RIGHT := 464.0
@@ -47,25 +47,25 @@ static func chat_settings(window_px: Vector2) -> Dictionary:
 
 ## The server's touch rules, built in [MmGame]: auto-fire stays off (`sv_autofire 0`) unless an operator turns it on.
 ## Nobody is known to be an enemy here (roles are secret), so even then [method crosshair_kind] never allows a shot.
-static func make_rules() -> DotMobileRules:
-	var rules := DotMobileRules.new()
-	rules.autofire = DotMobileRules.OFF
+static func make_rules() -> GSMobileRules:
+	var rules := GSMobileRules.new()
+	rules.autofire = GSMobileRules.OFF
 	return rules
 
 
-var controls: DotMobileControls = null
+var controls: GSMobileControls = null
 ## dot-mobile's buttons inside the overlay, for the shell's DPI fit.
-var buttons: DotMobileButtons:
+var buttons: GSMobileButtons:
 	get:
 		return controls.buttons if controls != null else null
 
 ## Held now (a thumb), read by the client each tick beside the keys.
 var attack_held: bool:
 	get:
-		return is_held(DotGameTouchLayout.FIRE)
+		return is_held(GSGameTouchLayout.FIRE)
 var use_held: bool:
 	get:
-		return is_held(DotGameTouchLayout.USE)
+		return is_held(GSGameTouchLayout.USE)
 var holster_held: bool:
 	get:
 		return is_held(HOLSTER)
@@ -78,24 +78,24 @@ var _made: Array[Dictionary] = []
 
 ## `--touch` forces them on so a desktop render shows the layout.
 static func wanted() -> bool:
-	return DotPlatform.has_touch() or "--touch" in OS.get_cmdline_user_args()
+	return GSPlatform.has_touch() or "--touch" in OS.get_cmdline_user_args()
 
 
 ## dot-game's fps preset less what this game has no use for. Holster (draw or put away) takes the secondary slot.
-static func touch_layout() -> DotGameTouchLayout:
-	var res := DotGameTouchLayout.build(DotGameTouchLayout.FPS, {
-		DotGameTouchLayout.ALT: null,
-		DotGameTouchLayout.RELOAD: null,
-		DotGameTouchLayout.NEXT: null,
-		DotGameTouchLayout.PREV: null,
-		DotGameTouchLayout.BOARD: null,
-		DotGameTouchLayout.CHAT: null,
-		DotGameTouchLayout.FIRE: {"label": "HIT"},
+static func touch_layout() -> GSGameTouchLayout:
+	var res := GSGameTouchLayout.build(GSGameTouchLayout.FPS, {
+		GSGameTouchLayout.ALT: null,
+		GSGameTouchLayout.RELOAD: null,
+		GSGameTouchLayout.NEXT: null,
+		GSGameTouchLayout.PREV: null,
+		GSGameTouchLayout.BOARD: null,
+		GSGameTouchLayout.CHAT: null,
+		GSGameTouchLayout.FIRE: {"label": "HIT"},
 		HOLSTER: {"slot": &"secondary", "label": "DRAW"},
 	})
 	if not res.ok:
 		push_error("game-murder-mystery touch layout refused: %s" % str(res.error))
-		return DotGameTouchLayout.custom()
+		return GSGameTouchLayout.custom()
 	return res.value
 
 
@@ -104,21 +104,21 @@ static func layout() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for b: Dictionary in touch_layout().buttons():
 		var made := b.duplicate()
-		if made["id"] == DotGameTouchLayout.JUMP:
-			made["hold"] = DotFpsCommand.BUTTON_JUMP
-		elif made["id"] == DotGameTouchLayout.CROUCH:
-			made["hold"] = DotFpsCommand.BUTTON_CROUCH
+		if made["id"] == GSGameTouchLayout.JUMP:
+			made["hold"] = GSFpsCommand.BUTTON_JUMP
+		elif made["id"] == GSGameTouchLayout.CROUCH:
+			made["hold"] = GSFpsCommand.BUTTON_CROUCH
 		out.append(made)
 	return out
 
 
 ## Builds the overlay on [param sampler], following [param rules] (the server's). [param client] is the platform that
 ## fits the buttons to the screen.
-func build(sampler: DotFpsTouchSampler, client: Object = null, rules: DotMobileRules = null, host: Node = null) -> void:
+func build(sampler: GSFpsTouchSampler, client: Object = null, rules: GSMobileRules = null, host: Node = null) -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_host = host
-	controls = DotMobileControls.new()
+	controls = GSMobileControls.new()
 	controls.name = "Controls"
 	controls.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if rules != null:
@@ -136,7 +136,7 @@ func _ready() -> void:
 	if controls == null or controls.buttons == null:
 		return
 	controls.buttons.margin = EDGE_MARGIN
-	if _client != null and DotPlatform.has_touch() and _client.has_method(&"fit_touch_buttons"):
+	if _client != null and GSPlatform.has_touch() and _client.has_method(&"fit_touch_buttons"):
 		_client.call(&"fit_touch_buttons", controls.buttons, _made)
 
 
@@ -176,7 +176,7 @@ func describe() -> Dictionary:
 ## What the crosshair is on, for auto-fire: never an enemy. Everybody is a bystander to everybody and a shot at one
 ## costs the gun (and with `innocent_kills_shooter`, the shooter), so no auto-fire press is ever safe.
 static func crosshair_kind() -> int:
-	return DotMobileAutoFire.TARGET_FRIEND
+	return GSMobileAutoFire.TARGET_FRIEND
 
 
 ## Touches on the Menu button belong to the button, not to the stick or the look.

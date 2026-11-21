@@ -1,4 +1,4 @@
-extends DotGameCheckSuite
+extends GSGameCheckSuite
 
 const MmConfig := preload("../game/mm_config.gd")
 const MmGame := preload("../game/mm_game.gd")
@@ -48,7 +48,7 @@ var _sections_finished := 0
 
 
 func _ready() -> void:
-	DotLog.set_level(DotLog.Level.ERROR)
+	GSLog.set_level(GSLog.Level.ERROR)
 	_run.call_deferred()
 
 
@@ -58,9 +58,9 @@ const SHARDS := 4
 
 
 func _merge(logs: Array) -> void:
-	var absent := DotGameShardArgs.missing(PackedStringArray(logs))
+	var absent := GSGameShardArgs.missing(PackedStringArray(logs))
 	_check(logs.size() == SHARDS and absent.is_empty(), "every shard's log is there (%d logs)" % logs.size(), "missing %s" % [absent])
-	var entered := DotGameShardArgs.sections_entered(PackedStringArray(logs))
+	var entered := GSGameShardArgs.sections_entered(PackedStringArray(logs))
 	var linked := DirAccess.dir_exists_absolute(ProjectSettings.globalize_path("res://maps"))
 	var want := SHARDS + (MAPS.size() if linked else 1)
 	_check(entered >= want, "the shards entered the catalogue once each and every map (%d sections, at least %d)" % [entered, want])
@@ -71,17 +71,17 @@ func _run() -> void:
 	print("murder maps")
 	print("")
 
-	if DotGameShardArgs.is_merge():
+	if GSGameShardArgs.is_merge():
 		_section("merged from the shards' logs")
-		_merge(DotGameShardArgs.merge_logs())
+		_merge(GSGameShardArgs.merge_logs())
 		_finished()
 		_report_sections(_sections_entered, _sections_finished, 1, 2)
 		return
 
-	var shard := DotGameShardArgs.shard()
+	var shard := GSGameShardArgs.shard()
 	await _test_the_catalogue()
-	var own: Array = DotGameShardArgs.slice(_maps, shard, SHARDS)
-	var foreign: Array = DotGameShardArgs.slice(_foreign, shard, SHARDS)
+	var own: Array = GSGameShardArgs.slice(_maps, shard, SHARDS)
+	var foreign: Array = GSGameShardArgs.slice(_foreign, shard, SHARDS)
 
 	for id: String in own:
 		await _test_map(StringName(id))
@@ -261,7 +261,7 @@ func _test_map(id: StringName) -> void:
 ## The spawn batches keep their people apart.
 func _check_spread(game: MmGame, id: StringName, spawns_n: int) -> void:
 	var least := INF
-	var rules: DotSpawnRules = game.config.spawn_rules()
+	var rules: GSSpawnRules = game.config.spawn_rules()
 
 	for offset in range(0, 64, 9):
 		var spots: Array = game.map.spawn_batch(MmGame.SPAWN_GROUP, SPREAD_PLAYERS, rules, offset)
@@ -364,7 +364,7 @@ func _bad_spawns(game: MmGame, seats: int) -> Array:
 	return bad
 
 
-func _toy_hits(game: MmGame, toy: DotPropBody, own: Array[RID]) -> String:
+func _toy_hits(game: MmGame, toy: GSPropBody, own: Array[RID]) -> String:
 	var space := game.get_world_3d().direct_space_state
 	for part: CollisionObject3D in [toy.fixed, toy.body]:
 		if part == null:
@@ -542,12 +542,12 @@ func _world(id: StringName, drawn := false) -> MmGame:
 	return game
 
 
-## dot-core's [DotCollisionAudit] over the map as a client draws it: visible geometry with no shape near it. Fails on
+## dot-core's [GSCollisionAudit] over the map as a client draws it: visible geometry with no shape near it. Fails on
 ## any finding. The audit is lenient (a shape anywhere under the map that the mesh touches covers it); the exact half
 ## is that a non-solid box thicker than PAINT_THICKNESS must sit inside a solid one (embers in a hearth).
 func _audit_colliderless(id: StringName, doc: Dictionary) -> void:
 	var drawn := await _world(id, true)
-	var res := DotCollisionAudit.audit(drawn.map, true)
+	var res := GSCollisionAudit.audit(drawn.map, true)
 	var found := 0
 	var ghosts := 0
 	var thick: Array[String] = []
@@ -571,7 +571,7 @@ func _audit_colliderless(id: StringName, doc: Dictionary) -> void:
 				thick.append("%s at %s" % [box["mat"], box["at"]])
 
 	if res.ok:
-		var report: DotCollisionAudit = res.value
+		var report: GSCollisionAudit = res.value
 		found = report.count()
 		print("  collision audit: %d meshes with no shape near them of %d, %d visible boxes not solid" % [found, report.examined, ghosts])
 
@@ -579,7 +579,7 @@ func _audit_colliderless(id: StringName, doc: Dictionary) -> void:
 			print("  %s" % line)
 
 	var terrain_fault := _terrain_fault(drawn) if doc.has("terrain") else ""
-	_check(res.ok and found == 0 and (res.value as DotCollisionAudit).examined > 0 and terrain_fault == "",
+	_check(res.ok and found == 0 and (res.value as GSCollisionAudit).examined > 0 and terrain_fault == "",
 		"nothing drawn is walked through, and a map's terrain is ground", terrain_fault if res.ok else res.error.message)
 	_check(thick.is_empty(), "every box that is drawn and not solid is paint", ", ".join(thick))
 	await _dispose(drawn)

@@ -1,4 +1,4 @@
-extends DotGameCheckSuite
+extends GSGameCheckSuite
 ## The headless_run suite's world builders and drivers, so the suite itself holds only the tests.
 
 const MmConfig := preload("../game/mm_config.gd")
@@ -141,7 +141,7 @@ func _dispose(game: MmGame) -> void:
 
 
 func _drive(player: MmPlayer, move: Vector2) -> void:
-	var command := DotFpsCommand.new()
+	var command := GSFpsCommand.new()
 	command.yaw = player.controller.state.yaw
 	command.move = move
 	player.controller.apply_command(command)
@@ -149,7 +149,7 @@ func _drive(player: MmPlayer, move: Vector2) -> void:
 
 func _aim(player: MmPlayer, target: Vector3) -> void:
 	var look := target - player.eye_position()
-	var command := DotFpsCommand.new()
+	var command := GSFpsCommand.new()
 	command.yaw = rad_to_deg(atan2(-look.x, -look.z))
 	command.pitch = clampf(rad_to_deg(asin(clampf(look.normalized().y, -1.0, 1.0))), -89.0, 89.0)
 	player.controller.state.yaw = command.yaw

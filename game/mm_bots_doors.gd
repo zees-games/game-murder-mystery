@@ -42,7 +42,7 @@ func _note_doorway(player: MmPlayer, state: Dictionary, goal: Vector3) -> void:
 
 ## Turns to the door in `state.shut` and presses use until it is shut or the moment has passed.
 ## Returns true while it is at it.
-func _shut_door(player: MmPlayer, command: DotFpsCommand, state: Dictionary) -> bool:
+func _shut_door(player: MmPlayer, command: GSFpsCommand, state: Dictionary) -> bool:
 	var shut: Dictionary = state.get("shut", {})
 	if shut.is_empty():
 		return false
@@ -59,7 +59,7 @@ func _shut_door(player: MmPlayer, command: DotFpsCommand, state: Dictionary) -> 
 		return false
 	var panel_at: Vector3 = (doors.call("panel_transform", index, 0.0) as Transform3D).origin
 	command.move = Vector2.ZERO
-	command.set_button(DotFpsCommand.BUTTON_CROUCH, bool(state.get("crouch", false)))
+	command.set_button(GSFpsCommand.BUTTON_CROUCH, bool(state.get("crouch", false)))
 	_look(player, command, panel_at)
 	var facing: int = doors.call("door_for", player.eye_position(), player.aim_direction())
 	state["use_now"] = facing == index and not bool(doors.call("moving", index, int(game.get("_tick"))))
@@ -135,7 +135,7 @@ func _plan_shut_from_clear(player: MmPlayer, state: Dictionary, index: int) -> b
 
 ## Walks back to `state.opening`'s point, facing the door, and presses use once it is out of the
 ## swing: to open it, or (`open` false) to shut it. Returns true while it is at it.
-func _open_from_clear(player: MmPlayer, command: DotFpsCommand, state: Dictionary) -> bool:
+func _open_from_clear(player: MmPlayer, command: GSFpsCommand, state: Dictionary) -> bool:
 	var opening: Dictionary = state.get("opening", {})
 	if opening.is_empty():
 		return false

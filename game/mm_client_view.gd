@@ -38,7 +38,7 @@ func _place_camera() -> void:
 	# dot-core's boom, swept from the eye with the height above it added in the world's up:
 	# a pivot above the head can be inside a tree's canopy (the play test, 0:33), and the
 	# spring arm it replaced cast a ray from there and snapped to whatever it hit.
-	_arm = DotCameraBoom.new()
+	_arm = GSCameraBoom.new()
 	_arm.name = "Chase"
 	_arm.spring_length = CHASE_BACK
 	# Against the building and the furniture, never the player's own body.
@@ -94,7 +94,7 @@ func _build_camera() -> void:
 	# Other players and stand-ins, handed over (their hulls are off while players pass
 	# through each other): hidden at the lens, faded in third person between the camera and
 	# you. It rides the camera wherever the camera goes.
-	_fade = DotCameraFade.new()
+	_fade = GSCameraFade.new()
 	_fade.name = "Fade"
 	_fade.bodies_fn = _other_players
 	camera.add_child(_fade)
@@ -148,10 +148,10 @@ func _key(action: StringName) -> String:
 
 
 ## The sound manager the flashlight clicks play through, or null before audio is up.
-func _flash_audio_ref() -> DotNodeRef:
+func _flash_audio_ref() -> GSNodeRef:
 	if audio == null or audio.manager == null or not audio.manager.is_inside_tree():
 		return null
-	return DotNodeRef.of_path(audio.manager.get_path())
+	return GSNodeRef.of_path(audio.manager.get_path())
 
 
 ## The light on the eye follows the server's state (but not for 0.4 s after our own switch, which is shown at once); everybody else's beam, and ours when the camera is not our eye, comes from the crowd.
@@ -160,7 +160,7 @@ func _present_flashlights(delta: float) -> void:
 	var map_id := str(game.map_doc.get("id", ""))
 
 	if flash == null or not is_instance_valid(flash):
-		flash = DotFlashlight.new()
+		flash = GSFlashlight.new()
 		flash.name = "Flashlight"
 		flash.config = cfg
 		flash.handle_input = false
@@ -169,10 +169,10 @@ func _present_flashlights(delta: float) -> void:
 		flash.switch_requested.connect(_on_flash_switch)
 		camera.add_child(flash)
 
-	flash.allowed = DotFlashlightRules.allowed_on(cfg, map_id)
+	flash.allowed = GSFlashlightRules.allowed_on(cfg, map_id)
 
 	if flash_crowd == null:
-		flash_crowd = DotFlashlightCrowd.new()
+		flash_crowd = GSFlashlightCrowd.new()
 		flash_crowd.name = "Flashlights"
 		flash_crowd.config = cfg
 		flash_crowd.audio = _flash_audio_ref()

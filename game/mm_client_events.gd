@@ -88,7 +88,7 @@ func _toy_sound(id: StringName, at: Vector3, strength: float) -> void:
 
 func _on_map(map_id: StringName) -> void:
 	if flash != null:
-		flash.allowed = DotFlashlightRules.allowed_on(game.flashlight_conf(), str(map_id))
+		flash.allowed = GSFlashlightRules.allowed_on(game.flashlight_conf(), str(map_id))
 
 	if ragdolls != null:
 		# A body on the old map would hang in the new one's air.
@@ -150,9 +150,9 @@ func _play_killcam(killer: int) -> void:
 
 ## The killcam's host, off unless dot-replay has it (API 6).
 func _build_killcam() -> void:
-	if DotAddonApi.build_level("dot_replay") < 6:
+	if GSAddonApi.build_level("dot_replay") < 6:
 		return
-	killcam = DotKillcamHost.new()
+	killcam = GSKillcamHost.new()
 	MmKillcamBodies.configure(killcam)
 	killcam.name = "FinalKillcam"
 	killcam.players_fn = func() -> Array: return game.players.values() if game != null else []
@@ -186,7 +186,7 @@ func _fall(who: MmPlayer) -> void:
 		# The rooms and the props: a body lands on them and on nothing else (not on a person).
 		game.ragdoll_rules.collision_mask = game.physics.layer_mask(&"world") | game.physics.layer_mask(&"prop")
 	var velocity := who.controller.state.velocity if who.controller != null else Vector3.ZERO
-	var _body := ragdolls.spawn(who.figure, who.death if who.death != null else DotPlayerDeath.new(), velocity)
+	var _body := ragdolls.spawn(who.figure, who.death if who.death != null else GSPlayerDeath.new(), velocity)
 	# The blade or gun falls with the hand that held it, as a short-lived prop (sv_ragdoll_weapon_drop).
 	var held := who.figure.held_node()
 	if held != null:

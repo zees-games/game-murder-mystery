@@ -3,7 +3,7 @@ extends "mm_net_bridge_roster.gd"
 ## What a client does with each event in [code]mm_net_bridge.gd[/code]: the server's word put on the mirrored
 ## world. Path-based base, no class_name.
 
-func _on_event(message: DotNetMessage) -> void:
+func _on_event(message: GSNetMessage) -> void:
 	var event := message as MmEvent
 
 	if event == null or game == null or net == null or net.is_server:
@@ -59,14 +59,14 @@ func _on_event(message: DotNetMessage) -> void:
 			_apply_gun(reader)
 
 
-func _apply_leave(reader: DotNetReader) -> void:
+func _apply_leave(reader: GSNetReader) -> void:
 	var session_id := MmEvents.read_player(reader)
 	_release_entity(session_id)
 	game.remove_player(player_key(session_id))
 	roster_changed.emit(session_id)
 
 
-func _apply_team(reader: DotNetReader) -> void:
+func _apply_team(reader: GSNetReader) -> void:
 	var side := MmEvents.read_team(reader)
 
 	if bool(side["ok"]):
@@ -76,7 +76,7 @@ func _apply_team(reader: DotNetReader) -> void:
 		roster_changed.emit(int(side["player_id"]))
 
 
-func _apply_round(reader: DotNetReader) -> void:
+func _apply_round(reader: GSNetReader) -> void:
 	var round_info := MmEvents.read_round(reader)
 
 	if not bool(round_info["ok"]):
@@ -105,7 +105,7 @@ func _apply_round(reader: DotNetReader) -> void:
 	)
 
 
-func _apply_phase(reader: DotNetReader) -> void:
+func _apply_phase(reader: GSNetReader) -> void:
 	var moved := MmEvents.read_phase(reader)
 
 	if bool(moved["ok"]):
@@ -115,7 +115,7 @@ func _apply_phase(reader: DotNetReader) -> void:
 		phase_received.emit(int(moved["phase"]))
 
 
-func _apply_death(reader: DotNetReader) -> void:
+func _apply_death(reader: GSNetReader) -> void:
 	var death := MmEvents.read_death(reader)
 
 	if bool(death["ok"]):
@@ -130,7 +130,7 @@ func _apply_death(reader: DotNetReader) -> void:
 		)
 
 
-func _apply_spectate(reader: DotNetReader) -> void:
+func _apply_spectate(reader: GSNetReader) -> void:
 	var view := MmEvents.read_spectate(reader)
 
 	if bool(view["ok"]) and game.spectate != null:
@@ -146,7 +146,7 @@ func _apply_spectate(reader: DotNetReader) -> void:
 		)
 
 
-func _apply_door(reader: DotNetReader) -> void:
+func _apply_door(reader: GSNetReader) -> void:
 	var door := MmEvents.read_door(reader)
 
 	if bool(door["ok"]) and game.map != null and game.map.doors != null \
@@ -155,7 +155,7 @@ func _apply_door(reader: DotNetReader) -> void:
 		door_received.emit(int(door["index"]), bool(door["open"]), int(door["tick"]))
 
 
-func _apply_role(reader: DotNetReader) -> void:
+func _apply_role(reader: GSNetReader) -> void:
 	var role := MmEvents.read_role(reader)
 
 	if bool(role["ok"]):
@@ -171,7 +171,7 @@ func _apply_role(reader: DotNetReader) -> void:
 		role_received.emit(local_role, bool(role["gun"]), role["weapon_id"])
 
 
-func _apply_gun(reader: DotNetReader) -> void:
+func _apply_gun(reader: GSNetReader) -> void:
 	var gun := MmEvents.read_gun(reader)
 
 	if bool(gun["ok"]):
@@ -196,7 +196,7 @@ func _adopt_side(id: StringName, side: int) -> void:
 		player.retune()
 
 
-func _apply_hello(reader: DotNetReader) -> void:
+func _apply_hello(reader: GSNetReader) -> void:
 	var hello := MmEvents.read_hello(reader)
 
 	if not bool(hello["ok"]):
@@ -237,22 +237,22 @@ func _adopt_tick_rate(rate: int) -> void:
 	# The LIVE one, which is built from the config back at `setup()` and is therefore not
 	# updated by writing the config alone.
 	net.clock.tick_rate = game.tick_rate
-	# dot-net API 7 has DotNetClock.adopt_tick_rate(), which also raises the engine's step cap.
+	# dot-net API 7 has GSNetClock.adopt_tick_rate(), which also raises the engine's step cap.
 	# A shell built before it gets the same rule here; remove this branch when the oldest shell is API 7.
-	if DotAddonApi.build_level("dot_net") >= 7:
-		DotNetClock.adopt_tick_rate(game.tick_rate)
+	if GSAddonApi.build_level("dot_net") >= 7:
+		GSNetClock.adopt_tick_rate(game.tick_rate)
 	else:
 		Engine.max_physics_steps_per_frame = maxi(Engine.max_physics_steps_per_frame, ceili(0.25 * float(game.tick_rate)))
 		Engine.physics_ticks_per_second = game.tick_rate
 
-	DotLog.info(CHANNEL, "adopted the server's tick rate", {
+	GSLog.info(CHANNEL, "adopted the server's tick rate", {
 		"was": before, "now": game.tick_rate, "engine": Engine.physics_ticks_per_second,
 	})
 
 
 ## The map, which on a client is a document it builds exactly as the server did.
 # Refused with a line, never half built: a client a format behind answers no map and a WARN, not a map with holes.
-func _apply_map(reader: DotNetReader) -> void:
+func _apply_map(reader: GSNetReader) -> void:
 	var told := MmEvents.read_map(reader)
 
 	if not bool(told["ok"]) or game == null:
@@ -264,7 +264,7 @@ func _apply_map(reader: DotNetReader) -> void:
 
 ## One piece of a large map. Index 0 starts it over; a piece out of order, or a whole that
 ## does not add up, drops the map with a line rather than building half of one.
-func _apply_map_part(reader: DotNetReader) -> void:
+func _apply_map_part(reader: GSNetReader) -> void:
 	var told := MmEvents.read_map_part(reader)
 
 	if not bool(told["ok"]) or game == null:
@@ -279,7 +279,7 @@ func _apply_map_part(reader: DotNetReader) -> void:
 		_map_joined = PackedByteArray()
 
 	if index != _map_next or int(told["count"]) != _map_count or int(told["total"]) != _map_total:
-		DotLog.warn(CHANNEL, "a map piece arrived out of order; the map is dropped", {
+		GSLog.warn(CHANNEL, "a map piece arrived out of order; the map is dropped", {
 			"index": index, "expected": _map_next, "count": told["count"],
 		})
 		_map_next = -1
@@ -294,7 +294,7 @@ func _apply_map_part(reader: DotNetReader) -> void:
 	_map_next = 0
 
 	if _map_joined.size() != _map_total:
-		DotLog.warn(CHANNEL, "a map's pieces do not add up; the map is dropped", {
+		GSLog.warn(CHANNEL, "a map's pieces do not add up; the map is dropped", {
 			"bytes": _map_joined.size(), "expected": _map_total,
 		})
 		return
@@ -309,7 +309,7 @@ func _build_map_bytes(encoded: PackedByteArray) -> void:
 	var decoded := MmMapDoc.decode(encoded)
 
 	if not decoded.ok:
-		DotLog.warn(CHANNEL, "the server sent a map this build cannot build", {
+		GSLog.warn(CHANNEL, "the server sent a map this build cannot build", {
 			"why": decoded.error.message, "detail": decoded.error.detail,
 		})
 		return
@@ -320,7 +320,7 @@ func _build_map_bytes(encoded: PackedByteArray) -> void:
 		map_received.emit(game.map.id())
 
 
-func _apply_join(reader: DotNetReader) -> void:
+func _apply_join(reader: GSNetReader) -> void:
 	var join := MmEvents.read_join(reader)
 
 	if not bool(join["ok"]):
@@ -349,7 +349,7 @@ func _apply_join(reader: DotNetReader) -> void:
 		)
 
 		if not registered.ok:
-			DotLog.warn(CHANNEL, "could not mirror a player", {"error": str(registered.error)})
+			GSLog.warn(CHANNEL, "could not mirror a player", {"error": str(registered.error)})
 			return
 	else:
 		player.display_name = str(join["name"])
@@ -386,13 +386,13 @@ func _claim_local_player() -> void:
 	if claimed == 0 or mine.identity.owner_peer_id == claimed:
 		return
 
-	DotLog.debug(CHANNEL, "claimed the local player after HELLO", {
+	GSLog.debug(CHANNEL, "claimed the local player after HELLO", {
 		"session": local_player_id, "net_id": mine.identity.net_id,
 	})
 	var _changed := net.registry.change_owner(mine.identity.net_id, claimed)
 
 
-func _apply_clock(reader: DotNetReader) -> void:
+func _apply_clock(reader: GSNetReader) -> void:
 	var clock := MmEvents.read_clock(reader)
 
 	if not bool(clock["ok"]):

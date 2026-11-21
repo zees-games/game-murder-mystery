@@ -1,7 +1,7 @@
 extends "dedicated_tests.gd"
 
-## The game as a deployed server runs it: a real [DotServer] booted from a config file, the module loaded BY PATH.
-## The only suite where [MmModule] loads, [DotGameModule]'s order runs, a cvar is typed at a console and a round is
+## The game as a deployed server runs it: a real [GSServer] booted from a config file, the module loaded BY PATH.
+## The only suite where [MmModule] loads, [GSGameModule]'s order runs, a cvar is typed at a console and a round is
 ## played by nothing but the stand-ins the module seats itself; `headless_run` and `headless_net` cannot reach these.
 
 const SECTIONS := 16
@@ -9,7 +9,7 @@ const CHECKS := 123
 
 
 func _ready() -> void:
-	DotLog.set_level(DotLog.Level.ERROR)
+	GSLog.set_level(GSLog.Level.ERROR)
 	_run.call_deferred()
 
 
@@ -21,12 +21,12 @@ func _run() -> void:
 	if not _is_exit_probe():
 		probe = await _run_exit_probe()
 
-	DotPaths.remove_tree(SERVER_DIR)
+	GSPaths.remove_tree(SERVER_DIR)
 	DirAccess.make_dir_recursive_absolute(SERVER_DIR)
 
 	await _boot()
 
-	if server != null and server.state == DotServer.State.RUNNING:
+	if server != null and server.state == GSServer.State.RUNNING:
 		await _test_the_module_loads()
 		_test_the_commands()
 		await _test_a_round_runs()
@@ -51,5 +51,5 @@ func _run() -> void:
 	var checks := CHECKS - (EXIT_PROBE_CHECKS if _is_exit_probe() else 0)
 
 	await _shut_down()
-	DotPaths.remove_tree(SERVER_DIR)
+	GSPaths.remove_tree(SERVER_DIR)
 	_report_sections(_sections_entered, _sections_finished, sections, checks)

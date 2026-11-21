@@ -14,10 +14,10 @@ func _test_map_rotation_file() -> void:
 		return
 
 	game.config.map_ids = PackedStringArray()
-	var kept_file: DotMapRotationFile = game.rotation_file
+	var kept_file: GSMapRotationFile = game.rotation_file
 	_check(server.console.find_cvar("sv_map_rotation_file") != null, "sv_map_rotation_file is a cvar")
 
-	var built := DotMapRotationFile.from_trees([{"defaults": {
+	var built := GSMapRotationFile.from_trees([{"defaults": {
 		"rotation": "main",
 		"rotations": {
 			"main": {"mode": "cycle", "cooldown": 0, "maps": ["mm_mansion"]},
@@ -48,7 +48,7 @@ func _test_map_rotation_file() -> void:
 		"60 draws of the next map never choose a map outside the rotation", str(game.rotation_pool()))
 
 	var ids: Array = []
-	for choice: DotVoteChoice in (vote.get("source") as DotVoteListSource).entries:
+	for choice: GSVoteChoice in (vote.get("source") as GSVoteListSource).entries:
 		ids.append(String(choice.id))
 	_check(not ids.has("mm_motel") and ids.has("mm_mansion"),
 		"a map outside the rotation is not on the ballot, one inside is", str(ids))
@@ -72,15 +72,15 @@ func _test_map_rotation_file() -> void:
 	_finished()
 
 
-func _rotation_commands_and_fallbacks(module: DotModule, vote: Node, kept_file: DotMapRotationFile) -> void:
-	var rtv := DotVoteCommands.new()
+func _rotation_commands_and_fallbacks(module: GSModule, vote: Node, kept_file: GSMapRotationFile) -> void:
+	var rtv := GSVoteCommands.new()
 	rtv.director = vote.get("director")
 	rtv.spec_fn = game.rotation_commands
 	var bound := rtv.bind(server.console)
 	_check(bound.ok and rtv.command_name("rtv") == "rockthevote"
 		and server.console.find_command("rockthevote") != null,
 		"a renamed rtv command is registered from maps.yml's commands")
-	_check(DotCommandNames.all_of("", module.call("_renames", game), {}, "mm_maps")[0] == "maplist",
+	_check(GSCommandNames.all_of("", module.call("_renames", game), {}, "mm_maps")[0] == "maplist",
 		"mm_maps answers to the name the file gives it")
 
 	# No file again: everything back in, as before maps.yml.
@@ -92,7 +92,7 @@ func _rotation_commands_and_fallbacks(module: DotModule, vote: Node, kept_file: 
 	_check(game.rotation_commands().is_empty(), "and no command is renamed")
 
 	# A file that names nothing installed must not strand the server.
-	var empty := DotMapRotationFile.from_trees([{"defaults": {"rotations": {"main": {"maps": ["nothing_here"]}}}}],
+	var empty := GSMapRotationFile.from_trees([{"defaults": {"rotations": {"main": {"maps": ["nothing_here"]}}}}],
 		"game-murder-mystery")
 	game.rotation_file = empty.value
 	game.apply_rotation()
@@ -136,11 +136,11 @@ func _test_the_module_loads() -> void:
 	add_child(game)
 	await get_tree().process_frame
 
-	_check(DotRegistry.get_node_service(MmGame.SERVICE) == game, "the world publishes itself where a module looks")
+	_check(GSRegistry.get_node_service(MmGame.SERVICE) == game, "the world publishes itself where a module looks")
 	_check(not game.map_doc.is_empty(), "and already has a map")
 
 	(load("res://game/mm_module.gd") as GDScript).set("punishments_file", "%s/punishments.json" % SERVER_DIR)
-	var loaded: DotResult = await server.modules.load_module("res://game/mm_module.gd")
+	var loaded: GSResult = await server.modules.load_module("res://game/mm_module.gd")
 	_check(loaded.ok, "the module loads into the server", loaded.error.message if not loaded.ok else "")
 
 	var module := _module()
@@ -151,14 +151,14 @@ func _test_the_module_loads() -> void:
 
 	_check(game.progress.feed != null and game.progress.feed.tracker == game.progress.stats,
 		"kills go through dot-stats' event feed over the progress tracker")
-	var stats: DotStatsTracker = game.progress.stats
+	var stats: GSStatsTracker = game.progress.stats
 	var was_reporting := stats.report_to_backbone
 	stats.report_to_backbone = true
 	_check(game.progress.feed.report_kill(&"u91", &"u92", "knife") and not game.progress.feed.report_kill(&"u91", &"u91", "knife"),
 		"the feed files a kill and refuses a suicide")
 	stats.report_to_backbone = was_reporting
 
-	var net: DotNetManager = module.get("net") if module != null else null
+	var net: GSNetManager = module.get("net") if module != null else null
 	_check(net != null and net.config.tick_rate == TICK_RATE, "the netcode runs at the configured rate")
 	var freeroam: Object = server.console.find_cvar("mp_freeroam")
 	var forcecam: Object = server.console.find_cvar("mp_forcecamera")
@@ -182,8 +182,8 @@ func _test_the_module_loads() -> void:
 	_finished()
 
 
-## Config cvars, the workbench's sync into a hand-written cvar, and dot-team's block rules through dot-game's DotGameNoblock.
-func _noblock_and_config(module: DotModule) -> void:
+## Config cvars, the workbench's sync into a hand-written cvar, and dot-team's block rules through dot-game's GSGameNoblock.
+func _noblock_and_config(module: GSModule) -> void:
 	var teamblock := server.console.find_cvar("mp_teamblock")
 	var enemyblock := server.console.find_cvar("mp_enemyblock")
 	_check(teamblock != null and teamblock.get_string() == "0" and enemyblock != null and enemyblock.get_string() == "1",
@@ -289,18 +289,18 @@ func _note_round_began(_n: int, _map: StringName, drawn: Array) -> void:
 	drawn.append(game.players_on(MmGame.MURDERERS).size())
 
 
-## A person takes a stand-in's place and leaving gives it back (DotBotQuota's fill mode), driven by the roster check, not its interval.
+## A person takes a stand-in's place and leaving gives it back (GSBotQuota's fill mode), driven by the roster check, not its interval.
 func _stand_ins_fill_for_people() -> void:
 	var quota_module := _module()
 	var quota_bridge: Object = quota_module.get("bridge") if quota_module != null else null
 	_check(server.console.find_cvar("bot_quota") != null and server.console.find_cvar("bot_quota_mode") != null,
 		"the shared bot_quota cvars are registered")
 	# How the stand-ins see, hear and know a map is dot-bot's: the family's names, medium by default.
-	var bot_settings := DotBotSettings.of(game)
+	var bot_settings := GSBotSettings.of(game)
 	_check(server.console.get_string("bot_difficulty", "") == "medium" and bot_settings.difficulty() == "medium",
 		"bot_difficulty is the module's and medium is the default")
 	var _hard := _run_command("bot_difficulty hard")
-	_check(bot_settings.difficulty() == "hard" and is_equal_approx(server.console.get_float("bot_sight"), DotBotProfile.preset_value("hard", "sight")),
+	_check(bot_settings.difficulty() == "hard" and is_equal_approx(server.console.get_float("bot_sight"), GSBotProfile.preset_value("hard", "sight")),
 		"bot_difficulty hard writes every bot_* setting", server.console.get_string("bot_sight"))
 	var _medium := _run_command("bot_difficulty medium")
 	var _alias := _run_command("mm_min_players 3")
@@ -311,7 +311,7 @@ func _stand_ins_fill_for_people() -> void:
 	if quota_module != null and quota_bridge != null:
 		quota_module.call("_keep_the_round_full")
 		var bots_before: int = (quota_module.get("_bot_ids") as Array).size()
-		var joined: DotResult = quota_bridge.call("add_player", 0, 9001, "Person")
+		var joined: GSResult = quota_bridge.call("add_player", 0, 9001, "Person")
 		quota_module.call("_keep_the_round_full")
 		var bots_with: int = (quota_module.get("_bot_ids") as Array).size()
 		_check(joined.ok and bots_before == 3 and bots_with == bots_before - 1,
@@ -333,9 +333,9 @@ func _stand_ins_fill_for_people() -> void:
 func _test_the_murderer_plays_no_action() -> void:
 	_section("the murderer plays no avatar action in a round")
 	var module := _module()
-	var net: DotNetManager = module.get("net") if module != null else null
+	var net: GSNetManager = module.get("net") if module != null else null
 	var bridge: Object = module.get("bridge") if module != null else null
-	var relay := net.get_meta(DotGameAvatarActionRelay.NET_META, null) as DotGameAvatarActionRelay if net != null else null
+	var relay := net.get_meta(GSGameAvatarActionRelay.NET_META, null) as GSGameAvatarActionRelay if net != null else null
 	_check(relay != null and relay.veto_fn.is_valid(), "the module bound its veto to the relay")
 
 	if relay == null or bridge == null:
@@ -346,8 +346,8 @@ func _test_the_murderer_plays_no_action() -> void:
 
 	var murderer_peer := 9101
 	var bystander_peer := 9102
-	var _m: DotResult = bridge.call("add_player", murderer_peer, 9201, "Killer")
-	var _b: DotResult = bridge.call("add_player", bystander_peer, 9202, "Bystander")
+	var _m: GSResult = bridge.call("add_player", murderer_peer, 9201, "Killer")
+	var _b: GSResult = bridge.call("add_player", bystander_peer, 9202, "Bystander")
 	var killer := game.players.get(MmNetBridge.player_key(bridge.call("player_for_peer", murderer_peer))) as MmPlayer
 	var innocent := game.players.get(MmNetBridge.player_key(bridge.call("player_for_peer", bystander_peer))) as MmPlayer
 	_check(killer != null and innocent != null, "both seats exist")
@@ -393,7 +393,7 @@ func _test_a_module_reload_keeps_one_link() -> void:
 	for _i in range(2):
 		var gone := server.modules.unload_module("murder")
 		_check(gone.ok, "the module unloads", gone.error.message if not gone.ok else "")
-		var back: DotResult = await server.modules.load_module("res://game/mm_module.gd")
+		var back: GSResult = await server.modules.load_module("res://game/mm_module.gd")
 		_check(back.ok, "and loads again", back.error.message if not back.ok else "")
 	for _i in range(5):
 		await get_tree().process_frame
@@ -412,7 +412,7 @@ func _test_a_module_reload_keeps_one_link() -> void:
 	var mirror := Node.new()
 	mirror.name = name
 	side.add_child(mirror)
-	var client := DotClientLink.new()
+	var client := GSClientLink.new()
 	client.name = "Server"
 	client.player_name = "Reload"
 	client.transport_preference = "udp"
@@ -429,8 +429,8 @@ func _test_a_module_reload_keeps_one_link() -> void:
 			seated = true
 			# The server tells a peer nothing until it says READY (its world exists, which
 			# the bridge does when it is built); this stand-in has no bridge, so it says it.
-			var writer := DotNetWriter.new()
-			var _asked: DotResult = _module().get("bridge").net.messages.encode(
+			var writer := GSNetWriter.new()
+			var _asked: GSResult = _module().get("bridge").net.messages.encode(
 				load("res://game/net/mm_request.gd").new(MmEvents.Ask.READY, PackedByteArray([0])), writer)
 			receiver.send_request(writer.to_bytes())
 			break

@@ -11,7 +11,7 @@ func _ready() -> void:
 	var valid := config.validate()
 
 	if not valid.ok:
-		DotLog.error(CHANNEL, "the configuration is not usable", {"why": valid.error.message})
+		GSLog.error(CHANNEL, "the configuration is not usable", {"why": valid.error.message})
 		return
 
 	_round_seed = config.seed_value
@@ -46,16 +46,16 @@ func _ready() -> void:
 		_lay_out_map()
 
 	if register_service:
-		DotRegistry.register(SERVICE, self)
+		GSRegistry.register(SERVICE, self)
 
-	DotLog.info(CHANNEL, "world ready", config.describe())
+	GSLog.info(CHANNEL, "world ready", config.describe())
 
 
 ## The `<pack>/<subdir>` map directories a host running this game without a server has mounted
 ## (the client shell's Solo play), read as the module reads its server's. Empty elsewhere;
 ## duck-typed, because a delivered game may not name a host's class.
 static func solo_map_dirs(subdir: String) -> PackedStringArray:
-	var host: Object = DotRegistry.get_service(SOLO_SERVICE)
+	var host: Object = GSRegistry.get_service(SOLO_SERVICE)
 	if host == null or not host.has_method(&"map_dirs"):
 		return PackedStringArray()
 	return host.call(&"map_dirs", subdir)
@@ -63,15 +63,15 @@ static func solo_map_dirs(subdir: String) -> PackedStringArray:
 
 func _exit_tree() -> void:
 	if register_service:
-		DotRegistry.unregister_instance(SERVICE, self)
+		GSRegistry.unregister_instance(SERVICE, self)
 
 
 func _build_match() -> void:
-	match_node = DotMatch.new()
+	match_node = GSMatch.new()
 	match_node.name = "Match"
 	match_node.register_service = false
 
-	var match_config := DotMatchConfig.new()
+	var match_config := GSMatchConfig.new()
 	match_config.tick_rate = tick_rate
 	match_config.auto_start = false
 	match_config.log_transitions = false
@@ -79,7 +79,7 @@ func _build_match() -> void:
 	match_config.balance_between_rounds = false
 	match_node.config = match_config
 
-	var match_rules: DotMatchRules = MmRules.make()
+	var match_rules: GSMatchRules = MmRules.make()
 	match_rules.intermission_sec = config.intermission_seconds
 	match_rules.warmup_sec = config.warmup_seconds
 	match_rules.countdown_sec = 0.0
@@ -90,15 +90,15 @@ func _build_match() -> void:
 	match_node.rules = match_rules
 
 	# Scoped to the match node, which finds nothing: this game places its own players.
-	match_node.spawns_ref = DotNodeRef.of_path(^".")
+	match_node.spawns_ref = GSNodeRef.of_path(^".")
 	add_child(match_node)
 
 	match_node.round_started.connect(_on_round_started)
 	match_node.round_ended.connect(_on_round_ended)
 
-	var teams: Array[DotTeam] = [
-		DotTeam.make(BYSTANDERS, TEAM_NAMES[0], TEAM_COLOURS[0]),
-		DotTeam.make(MURDERERS, TEAM_NAMES[1], TEAM_COLOURS[1]),
+	var teams: Array[GSTeam] = [
+		GSTeam.make(BYSTANDERS, TEAM_NAMES[0], TEAM_COLOURS[0]),
+		GSTeam.make(MURDERERS, TEAM_NAMES[1], TEAM_COLOURS[1]),
 	]
 	match_node.teams.teams = teams
 	match_node.teams.force_balance = false
@@ -141,16 +141,16 @@ func add_player(
 		var applied := physics.apply_to(player, &"player")
 
 		if not applied.ok:
-			DotLog.warn(CHANNEL, "a player could not be put on its collision layer", {"why": applied.error.message})
+			GSLog.warn(CHANNEL, "a player could not be put on its collision layer", {"why": applied.error.message})
 
 		_apply_body_mask(player)
 
 	var opened := entities.open(
-		DotEntity.KIND_PLAYER, player, &"", player_id, float(_tick) / float(maxi(tick_rate, 1))
+		GSEntity.KIND_PLAYER, player, &"", player_id, float(_tick) / float(maxi(tick_rate, 1))
 	)
-	player.entity_id = (opened.value as DotEntityHandle).id if opened.ok else 0
+	player.entity_id = (opened.value as GSEntityHandle).id if opened.ok else 0
 
-	var health := DotHealth.new()
+	var health := GSHealth.new()
 	health.name = "Health"
 	health.max_health = config.player_health
 	health.health = health.max_health
@@ -161,19 +161,19 @@ func add_player(
 		combat.register_health(player.entity_id, health)
 
 	if combat != null and player.controller != null:
-		var fall := DotFallDamage.new()
+		var fall := GSFallDamage.new()
 		fall.name = "FallDamage"
 		fall.rules = fall_rules
 		fall.victim = player.entity_id
-		fall.controller = DotNodeRef.of_path(player.controller.get_path())
-		fall.controller.mode = DotNodeRef.Mode.ABSOLUTE
-		fall.combat = DotNodeRef.of_path(combat.get_path())
-		fall.combat.mode = DotNodeRef.Mode.ABSOLUTE
+		fall.controller = GSNodeRef.of_path(player.controller.get_path())
+		fall.controller.mode = GSNodeRef.Mode.ABSOLUTE
+		fall.combat = GSNodeRef.of_path(combat.get_path())
+		fall.combat.mode = GSNodeRef.Mode.ABSOLUTE
 		# No ladders or noclip here; nobody is hurt between rounds (the intermission).
 		fall.context_checks = {&"protected": func() -> bool: return phase == Phase.IDLE}
 		player.add_child(fall)
 
-	health.died.connect(func(damage: DotDamage) -> void: _on_player_died(player, damage))
+	health.died.connect(func(damage: GSDamage) -> void: _on_player_died(player, damage))
 
 	players[player_id] = player
 	sides[player_id] = side
@@ -186,7 +186,7 @@ func add_player(
 		var seated := match_node.add_player(String(player_id), display_name, _tick, side)
 
 		if not seated.ok:
-			DotLog.error(CHANNEL, "dot-match refused a player", {"id": String(player_id), "why": seated.error.message})
+			GSLog.error(CHANNEL, "dot-match refused a player", {"id": String(player_id), "why": seated.error.message})
 
 	place_one(player)
 
@@ -194,7 +194,7 @@ func add_player(
 		_bench(player)
 
 	player.retune()
-	DotLog.debug(CHANNEL, "player joined", {"id": String(player_id)})
+	GSLog.debug(CHANNEL, "player joined", {"id": String(player_id)})
 	apply_pass_through()
 	player_added.emit(player_id)
 	return player
@@ -234,7 +234,7 @@ func remove_player(player_id: StringName) -> void:
 
 	if combat != null and is_instance_valid(combat) and player.entity_id != 0:
 		combat.forget(player.entity_id)
-		var _closed := entities.close(player.entity_id, DotEntityTable.REASON_OWNER_LEFT)
+		var _closed := entities.close(player.entity_id, GSEntityTable.REASON_OWNER_LEFT)
 
 	var _gone := _trail.erase(player_id)
 
@@ -325,7 +325,7 @@ func _on_round_started(number: int) -> void:
 
 	round_began.emit(number, map.id())
 
-	DotLog.info(CHANNEL, "round began", {
+	GSLog.info(CHANNEL, "round began", {
 		"number": number, "map": String(map.id()), "seed": _round_seed,
 		"players": players.size(), "murderers": ", ".join(_names(players_on(MURDERERS))),
 	})
@@ -343,12 +343,12 @@ func _on_round_ended(number: int, winner: int, _outcome: int) -> void:
 		progress.on_round_over(winner)
 
 	round_over.emit(number, winner, _winner_name)
-	DotLog.info(CHANNEL, "round over", {"number": number, "winner": _winner_name})
+	GSLog.info(CHANNEL, "round over", {"number": number, "winner": _winner_name})
 
 
 
 ## Who is the murderer and who has the gun this round, and everybody's shirt.
-## Murderers by [DotTeamRotation] over a history, gunners at random from the rest;
+## Murderers by [GSTeamRotation] over a history, gunners at random from the rest;
 ## [member forced_roles] overrides the draw for the people it names.
 func _draw_roles() -> void:
 	var keys: Array[StringName] = []
@@ -360,7 +360,7 @@ func _draw_roles() -> void:
 
 	var murderers := _draw_murderers(keys)
 
-	DotTeamRotation.note(murderer_history, keys, murderers, round_number)
+	GSTeamRotation.note(murderer_history, keys, murderers, round_number)
 
 	var rest: Array[StringName] = []
 
@@ -408,7 +408,7 @@ func _set_phase(to: int) -> void:
 	phase_elapsed = 0.0
 
 	phase_changed.emit(to)
-	DotLog.debug(CHANNEL, "the round changed phase", {"phase": Phase.keys()[to]})
+	GSLog.debug(CHANNEL, "the round changed phase", {"phase": Phase.keys()[to]})
 
 
 func _advance_phase(delta: float) -> void:

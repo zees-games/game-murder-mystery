@@ -19,8 +19,8 @@ const BODY_CROUCH := 0.95
 const BODY_STEP := 0.4
 
 ## The attack key (stab, or shoot) and the holster key, in the same buttons.
-const ATTACK_BUTTON := DotFpsCommand.BUTTON_USER_1
-const HOLSTER_BUTTON := DotFpsCommand.BUTTON_USER_2
+const ATTACK_BUTTON := GSFpsCommand.BUTTON_USER_1
+const HOLSTER_BUTTON := GSFpsCommand.BUTTON_USER_2
 
 ## What somebody has in their hand, as everybody sees it: [member armed].
 ## The murderers' team id, as [constant MmGame.MURDERERS] (not preloaded here: the game
@@ -33,7 +33,7 @@ const ARMED_GUN := 2
 
 ## The use key, in the movement command's buttons: one dot-player-controller leaves to games,
 ## so it rides in every input packet with the movement and needs no field of its own.
-const USE_BUTTON := DotFpsCommand.BUTTON_USER_0
+const USE_BUTTON := GSFpsCommand.BUTTON_USER_0
 
 @export var player_id: StringName = &"local"
 @export var display_name: String = "Player"
@@ -41,16 +41,16 @@ const USE_BUTTON := DotFpsCommand.BUTTON_USER_0
 @export var is_bot: bool = false
 
 ## What this player looks like, as a dot-user-avatar document; null is the stock person.
-var avatar: DotAvatar = null
+var avatar: GSAvatar = null
 
 var config: MmConfig = null
 
 var controller: MmController = null
-var sampler: DotFpsSampler = null
+var sampler: GSFpsSampler = null
 ## Offline only: the keys do not walk this body. Set while its owner flies the spectator's free
 ## camera, which takes the same keys.
 var input_off: bool = false
-var health: DotHealth = null
+var health: GSHealth = null
 
 ## Their role this round: [constant MmGame.BYSTANDERS] or [constant MmGame.MURDERERS]. The
 ## server's; on a client it is known for the local player alone (the ROLE event) and is 1 for
@@ -137,7 +137,7 @@ var holster_was_held: bool = false
 var blinded: bool = false
 var beacon: bool = false
 
-var beacon_marker: DotFxBeacon = null
+var beacon_marker: GSFxBeacon = null
 
 ## What other people see this player as. Client side.
 var figure: MmFigure = null
@@ -152,7 +152,7 @@ func armed() -> int:
 
 ## How this player's body falls on their death: the server's pick ([method MmGame.decide_death]),
 ## carried on DEATH and set here before anybody hears of it. Null before a first death.
-var death: DotPlayerDeath = null
+var death: GSPlayerDeath = null
 
 var tick_rate: int = 64:
 	set(value):
@@ -167,21 +167,21 @@ func _ready() -> void:
 	controller.tick_rate = tick_rate
 	# EXTERNAL even offline: the world owns the tick, which is the shape a dedicated server
 	# needs and the one a predicting client replays.
-	controller.drive = DotFpsController.Drive.EXTERNAL
+	controller.drive = GSFpsController.Drive.EXTERNAL
 	controller.tunables = tunables_for(config)
 	controller.admin_abilities = true
 	add_child(controller)
 
 	if samples_input:
-		sampler = DotFpsSampler.new(controller.tunables)
+		sampler = GSFpsSampler.new(controller.tunables)
 		register_actions(sampler)
 
 
 ## How a player moves. Static: a connected client builds a sampler before it has a player, and
 ## the two must agree. The same for both sides, so a predicting client never has to know which
 ## side somebody is on to move them.
-static func tunables_for(config: MmConfig, speed_scale: float = 1.0) -> DotFpsTunables:
-	var t := DotFpsTunables.with_profile("legacy")
+static func tunables_for(config: MmConfig, speed_scale: float = 1.0) -> GSFpsTunables:
+	var t := GSFpsTunables.with_profile("legacy")
 	t.max_speed = (config.run_speed if config != null else 6.0) * speed_scale
 	t.gravity = config.gravity if config != null else 20.0
 	t.jump_height = config.jump_height if config != null else 1.15
@@ -210,8 +210,8 @@ static func tunables_for(config: MmConfig, speed_scale: float = 1.0) -> DotFpsTu
 
 ## The movement actions. Shift sprints here (the controller's own default), because a chase is
 ## the game; the slow walk stays on its own key.
-static func register_actions(p_sampler: DotFpsSampler = null) -> void:
-	var _added := DotFpsSampler.register_default_actions(p_sampler)
+static func register_actions(p_sampler: GSFpsSampler = null) -> void:
+	var _added := GSFpsSampler.register_default_actions(p_sampler)
 
 
 ## One simulated tick. On the server and offline; a client predicts through its behaviour.
@@ -222,11 +222,11 @@ func simulate(tick: int, delta: float) -> void:
 
 	if sampler != null:
 		# Settling under the cover runs the body with its input off (falls, lands, no keys).
-		var gate := DotLoadGate.of(self) if is_inside_tree() else null
+		var gate := GSLoadGate.of(self) if is_inside_tree() else null
 		# Sampled even when off, so presses latched meanwhile are consumed, not replayed later.
 		var command := sampler.sample(delta)
 		controller.apply_command(
-			command if (gate == null or gate.is_open()) and not input_off else DotFpsCommand.new())
+			command if (gate == null or gate.is_open()) and not input_off else GSFpsCommand.new())
 
 	controller.simulate_tick(tick, delta)
 	global_position = controller.state.position
@@ -262,9 +262,9 @@ func aim_direction() -> Vector3:
 ## The duck-typed lookup other addons ask a carrier for.
 func component(type_name: StringName) -> Object:
 	match String(type_name):
-		"DotPlayerController", "DotFpsController":
+		"GSPlayerController", "GSFpsController":
 			return controller
-		"DotHealth":
+		"GSHealth":
 			return health
 		_:
 			return null
@@ -279,7 +279,7 @@ func place_at(at: Vector3, yaw_degrees: float) -> void:
 	if sampler != null:
 		sampler.look_at_angles(yaw_degrees, 0.0)
 
-	var facing := DotFpsCommand.new()
+	var facing := GSFpsCommand.new()
 	facing.yaw = yaw_degrees
 	controller.apply_command(facing)
 
@@ -339,7 +339,7 @@ func present_beacon(delta: float, at: Vector3, local_view: bool, period: float) 
 		return false
 
 	if beacon_marker == null:
-		beacon_marker = DotFxBeacon.new()
+		beacon_marker = GSFxBeacon.new()
 		beacon_marker.name = "Beacon"
 		beacon_marker.period = period
 		beacon_marker.colour = Color(0.98, 0.22, 0.86)
@@ -378,7 +378,7 @@ func present_body(hidden: bool, at: Vector3, shirt_colour: Color) -> bool:
 		_attacks_drawn = attacks
 		var velocity := controller.state.velocity
 		figure.set_motion({
-			"on_floor": controller.state.mode == DotFpsState.Mode.GROUND,
+			"on_floor": controller.state.mode == GSFpsState.Mode.GROUND,
 			"vertical": velocity.y,
 			"crouched": controller.state.crouch_fraction > 0.5,
 			# The view's pitch: the upper body and the head follow it.
@@ -394,8 +394,8 @@ var _attacks_drawn: int = 0
 
 
 ## The drawn person's look, for the first-person arms (the figure is never built for your own eyes).
-func view_look() -> DotHumanoidLook:
-	return DotHumanoidLook.from_letter(_atlas())
+func view_look() -> GSHumanoidLook:
+	return GSHumanoidLook.from_letter(_atlas())
 
 
 func _atlas() -> String:

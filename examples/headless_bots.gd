@@ -1,4 +1,4 @@
-extends DotGameCheckSuite
+extends GSGameCheckSuite
 
 const MmConfig := preload("../game/mm_config.gd")
 const MmGame := preload("../game/mm_game.gd")
@@ -37,7 +37,7 @@ var _completed := 0
 
 
 func _ready() -> void:
-	DotLog.set_level(DotLog.Level.ERROR)
+	GSLog.set_level(GSLog.Level.ERROR)
 	# The world ticks itself (simulate) and waits for a physics frame after each tick so doors
 	# and bodies are where the physics server says; physics frames come at their rate in real
 	# time, so a fast rate lets a round of minutes play in seconds.
@@ -186,7 +186,7 @@ func _round(map_id: String, index: int, difficulty: String) -> Dictionary:
 	game.register_service = false
 	add_child(game)
 	game.set_physics_process(false)
-	var _set := DotBotSettings.of(game).set_difficulty(difficulty)
+	var _set := GSBotSettings.of(game).set_difficulty(difficulty)
 	await get_tree().physics_frame
 
 	for i in range(BOTS):

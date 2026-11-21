@@ -42,7 +42,7 @@ func _start_offline() -> void:
 			chat.say_locally("Achievement: %s (+%d)" % [title, points], Color(0.98, 0.84, 0.40))
 	)
 	game.start()
-	DotLog.result(CHANNEL, "chat, offline", chat.attach(null))
+	GSLog.result(CHANNEL, "chat, offline", chat.attach(null))
 
 
 ## A solo stand-in's name: the server's list, through dot-bot's pick, so solo and a server
@@ -50,8 +50,8 @@ func _start_offline() -> void:
 static func _bot_name(index: int) -> String:
 	var taken: Array = []
 	for i in range(index):
-		taken.append(DotBotNames.pick(taken, i, MmGame.BOT_NAMES))
-	return DotBotNames.pick(taken, index, MmGame.BOT_NAMES)
+		taken.append(GSBotNames.pick(taken, i, MmGame.BOT_NAMES))
+	return GSBotNames.pick(taken, index, MmGame.BOT_NAMES)
 
 
 func _say_ready() -> void:
@@ -71,15 +71,15 @@ func _on_roster_changed(session_id: int) -> void:
 		_adopt(game.players.get(MmNetBridge.player_key(session_id)))
 
 
-func _build_netcode() -> DotResult:
-	net = DotNetManager.new()
+func _build_netcode() -> GSResult:
+	net = GSNetManager.new()
 	net.name = "Net"
 	net.is_server = false
 	net.local_peer_id = multiplayer.get_unique_id() if multiplayer != null else 2
 	net.auto_tick = false
 	net.config_file = ""
 
-	var net_config := DotNetConfig.new()
+	var net_config := GSNetConfig.new()
 	net_config.tick_rate = game.tick_rate
 	net_config.snapshot_rate = MmGame.NET_SNAPSHOT_RATE
 	net_config.enable_prediction = true
@@ -117,9 +117,9 @@ func _build_netcode() -> DotResult:
 	# And mp_forcecamera / mp_freeroam*: this end flies the spectator's free camera.
 	var _spectate := game.spectate_rules.follow_cvars(link)
 	# Before the seal and in the server's order (after the bridge), or the actions stay local.
-	DotLog.result(CHANNEL, "avatar action message", DotGameAvatarActionMessage.register(net))
+	GSLog.result(CHANNEL, "avatar action message", GSGameAvatarActionMessage.register(net))
 	# The server's order again (after the avatar frame): the remote workbench's frame.
-	workbench_remote = DotGameWorkbenchRemoteClient.attach(net)
+	workbench_remote = GSGameWorkbenchRemoteClient.attach(net)
 	net.messages.seal()
 
 	bridge.hello_received.connect(_on_hello)
@@ -139,7 +139,7 @@ func _build_netcode() -> DotResult:
 		bridge.rtt_source = func() -> float:
 			return float(maxi(0, int(link.call("ping_ms"))))
 
-	DotLog.result(CHANNEL, "chat and voice", chat.attach(bridge))
+	GSLog.result(CHANNEL, "chat and voice", chat.attach(bridge))
 
 	if link != null and link.has_method("is_playing") and bool(link.call("is_playing")):
 		_say_ready()

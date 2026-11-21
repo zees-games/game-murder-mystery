@@ -3,7 +3,7 @@ extends Node
 const MmConfig := preload("mm_config.gd")
 const MmGame := preload("mm_game.gd")
 
-## What a [DotServer] loads as its game scene. Never a client. Everything a server does is in
+## What a [GSServer] loads as its game scene. Never a client. Everything a server does is in
 ## `mm_module.gd`; the scene puts the world in the tree under [constant MmGame.SERVICE] before
 ## the module looks for it. It lives in `game/` because only a game's `.tscn` is vendored from `scenes/`.
 
@@ -23,7 +23,7 @@ func _ready() -> void:
 	var loaded := binder.load_layers()
 
 	if not loaded.ok:
-		DotGameConfigBinder.fail_boot(get_tree(), loaded)
+		GSGameConfigBinder.fail_boot(get_tree(), loaded)
 		return
 
 	game = MmGame.new()
@@ -36,7 +36,7 @@ func _ready() -> void:
 	game.tick_rate = Engine.physics_ticks_per_second
 	add_child(game)
 
-	DotLog.info(CHANNEL, "the world is up", {
+	GSLog.info(CHANNEL, "the world is up", {
 		"tick_rate": game.tick_rate,
 		"maps": config.map_directory,
 		"round": config.round_seconds,

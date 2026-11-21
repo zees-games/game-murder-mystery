@@ -6,19 +6,19 @@ const MmConfig := preload("../game/mm_config.gd")
 
 var flags: Dictionary = {}
 var state: Dictionary = {}
-var snet: DotNetManager = null
-var cnet: DotNetManager = null
+var snet: GSNetManager = null
+var cnet: GSNetManager = null
 var sconfig: MmConfig = null
-var sbinder: DotGameConfigBinder = null
-var sset: DotProfileSet = null
-var cset: DotProfileSet = null
-var swb: DotGameWorkbench = null
-var cwb: DotGameWorkbench = null
-var cremote: DotGameWorkbenchRemoteClient = null
-var crt: DotProfileRuntime = null
-var slink: DotNetProfileLink = null
-var clink: DotNetProfileLink = null
-var remote: DotGameWorkbenchRemote = null
+var sbinder: GSGameConfigBinder = null
+var sset: GSProfileSet = null
+var cset: GSProfileSet = null
+var swb: GSGameWorkbench = null
+var cwb: GSGameWorkbench = null
+var cremote: GSGameWorkbenchRemoteClient = null
+var crt: GSProfileRuntime = null
+var slink: GSNetProfileLink = null
+var clink: GSNetProfileLink = null
+var remote: GSGameWorkbenchRemote = null
 var host: Node = null
 var tick_rate := 64
 
@@ -32,7 +32,7 @@ func _check(ok: bool, what: String, detail := "") -> void:
 	var _r: bool = host._check(ok, what, detail)
 
 
-func _manager(server: bool, scope: StringName, peer_id: int) -> DotNetManager:
+func _manager(server: bool, scope: StringName, peer_id: int) -> GSNetManager:
 	return host._make_manager(server, scope, peer_id, host, tick_rate)
 
 
@@ -40,7 +40,7 @@ func _manager(server: bool, scope: StringName, peer_id: int) -> DotNetManager:
 ## admin gets a panel and an edit that applies and replicates; others are refused.
 func run() -> void:
 	host._section("[a flagged admin edits the server's profiles, and nobody else can]")
-	if not DotGameWorkbench.available():
+	if not GSGameWorkbench.available():
 		print("  dot-workbench is not linked: skipped")
 		host._passed += 16
 		host._finished()
@@ -56,25 +56,25 @@ func run() -> void:
 	var _l1 := sbinder.load_layers()
 	var _l2 := cbinder.load_layers()
 	sset = null
-	for candidate: DotProfileSet in sbinder.profile_sets():
+	for candidate: GSProfileSet in sbinder.profile_sets():
 		if candidate.rel_path.ends_with("weapons"):
 			sset = candidate
 	cset = null
-	for candidate: DotProfileSet in cbinder.profile_sets():
+	for candidate: GSProfileSet in cbinder.profile_sets():
 		if candidate.rel_path.ends_with("weapons"):
 			cset = candidate
-	swb = DotGameWorkbench.new()
+	swb = GSGameWorkbench.new()
 	swb.dedicated = true
 	swb.config = {"enabled": false}
 	swb.add_set(sset, "Game settings")
 	host.add_child(swb)
 	var started := swb.start()
 	sbinder.attach(swb.api.runtime)
-	var made := DotGameWorkbenchRemote.serve(snet)
-	slink = DotNetProfileLink.attach(snet, swb.api.runtime as DotProfileRuntime)
-	cremote = DotGameWorkbenchRemoteClient.attach(cnet)
-	crt = DotProfileRuntime.new()
-	clink = DotNetProfileLink.attach(cnet, crt)
+	var made := GSGameWorkbenchRemote.serve(snet)
+	slink = GSNetProfileLink.attach(snet, swb.api.runtime as GSProfileRuntime)
+	cremote = GSGameWorkbenchRemoteClient.attach(cnet)
+	crt = GSProfileRuntime.new()
+	clink = GSNetProfileLink.attach(cnet, crt)
 	snet.messages.seal()
 	cnet.messages.seal()
 	remote = swb.serve_remote(snet)
@@ -90,8 +90,8 @@ func run() -> void:
 	remote.connected_fn = func(_p: int) -> bool: return true
 	remote.permit_uid_fn = func(uid: String, flag: String) -> bool: return (flags.get(uid, []) as Array).has(flag)
 	remote.now_fn = func() -> int: return state["now"]
-	remote.limiter = DotRateLimiter.new(1000.0, 1000.0)
-	cwb = DotGameWorkbench.new()
+	remote.limiter = GSRateLimiter.new(1000.0, 1000.0)
+	cwb = GSGameWorkbench.new()
 	cwb.panel_mode = 2
 	cwb.config = {"enabled": false}
 	cwb.remote_client = cremote
@@ -106,7 +106,7 @@ func run() -> void:
 func _rounds() -> void:
 	var kind: String = sset.rel_path
 	var edit := {"op": "set", "kind": kind, "id": sbinder.profile_id, "key": "drop_on_miss", "value": false}
-	var srt := swb.api.runtime as DotProfileRuntime
+	var srt := swb.api.runtime as GSProfileRuntime
 
 	state["uid"] = "boss"
 	cremote.ask()
@@ -118,7 +118,7 @@ func _rounds() -> void:
 	cremote.ask()
 	_check(cremote.allowed and cremote.flags.has("cvar"), "with the cvar on an admin is told the flags it holds")
 	_check(cwb.overlay != null, "and gets the panel")
-	var applied: DotResult = cwb.api.handle(DotGameWorkbenchRemoteClient.ACTOR, edit)
+	var applied: GSResult = cwb.api.handle(GSGameWorkbenchRemoteClient.ACTOR, edit)
 	_check(applied.ok and not sconfig.drop_on_miss, "an edit from the panel reaches the server's live config", "" if applied.ok else applied.error.message)
 	_check(crt.revision(kind, sbinder.profile_id) > 0 and crt.revision(kind, sbinder.profile_id) == srt.revision(kind, sbinder.profile_id), "and its row replicated to the client")
 

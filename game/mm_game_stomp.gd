@@ -3,7 +3,7 @@ extends "mm_game_death.gd"
 ## Damage from the world and from heads: the stomp rule and the fall below the map, of
 ## [code]mm_game.gd[/code]. Path-based base, no class_name.
 
-## Scratch list of the hulls [method _resolve_stomps] hands to [DotStomp], kept so a tick allocates none.
+## Scratch list of the hulls [method _resolve_stomps] hands to [GSStomp], kept so a tick allocates none.
 var _stomp_hulls: Array = []
 
 
@@ -29,14 +29,14 @@ func _resolve_stomps() -> void:
 		if not player.is_alive():
 			continue
 
-		var state: DotFpsState = player.controller.state
+		var state: GSFpsState = player.controller.state
 		var victim_id := stomp.find(player.entity_id, state.position, player.controller.tunables.radius,
 			-float(_pre_vy[id]), -1, hulls, _tick, tick_rate)
 
 		if victim_id == 0:
 			continue
 
-		var hit := DotDamage.make(player.entity_id, victim_id, stomp.amount(), null)
+		var hit := GSDamage.make(player.entity_id, victim_id, stomp.amount(), null)
 		hit.tick = _tick
 		hit.point = state.position
 		hit.context = {"why": &"stomp", "ignores_teams": true}
@@ -62,7 +62,7 @@ func _watch_world() -> void:
 			continue
 
 		if player.controller.state.position.y < map.kill_height():
-			var fall := DotDamage.make(0, player.entity_id, player.health.max_health * 10.0, null)
+			var fall := GSDamage.make(0, player.entity_id, player.health.max_health * 10.0, null)
 			fall.tick = _tick
 			fall.context = {"why": DIED_FELL}
 			var _applied := combat.apply_damage(fall)

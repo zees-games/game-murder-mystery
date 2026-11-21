@@ -1,8 +1,8 @@
-extends DotSpectatorHost
+extends GSSpectatorHost
 
 const MmPlayer := preload("mm_player.gd")
 
-## Where somebody who is out looks: [DotSpectatorHost] with this game's numbers. The dead watch the rest of the round and are never told who killed them. No delay: every client already receives every player's position.
+## Where somebody who is out looks: [GSSpectatorHost] with this game's numbers. The dead watch the rest of the round and are never told who killed them. No delay: every client already receives every player's position.
 
 const CHANNEL := "mm.spectate"
 
@@ -38,7 +38,7 @@ func _channel() -> String:
 
 
 ## `force_camera` and `allow_roaming` are the operator's (`mp_forcecamera`, `mp_freeroam`), already on the shared [member rules].
-func _tune_rules(r: DotSpectatorRules) -> DotSpectatorRules:
+func _tune_rules(r: GSSpectatorRules) -> GSSpectatorRules:
 	# Dead players stay dead until the next round, so a list including them would be bodies at the kill height.
 	r.cycle_includes_dead = false
 	r.delay_ticks = 0
@@ -83,15 +83,15 @@ func line_for(key: String) -> String:
 	var who := _name_of(view.target)
 
 	match view.mode:
-		DotSpectatorView.Mode.DEATH_CAM:
+		GSSpectatorView.Mode.DEATH_CAM:
 			return "you are out"
-		DotSpectatorView.Mode.FREEZE_CAM:
+		GSSpectatorView.Mode.FREEZE_CAM:
 			return "shot by %s" % who
-		DotSpectatorView.Mode.FIXED:
+		GSSpectatorView.Mode.FIXED:
 			return "nobody left to watch%s" % _roam_suffix(key)
-		DotSpectatorView.Mode.ROAMING:
+		GSSpectatorView.Mode.ROAMING:
 			return "free camera   %s back to players" % roam_key
-		DotSpectatorView.Mode.CHASE:
+		GSSpectatorView.Mode.CHASE:
 			return "watching %s  (behind)   click: next   F5: their eyes%s" % [who, _roam_suffix(key)]
 		_:
 			return "watching %s   click: next   F5: behind them%s" % [who, _roam_suffix(key)]

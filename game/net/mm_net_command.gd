@@ -1,12 +1,12 @@
-extends DotNetInput
+extends GSNetInput
 
 const MmNetCommand := preload("mm_net_command.gd")
 
 ## One tick of a player's intent, on the wire: a movement command and nothing else. [b]An attack is a button, never a
-## claim[/b]: use, attack and holster ride in [member DotFpsCommand.buttons] (USER_0..2); the server decides from where it
+## claim[/b]: use, attack and holster ride in [member GSFpsCommand.buttons] (USER_0..2); the server decides from where it
 ## has the bodies whether a stab reached or a shot hit, and a client cannot send "I hit them".
 
-var move: DotFpsCommand = DotFpsCommand.new()
+var move: GSFpsCommand = GSFpsCommand.new()
 
 ## How far behind this command's tick the client was drawing everybody else, in quarter ticks: the tick a stab or shot on
 ## it was aimed at (`MmGame.unlag_tick_for`). Sent only while a button is down and capped by the server, never trusted:
@@ -17,7 +17,7 @@ const MAX_VIEW_LAG_Q := 1023
 const VIEW_LAG_BITS := 10
 
 
-func _write(writer: DotNetWriter) -> void:
+func _write(writer: GSNetWriter) -> void:
 	move.write(writer)
 	var lagged := move.buttons != 0 and view_lag_q >= 0
 	writer.write_bool(lagged)
@@ -25,8 +25,8 @@ func _write(writer: DotNetWriter) -> void:
 		writer.write_uint(clampi(view_lag_q, 0, MAX_VIEW_LAG_Q), VIEW_LAG_BITS)
 
 
-func _read(reader: DotNetReader) -> void:
-	move = DotFpsCommand.new()
+func _read(reader: GSNetReader) -> void:
+	move = GSFpsCommand.new()
 	move.read(reader)
 	view_lag_q = reader.read_uint(VIEW_LAG_BITS) if reader.read_bool() else -1
 
@@ -44,6 +44,6 @@ func view_lag_ticks() -> float:
 	return float(view_lag_q) * 0.25 if view_lag_q >= 0 else -1.0
 
 
-func _equals(other: DotNetInput) -> bool:
+func _equals(other: GSNetInput) -> bool:
 	var them := other as MmNetCommand
 	return them != null and move.equals(them.move) and view_lag_q == them.view_lag_q

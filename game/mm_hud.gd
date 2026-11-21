@@ -31,7 +31,7 @@ const MAP_COLOUR := Color(0.80, 0.88, 0.98)
 ## so a light or high-contrast theme can change them. Static so a render tool can use it.
 static func piece_theme() -> Theme:
 	var t := Theme.new()
-	var type := DotHudPiece.THEME_TYPE
+	var type := GSHudPiece.THEME_TYPE
 	t.set_color(&"plate_edge", type, Color(MAP_COLOUR, 0.3))
 	t.set_color(&"highlight", type, MAP_COLOUR)
 	return t
@@ -68,9 +68,9 @@ var blind_overlay: ColorRect = null
 var _root: Control = null
 ## The clock, everybody alive and the murderers left either side of it, and the caption and map
 ## name under it.
-var strip: DotScoreStrip = null
+var strip: GSScoreStrip = null
 ## "Open the pantry door" with the use key drawn as a key, while one is in reach.
-var prompt: DotKeyPrompt = null
+var prompt: GSKeyPrompt = null
 var _shout: Label = null
 var _hints: Label = null
 var _disc: Panel = null
@@ -78,14 +78,14 @@ var _disc_label: Label = null
 var _as: Label = null
 var _lock: Label = null
 ## The weapon or gun in hand as a sprite over the disc; hidden when it has none.
-var weapon_icon: DotWeaponIconPlate = null
+var weapon_icon: GSWeaponIconPlate = null
 ## The gun's or the weapon's readiness, under the disc's words.
 var _meter_back: ColorRect = null
 var _meter_fill: ColorRect = null
 var _meter_label: Label = null
 ## The colour the disc was last drawn in, so a style is built only when it changes.
 var _disc_colour: Color = Color(0, 0, 0, 0)
-var _crosshair: DotCrosshair = null
+var _crosshair: GSCrosshair = null
 var _shout_for: float = 0.0
 
 
@@ -108,14 +108,14 @@ func _build() -> void:
 
 	blind_overlay = _cover("Blind", BLIND_COLOUR)
 
-	# The glance pieces read their colours from the theme on the type DotHudPiece; set on
+	# The glance pieces read their colours from the theme on the type GSHudPiece; set on
 	# the root, every piece under it inherits them. See [method piece_theme].
 	_root.theme = piece_theme()
 	_follow()
 
 	# Top centre, full width because the strip centres itself on its own middle. Its plates
 	# span 388 pixels round the middle, clear of the key hints top left at 1280 x 720.
-	strip = DotScoreStrip.new()
+	strip = GSScoreStrip.new()
 	strip.name = "Clock"
 	strip.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	strip.offset_top = 14.0
@@ -160,7 +160,7 @@ func _build() -> void:
 	watching_label.add_theme_color_override("font_color", Color(0.80, 0.90, 1.0))
 
 	# What the use key would do, under the crosshair while a door is in reach.
-	prompt = DotKeyPrompt.new()
+	prompt = GSKeyPrompt.new()
 	prompt.name = "DoorPrompt"
 	prompt.font_size = 15
 	prompt.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
@@ -196,7 +196,7 @@ func _build_status() -> void:
 	_disc_label.add_theme_constant_override("outline_size", 4)
 	_disc.add_child(_disc_label)
 
-	weapon_icon = DotWeaponIconPlate.new()
+	weapon_icon = GSWeaponIconPlate.new()
 	weapon_icon.name = "WeaponIcon"
 	weapon_icon.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	weapon_icon.offset_left = -8.0
@@ -240,7 +240,7 @@ func _build_status() -> void:
 
 func _build_crosshair() -> void:
 	# A dot, as before: no arms, no outline, no spread.
-	_crosshair = DotCrosshair.new()
+	_crosshair = GSCrosshair.new()
 	_crosshair.name = "Crosshair"
 	_crosshair.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_crosshair.length = 0.0
@@ -251,7 +251,7 @@ func _build_crosshair() -> void:
 	_crosshair.dot_radius = 3.0
 	_crosshair.colour = Color(1.0, 1.0, 1.0, 0.75)
 	_crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if DotAddonApi.build_level("dot_ui") >= 14:
+	if GSAddonApi.build_level("dot_ui") >= 14:
 		_crosshair.set(&"alive_source", func() -> bool: return player != null and player.is_alive())
 	_root.add_child(_crosshair)
 
@@ -333,7 +333,7 @@ func _process(delta: float) -> void:
 	# reads "Bystanders win in · The Mansion".
 	var running := game.phase != MmGame.Phase.IDLE
 	strip.show_clock(
-		DotScoreStrip.clock_text(left) if running else "", running and left <= LOW_CLOCK_SEC,
+		GSScoreStrip.clock_text(left) if running else "", running and left <= LOW_CLOCK_SEC,
 		caption, str(game.map_doc.get("name", ""))
 	)
 	if running:

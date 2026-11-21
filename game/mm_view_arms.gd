@@ -1,30 +1,30 @@
 extends Node3D
 
 ## Your own arms holding the knife or the gun in first person, on dot-player-char's
-## DotPlayerViewArms. Absent on a shell older than that API: the bare weapon is drawn alone.
+## GSPlayerViewArms. Absent on a shell older than that API: the bare weapon is drawn alone.
 
 const MmWeapons := preload("mm_weapons.gd")
 
 ## dot-player-char API level that has the held-weapon mode.
 const NEEDS_LEVEL := 8
 
-var arms: DotPlayerViewArms = null
+var arms: GSPlayerViewArms = null
 var _what := ""
-var _grip: DotViewGrip = null
+var _grip: GSViewGrip = null
 
 
 static func available() -> bool:
-	return DotAddonApi.build_level("dot_player_char") >= NEEDS_LEVEL
+	return GSAddonApi.build_level("dot_player_char") >= NEEDS_LEVEL
 
 
 ## Holds [param weapon] (the view model, a node of boxes) as [param what] ("gun" or a weapon id);
 ## null or "" puts the arms away.
-func hold(weapon: Node3D, what: String, look: DotHumanoidLook, height: float) -> void:
+func hold(weapon: Node3D, what: String, look: GSHumanoidLook, height: float) -> void:
 	if arms == null:
 		if weapon == null:
 			return
 		top_level = true
-		arms = DotPlayerViewArms.new()
+		arms = GSPlayerViewArms.new()
 		arms.name = "ViewArms"
 		add_child(arms)
 		arms.build(look, height)
@@ -33,7 +33,7 @@ func hold(weapon: Node3D, what: String, look: DotHumanoidLook, height: float) ->
 	if weapon != null and what != "":
 		var spec := MmWeapons.grip_of(StringName(what))
 		var grip: Vector3 = spec["grip"]
-		_grip = DotViewGrip.two_hand(weapon, grip, spec["support"]) if spec.has("support") else DotViewGrip.one_hand(weapon, grip)
+		_grip = GSViewGrip.two_hand(weapon, grip, spec["support"]) if spec.has("support") else GSViewGrip.one_hand(weapon, grip)
 	arms.set_held(_grip)
 
 

@@ -273,7 +273,7 @@ func _kill(victim: MmPlayer, by: MmPlayer, how: StringName) -> void:
 	if combat == null or not victim.is_alive():
 		return
 
-	var hit := DotDamage.make(by.entity_id if by != null else 0, victim.entity_id, victim.health.max_health * 10.0, null)
+	var hit := GSDamage.make(by.entity_id if by != null else 0, victim.entity_id, victim.health.max_health * 10.0, null)
 	hit.tick = _tick
 	hit.context = {"why": how}
 
@@ -299,7 +299,7 @@ func _drop_gun(holder: MmPlayer, at: Vector3) -> void:
 	_next_drop_id += 1
 	gun_drops[drop_id] = {"at": at + Vector3(0.0, 0.05, 0.0), "dropped_by": holder.player_id, "since": _now()}
 	gun_dropped.emit(drop_id, gun_drops[drop_id]["at"])
-	DotLog.debug(CHANNEL, "the gun was dropped", {"by": String(holder.player_id), "at": str(at.snapped(Vector3.ONE * 0.1))})
+	GSLog.debug(CHANNEL, "the gun was dropped", {"by": String(holder.player_id), "at": str(at.snapped(Vector3.ONE * 0.1))})
 
 
 ## A gun on the floor goes to the first living bystander who walks onto it and may hold one: not

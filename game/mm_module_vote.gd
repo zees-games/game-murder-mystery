@@ -49,14 +49,14 @@ func _build_vote(world: MmGame) -> void:
 	var ready := vote.setup()
 
 	if not ready.ok:
-		DotLog.result(CHANNEL, "the map vote; the rotation alone chooses", ready)
+		GSLog.result(CHANNEL, "the map vote; the rotation alone chooses", ready)
 		vote.queue_free()
 		vote = null
 		return
 
 	vote.commands_spec_fn = world.rotation_commands
 	var commanded := vote.install_commands(self)
-	DotLog.result(CHANNEL, "the map vote's commands", commanded)
+	GSLog.result(CHANNEL, "the map vote's commands", commanded)
 
 	# The map menu (M), dot-vote's: a player holding the owner's `sv_map_menu_flag` changes the
 	# map now, not after its rounds, and sees the same rows a solo player does. Read by name,
@@ -86,9 +86,9 @@ func _wire_vote_callbacks(world: MmGame) -> void:
 			out.append([id, str((world.catalogue.maps.get(id, {}) as Dictionary).get("name", id))])
 
 		return out
-	vote.apply_fn = func(id: StringName) -> DotResult:
+	vote.apply_fn = func(id: StringName) -> GSResult:
 		world.next_map_id = id
-		return DotResult.success(id)
+		return GSResult.success(id)
 	vote.due_fn = func() -> bool:
 		return world.rounds_left_on_map() <= 1
 	vote.voters_fn = func() -> Array:
@@ -115,7 +115,7 @@ func _wire_vote_callbacks(world: MmGame) -> void:
 			server.broadcast_message(line)
 	vote.is_admin_fn = func(voter: StringName) -> bool:
 		var session := server.session_by_userid(String(voter).to_int()) if server != null else null
-		return session != null and session.has_permission(DotAdminFlags.CHANGEMAP)
+		return session != null and session.has_permission(GSAdminFlags.CHANGEMAP)
 	vote.ballot_fn = func(state: Dictionary) -> void:
 		if server == null:
 			return
@@ -123,7 +123,7 @@ func _wire_vote_callbacks(world: MmGame) -> void:
 		for session in server.playing_sessions():
 			var data := state.duplicate()
 			data["you"] = str(session.userid)
-			server.send_notice(session, DotNotice.make(
+			server.send_notice(session, GSNotice.make(
 				&"", "", float(state.get("seconds", -1.0)), MAP_BALLOT_TOPIC, data
 			))
 	vote.people_fn = func(voter: StringName) -> Dictionary:
@@ -152,7 +152,7 @@ func _wire_vote_events(world: MmGame) -> void:
 	)
 
 	if server != null:
-		server.client_disconnected.connect(func(session: DotClientSession, _reason: String) -> void:
+		server.client_disconnected.connect(func(session: GSClientSession, _reason: String) -> void:
 			if vote != null:
 				vote.forget_voter(StringName(str(session.userid)))
 		)
@@ -196,7 +196,7 @@ func _wire_progress(world: MmGame) -> void:
 
 
 func _on_say_requested(peer_id: int, channel_id: StringName, text: String) -> void:
-	var said: DotResult = services.call("say", peer_id, channel_id, text)
+	var said: GSResult = services.call("say", peer_id, channel_id, text)
 
 	if said.ok:
 		return
@@ -219,21 +219,21 @@ func _on_chat_command(peer_id: int, command: String, args: PackedStringArray) ->
 		return
 
 	for reply in server.run_command_as_uid(
-		session.uid(), command, args, DotCmdContext.Source.CHAT
+		session.uid(), command, args, GSCmdContext.Source.CHAT
 	):
 		bridge.call("notice", peer_id, reply)
 
 
 ## Who is what this round, for the operator. Answered on the server's own console only: from a
 ## player's chat or an rcon session it would be the one thing this game keeps secret.
-func _cmd_roles(ctx: DotCmdContext) -> void:
+func _cmd_roles(ctx: GSCmdContext) -> void:
 	var world := game as MmGame
 
 	if world == null:
 		ctx.reply("No world.")
 		return
 
-	if ctx.source != DotCmdContext.Source.CONSOLE and ctx.source != DotCmdContext.Source.INTERNAL:
+	if ctx.source != GSCmdContext.Source.CONSOLE and ctx.source != GSCmdContext.Source.INTERNAL:
 		ctx.reply("Roles are secret; only the server's own console can list them.")
 		return
 
@@ -244,7 +244,7 @@ func _cmd_roles(ctx: DotCmdContext) -> void:
 		ctx.reply("  %-10s %-18s %-10s %s" % [String(id), p.display_name, role, "alive" if p.is_alive() else "out"])
 
 
-func _cmd_say(ctx: DotCmdContext) -> void:
+func _cmd_say(ctx: GSCmdContext) -> void:
 	var text := ctx.rest()
 
 	if text.strip_edges() == "":
@@ -257,14 +257,14 @@ func _cmd_say(ctx: DotCmdContext) -> void:
 
 	var announced: Variant = services.get("chat").call("announce", text, MmServices.CH_ALL)
 
-	if announced is DotResult and not (announced as DotResult).ok:
+	if announced is GSResult and not (announced as GSResult).ok:
 		ctx.reply_error(announced)
 		return
 
 	ctx.reply("Said: %s" % text)
 
 
-func _cmd_status(ctx: DotCmdContext) -> void:
+func _cmd_status(ctx: GSCmdContext) -> void:
 	var world := game as MmGame
 
 	if world == null:
@@ -274,7 +274,7 @@ func _cmd_status(ctx: DotCmdContext) -> void:
 	ctx.reply_lines(world.describe_lines())
 
 
-func _cmd_net(ctx: DotCmdContext) -> void:
+func _cmd_net(ctx: GSCmdContext) -> void:
 	if bridge == null:
 		ctx.reply("No bridge; this server is not replicating anything.")
 		return
@@ -290,7 +290,7 @@ func _renames(world: MmGame) -> Dictionary:
 	return (world.rotation_commands().get("names", {}) as Dictionary)
 
 
-func _cmd_maps(ctx: DotCmdContext) -> void:
+func _cmd_maps(ctx: GSCmdContext) -> void:
 	var world := game as MmGame
 
 	if world == null or world.catalogue == null:
@@ -301,7 +301,7 @@ func _cmd_maps(ctx: DotCmdContext) -> void:
 	ctx.reply("playing: %s" % str(world.map_doc.get("id", "-")))
 
 
-func _cmd_map(ctx: DotCmdContext) -> void:
+func _cmd_map(ctx: GSCmdContext) -> void:
 	var world := game as MmGame
 	var id := StringName(ctx.arg(0)) if ctx.argc() > 0 else &""
 
@@ -317,7 +317,7 @@ func _cmd_map(ctx: DotCmdContext) -> void:
 	ctx.reply("%s is next, from the end of this round." % String(id))
 
 
-func _cmd_reload(ctx: DotCmdContext) -> void:
+func _cmd_reload(ctx: GSCmdContext) -> void:
 	var world := game as MmGame
 
 	if world == null or world.catalogue == null:

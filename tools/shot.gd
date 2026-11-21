@@ -51,11 +51,11 @@ func _ready() -> void:
 	_client.name = "Client"
 	_client.set("force_offline", true)
 	add_child(_client)
-	# --view=cover: the loading cover dot-game's DotGameClient puts up first, before it lifts.
+	# --view=cover: the loading cover dot-game's GSGameClient puts up first, before it lifts.
 	if _view == "cover":
 		for _i in 2:
 			await RenderingServer.frame_post_draw
-		var platform: DotGameClient = _client.get("platform")
+		var platform: GSGameClient = _client.get("platform")
 		print("cover %s" % ("lifted" if platform.is_shown() else "up"))
 		var cover_path := ProjectSettings.globalize_path(_out)
 		DirAccess.make_dir_recursive_absolute(cover_path.get_base_dir())
@@ -82,7 +82,7 @@ func _run() -> void:
 	var local: MmPlayer = _client.get("player")
 	await _wait_for_gate()
 	# Waits past the load cover (slow on a cold GPU box) before any timing starts; capped, so a stuck cover cannot hang the shot.
-	if not await DotShotGate.wait_lifted(get_tree(), _client.get("platform")):
+	if not await GSShotGate.wait_lifted(get_tree(), _client.get("platform")):
 		printerr("shot: load cover still up after the wait; shooting anyway")
 	await _stage_round(game, local)
 	await _pose(game, local)
@@ -100,14 +100,14 @@ func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
 	var saved := image.save_png(path)
 	print("saved %s (%s): %s" % [_out, _view, error_string(saved)])
-	await DotShotSeq.new().record(get_tree(), path)
+	await GSShotSeq.new().record(get_tree(), path)
 	get_tree().quit(0 if saved == OK else 1)
 
 
 ## The load gate's cover hides the world until the camera, the players and the warm-up are in:
 ## a frame saved under it is the cover, so wait for it to lift.
 func _wait_for_gate() -> void:
-	var gate: DotLoadGate = _client.get("gate")
+	var gate: GSLoadGate = _client.get("gate")
 	for _i in range(1800):
 		if gate == null or gate.is_open():
 			break
@@ -186,13 +186,13 @@ func _pose_scene(game: MmGame, local: MmPlayer) -> void:
 			await _seconds_of(maxf(_seconds, 1.0))
 		"spots":
 			# The annotator's spots, links and chokepoints over the map from above (dot-npc-ai's
-			# DotNpcAiNavDebug): where the stand-ins wander and a murderer looks for somebody alone.
+			# GSNpcAiNavDebug): where the stand-ins wander and a murderer looks for somebody alone.
 			await _seconds_of(1.0)
-			var ann: DotNpcAiNavAnnotations = game.bots.annotations
+			var ann: GSNpcAiNavAnnotations = game.bots.annotations
 			if ann == null:
 				push_error("no annotations: the bake or annotation has not finished")
 			else:
-				var debug := DotNpcAiNavDebug.new()
+				var debug := GSNpcAiNavDebug.new()
 				game.map.add_child(debug)
 				debug.show_annotations(ann)
 				var sbox: AABB = game.map.bounds()
@@ -281,7 +281,7 @@ func _view_action(game: MmGame, local: MmPlayer) -> void:
 	await _seconds_of(0.3)
 	await _settle(actor)
 	var parts := _action.split(":")
-	var entry: Dictionary = DotAvatarActions.defaults().find(StringName(parts[0]), parts[1])
+	var entry: Dictionary = GSAvatarActions.defaults().find(StringName(parts[0]), parts[1])
 	var ok: bool = actor.figure.body_node().play_action(StringName(parts[1]), bool(entry.get("loop", false)), 0.0)
 	print("action %s: played=%s" % [_action, ok])
 	var at_feet: Vector3 = actor.controller.state.position
@@ -357,7 +357,7 @@ func _seconds_of(seconds: float) -> void:
 
 ## The clip must start after the loading cover lifts, or it is spent unseen.
 func _until_uncovered() -> void:
-	var gate: DotLoadGate = _client.get("gate")
+	var gate: GSLoadGate = _client.get("gate")
 	for _i in range(1200):
 		if gate == null or gate.is_open():
 			break

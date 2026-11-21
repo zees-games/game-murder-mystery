@@ -1,7 +1,7 @@
 extends "mm_client_spectate.gd"
 
 ## One local player, a camera and a HUD over a [MmGame], offline or against a server. Offline is
-## the same world class with `authoritative` true and stand-ins; a [DotClientLink] in the registry
+## the same world class with `authoritative` true and stand-ins; a [GSClientLink] in the registry
 ## under `dot_client_link` picks the connected half, `--offline` forces it. First person (F5 for third).
 
 
@@ -33,7 +33,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _covered():
 		return
 
-	# Tab, M and a click taking the pointer back are the platform's (DotGameClient).
+	# Tab, M and a click taking the pointer back are the platform's (GSGameClient).
 	if event.is_action_pressed("ui_cancel"):
 		if settings != null:
 			settings.open()
@@ -45,7 +45,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 
 	# A tap or left click while out; is_next_press skips the mouse press the engine emulates from a touch.
-	if is_spectating() and DotSpectatorHost.is_next_press(event):
+	if is_spectating() and GSSpectatorHost.is_next_press(event):
 		spectate_step(1)
 		return
 

@@ -2,7 +2,7 @@ extends RefCounted
 
 ## Maps handed to Murder Mystery outside the game: a map document (`.json` of kind `murder_map`, or another game's it imports) or a folder holding
 ## some, dragged onto the window, dropped on the executable or named by `--map-path=<path>`, through dot-map's
-## DotMapDropIntake (API 30). Solo only: each document is checked as the catalogue checks one ([method
+## GSMapDropIntake (API 30). Solo only: each document is checked as the catalogue checks one ([method
 ## MmMapDoc.parse_json]), copied to `user://maps/<id>.json` (read on every start) and joins the open catalogue at once,
 ## so M offers it. Anything else (a converted BSP folder, a zip, a text file) is refused out loud with what the game
 ## takes. A shared document acceptor in dot-map would replace this file (nightly map-drop-games-1).
@@ -11,7 +11,7 @@ const MmConfig := preload("mm_config.gd")
 const MmMapDoc := preload("mm_map_doc.gd")
 
 const CHANNEL := "mm.map_drop"
-## dot-map's API level with DotMapDropIntake. Older builds take no dropped maps.
+## dot-map's API level with GSMapDropIntake. Older builds take no dropped maps.
 const NEEDS_LEVEL := 30
 const INTAKE_SCRIPT := "res://addons/dot_map/core/dot_map_drop_intake.gd"
 ## What the refusal says this game takes.
@@ -39,10 +39,10 @@ static func attach(host: Node, game: Node, say: Callable) -> Node:
 	return intake
 
 
-## A DotMapDropIntake whose one acceptor takes this game's documents into [param game]'s catalogue.
+## A GSMapDropIntake whose one acceptor takes this game's documents into [param game]'s catalogue.
 static func make(game: Node) -> Node:
-	if DotAddonApi.build_level("dot_map") < NEEDS_LEVEL or not ResourceLoader.exists(INTAKE_SCRIPT):
-		DotLog.warn(CHANNEL, "dropped maps are off: this build's dot-map is older than API %d" % NEEDS_LEVEL)
+	if GSAddonApi.build_level("dot_map") < NEEDS_LEVEL or not ResourceLoader.exists(INTAKE_SCRIPT):
+		GSLog.warn(CHANNEL, "dropped maps are off: this build's dot-map is older than API %d" % NEEDS_LEVEL)
 		return null
 	var intake: Node = load(INTAKE_SCRIPT).new()
 	intake.name = "MapDrop"

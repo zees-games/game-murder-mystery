@@ -19,7 +19,7 @@ const SWEEP_SAMPLES := 7
 const HANDLE_SIZE := Vector3(0.12, 0.04, 0.05)
 const HANDLE_TINT := Color(0.18, 0.18, 0.2)
 
-var physics: DotPhysicsLayout = null
+var physics: GSPhysicsLayout = null
 var draw_world: bool = false
 var tick_rate: int = 64
 
@@ -28,7 +28,7 @@ var tick_rate: int = 64
 ## [b]A swinging door opens away from whoever opens it[/b] unless the map says `away: false`, or none could be opened.
 var doors: Array[Dictionary] = []
 
-## [method door_for] asks dot-sim's `DotSimDoorReach` (the panels written as each door is posed) when the library has it, to the
+## [method door_for] asks dot-sim's `GSSimDoorReach` (the panels written as each door is posed) when the library has it, to the
 ## script's bit (`headless_native_doors`); off, or with no library (the web), the script answers. Read when a map is built.
 static var native_reach := true
 ## With the native ask, re-runs the script beside every [method door_for] and counts any difference (an error each); the parity
@@ -38,7 +38,7 @@ static var reach_verify := false
 static var reach_checked := 0
 static var reach_differ := 0
 
-## [method near_swing] asks dot-sim's `DotSimDoorReach` (each door's place, written when a map is built) when the library has it,
+## [method near_swing] asks dot-sim's `GSSimDoorReach` (each door's place, written when a map is built) when the library has it,
 ## to the script's bit (`headless_native_doors`); off, or with no library (the web), the script answers.
 static var native_near := true
 ## With the native ask, re-runs the script beside every [method near_swing] and counts any difference (an error each). On
@@ -84,7 +84,7 @@ func build(doc: Dictionary) -> void:
 	_reach_reset()
 	_near_reset()
 	pose_at(0)
-	DotLog.debug(CHANNEL, "doors built", {"doors": doors.size()})
+	GSLog.debug(CHANNEL, "doors built", {"doors": doors.size()})
 
 
 func clear() -> void:
@@ -176,7 +176,7 @@ func moving(index: int, tick: int) -> bool:
 func toggle(index: int, tick: int, user: Vector3) -> bool:
 	var open := not is_open(index)
 	apply(index, open, flips_for(index, user) if open else is_flipped(index), tick)
-	DotLog.debug(CHANNEL, "door used", {"door": index, "open": open})
+	GSLog.debug(CHANNEL, "door used", {"door": index, "open": open})
 	return open
 
 
@@ -386,10 +386,10 @@ func _reach_reset() -> void:
 	_reach = null
 	_reach_doors = 0
 
-	if not native_reach or doors.is_empty() or not DotSim.has(&"doors"):
+	if not native_reach or doors.is_empty() or not GSSim.has(&"doors"):
 		return
 
-	_reach = ClassDB.instantiate(&"DotSimDoorReach")
+	_reach = ClassDB.instantiate(&"GSSimDoorReach")
 	_reach.resize(doors.size())
 	_reach_doors = doors.size()
 
@@ -399,7 +399,7 @@ func _near_reset() -> void:
 	_near = null
 	_near_doors = 0
 
-	if not native_near or doors.is_empty() or not DotSim.has(&"doors"):
+	if not native_near or doors.is_empty() or not GSSim.has(&"doors"):
 		return
 
 	var places := PackedFloat64Array()
@@ -414,7 +414,7 @@ func _near_reset() -> void:
 		places.append(float((spec["size"] as Array)[1]) * 0.5)
 		swing.append(1 if str(spec["motion"]) == "swing" else 0)
 
-	_near = ClassDB.instantiate(&"DotSimDoorReach")
+	_near = ClassDB.instantiate(&"GSSimDoorReach")
 	if not _near.has_method(&"set_spots"):
 		_near = null	# a library older than dot-sim v0.2.9 (the pin): the script answers
 		return

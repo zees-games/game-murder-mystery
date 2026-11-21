@@ -4,7 +4,7 @@ extends "mm_bots_doors.gd"
 ## base, no class_name.
 
 ## Walks [param player] along the mesh to [param goal]. Returns true when there.
-func _walk_to(player: MmPlayer, command: DotFpsCommand, state: Dictionary, goal: Vector3, sprint: bool, look: bool = true, chaser: bool = false) -> bool:
+func _walk_to(player: MmPlayer, command: GSFpsCommand, state: Dictionary, goal: Vector3, sprint: bool, look: bool = true, chaser: bool = false) -> bool:
 	# For the soak: a bot that did not ask to walk this tick (a murderer holding still within
 	# reach of its target) is waiting, whatever its old goal says.
 	state["walk_at"] = now()
@@ -155,24 +155,24 @@ func _follow_detour(state: Dictionary, at: Vector3, t: float) -> void:
 
 ## Looks and walks toward [param corner], hopping at a jump-up link's foot and crouching under a
 ## low ceiling.
-func _step_toward(player: MmPlayer, command: DotFpsCommand, state: Dictionary, at: Vector3, corner: Vector3, dir: Vector3, sprint: bool, look: bool) -> void:
+func _step_toward(player: MmPlayer, command: GSFpsCommand, state: Dictionary, at: Vector3, corner: Vector3, dir: Vector3, sprint: bool, look: bool) -> void:
 	if look:
 		_look(player, command, Vector3(corner.x, player.eye_position().y + (corner.y - at.y) * 0.5, corner.z))
 	state["walk_dir"] = dir
 	_walk(command, dir)
-	command.set_button(DotFpsCommand.BUTTON_SPRINT, sprint)
+	command.set_button(GSFpsCommand.BUTTON_SPRINT, sprint)
 
 	# A jump-up link (the annotator found a ledge within a body's jump): hop at its foot.
 	if corner.y - at.y > MmPlayer.BODY_STEP + 0.05 and player.controller.state.is_grounded():
 		for foot in _jump_feet:
 			if Vector2(foot.x - at.x, foot.z - at.z).length() < 1.2 and absf(foot.y - at.y) < 0.6:
-				command.set_button(DotFpsCommand.BUTTON_JUMP, true)
+				command.set_button(GSFpsCommand.BUTTON_JUMP, true)
 				break
 
 	if dir.length() > 0.01:
 		var ahead := at + dir.normalized() * 0.6
 		if not _los(ahead + Vector3(0.0, 0.5, 0.0), ahead + Vector3(0.0, MmPlayer.BODY_HEIGHT + 0.05, 0.0)):
-			command.set_button(DotFpsCommand.BUTTON_CROUCH, true)
+			command.set_button(GSFpsCommand.BUTTON_CROUCH, true)
 
 
 ## A bot pressed into a pocket has its path start snapped to the nearest mesh, often past the wall,
@@ -303,7 +303,7 @@ func _body_clear(at: Vector3, to: Vector3) -> bool:
 	if world == null:
 		return true
 	var space := world.direct_space_state
-	var physics: DotPhysicsLayout = game.get("physics")
+	var physics: GSPhysicsLayout = game.get("physics")
 	var mask := physics.layer_mask(&"world") | physics.layer_mask(&"prop") if physics != null else 1
 	var side := flat.normalized().cross(Vector3.UP) * MmPlayer.BODY_RADIUS
 	for height in [0.47, 0.97]:
@@ -318,7 +318,7 @@ func _body_clear(at: Vector3, to: Vector3) -> bool:
 ## Hops, steps aside, then asks for somewhere else after [constant STUCK_SECONDS] without headway.
 ## The count resets only [constant STUCK_LEFT] from where it first stuck; a reset on any small
 ## move let a step aside and back clear it for ever (`headless_bots` round 38).
-func _unstick(player: MmPlayer, command: DotFpsCommand, state: Dictionary) -> void:
+func _unstick(player: MmPlayer, command: GSFpsCommand, state: Dictionary) -> void:
 	var mark: Array = state["stuck"]
 	var at := player.controller.state.position
 	var t := now()
@@ -333,8 +333,8 @@ func _unstick(player: MmPlayer, command: DotFpsCommand, state: Dictionary) -> vo
 	# On the ground, or caught on an edge in the air without rising or falling: a bot pressed
 	# into a door's jamb at the top of a camp cabin's steps hung a few centimetres up for half a
 	# minute, never on the ground, so it was never stuck (`headless_bots` round 18).
-	var hung := player.controller.state.mode == DotFpsState.Mode.AIR and absf(player.controller.state.velocity.y) < 1.0
-	if stuck and (player.controller.state.mode == DotFpsState.Mode.GROUND or hung):
+	var hung := player.controller.state.mode == GSFpsState.Mode.AIR and absf(player.controller.state.velocity.y) < 1.0
+	if stuck and (player.controller.state.mode == GSFpsState.Mode.GROUND or hung):
 		if first == Vector3.INF:
 			state["stuck_at"] = at
 		# A panel it could not see coming: round it, before anything blinder.
@@ -345,7 +345,7 @@ func _unstick(player: MmPlayer, command: DotFpsCommand, state: Dictionary) -> vo
 			state["stuck_count"] = 1
 			state["stuck"] = [at, t]
 			return
-		var stream: DotRandomStream = state["stream"]
+		var stream: GSRandomStream = state["stream"]
 		# Every other time a hop (a kerb, a step), else a step aside. Never a hop at something
 		# waist-high: that is a desk, and a bot hopped up on one stood there for half a minute
 		# (`headless_bots` round 11, a school classroom).
@@ -361,7 +361,7 @@ func _unstick(player: MmPlayer, command: DotFpsCommand, state: Dictionary) -> vo
 		var up := _next_corner(state, at).y - at.y
 		var hop_up := up > 0.3 and up < 0.8 and ahead.length() < 0.8 and headroom
 		if (int(state.get("stuck_count", 0)) % 2 == 0 and low_only) or hop_up:
-			command.set_button(DotFpsCommand.BUTTON_JUMP, true)
+			command.set_button(GSFpsCommand.BUTTON_JUMP, true)
 		else:
 			state["sidestep_until"] = t + 0.7
 			state["sidestep_side"] = 1.0 if stream.next_unit() < 0.5 else -1.0

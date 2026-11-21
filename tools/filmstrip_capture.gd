@@ -9,16 +9,16 @@ const MmPlayer := preload("../game/mm_player.gd")
 const TICK_RATE := 60
 const SETTLE_TICKS := 40
 const VIEW := Vector2i(640, 480)
-const BUTTONS := {"crouch": DotFpsCommand.BUTTON_CROUCH, "sprint": DotFpsCommand.BUTTON_SPRINT,
-	"walk": DotFpsCommand.BUTTON_WALK, "jump": DotFpsCommand.BUTTON_JUMP}
+const BUTTONS := {"crouch": GSFpsCommand.BUTTON_CROUCH, "sprint": GSFpsCommand.BUTTON_SPRINT,
+	"walk": GSFpsCommand.BUTTON_WALK, "jump": GSFpsCommand.BUTTON_JUMP}
 
-var _clip: DotScenario = null
+var _clip: GSScenario = null
 var _player: MmPlayer = null
 var _cam: Camera3D = null
 var _tick := 0
 var _prev_time := 0.0
 var _before := Vector3.INF
-var _metrics := DotClipMetrics.new()
+var _metrics := GSClipMetrics.new()
 var _rows: Array = []
 var _skeleton: Skeleton3D = null
 var _done := false
@@ -27,7 +27,7 @@ var _armed := false
 
 func _initialize() -> void:
 	var args := OS.get_cmdline_user_args()
-	var clips := DotScenario.load_file("res://tools/filmstrip_scenarios.json")
+	var clips := GSScenario.load_file("res://tools/filmstrip_scenarios.json")
 	if args.is_empty() or not clips.has(args[0]):
 		printerr("filmstrip: clip %s not in %s" % [str(args), str(clips.keys())])
 		quit(2)
@@ -84,7 +84,7 @@ func _physics_process(_delta: float) -> bool:
 	var time := _clip_time()
 	var state := _clip.state_at(maxf(time, 0.0))
 	var move: Array = state["move"]
-	var cmd := DotFpsCommand.new()
+	var cmd := GSFpsCommand.new()
 	cmd.move = Vector2(float(move[0]), float(move[1]))
 	cmd.yaw = float(_clip.fields.get("spawn_yaw", 0.0)) + float(state["yaw"])
 	if time >= 0.0:
@@ -160,8 +160,8 @@ func _finalize() -> void:
 
 
 func _report() -> void:
-	var limits := DotClipMetrics.limits_for("res://tools/filmstrip_thresholds.json", _clip.name)
-	var text := DotClipMetrics.table(_clip.name, _metrics.evaluate(limits))
+	var limits := GSClipMetrics.limits_for("res://tools/filmstrip_thresholds.json", _clip.name)
+	var text := GSClipMetrics.table(_clip.name, _metrics.evaluate(limits))
 	print(text)
 	var log: Array[String] = []
 	for r: Array in _rows:
@@ -170,4 +170,4 @@ func _report() -> void:
 		for foot: Vector3 in r[4]:
 			row += "  h=%.3f" % (foot.y - feet.y)
 		log.append(row)
-	DotClipMetrics.write_report("res://screenshots/filmstrip/%s_report.txt" % _clip.name, text, log)
+	GSClipMetrics.write_report("res://screenshots/filmstrip/%s_report.txt" % _clip.name, text, log)

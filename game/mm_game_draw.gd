@@ -19,8 +19,8 @@ func _draw_murderers(keys: Array[StringName]) -> Array[StringName]:
 			loaded.append(id)
 
 	var candidates := loaded if loaded.size() >= want else keys
-	var picked: Dictionary = DotTeamRotation.pick(
-		candidates, want, DotTeamRotation.Mode.RANDOM, murderer_history, _round_seed, {}
+	var picked: Dictionary = GSTeamRotation.pick(
+		candidates, want, GSTeamRotation.Mode.RANDOM, murderer_history, _round_seed, {}
 	)
 	var murderers: Array[StringName] = []
 
@@ -42,7 +42,7 @@ func _draw_murderers(keys: Array[StringName]) -> Array[StringName]:
 
 
 ## The gunners out of the people who are not murderers (`rest`), at random from `stream`.
-func _draw_gunners(count: int, rest: Array[StringName], stream: DotRandomStream) -> Array[StringName]:
+func _draw_gunners(count: int, rest: Array[StringName], stream: GSRandomStream) -> Array[StringName]:
 	var gunners: Array[StringName] = []
 	var pool := rest.duplicate()
 	var loaded_pool: Array[StringName] = []
@@ -71,7 +71,7 @@ func _draw_gunners(count: int, rest: Array[StringName], stream: DotRandomStream)
 
 
 ## A shuffled palette of shirts, so no two share one until there are more people than colours.
-func _shirt_palette(stream: DotRandomStream) -> Array[int]:
+func _shirt_palette(stream: GSRandomStream) -> Array[int]:
 	var palette: Array[int] = []
 
 	for i in range(SHIRTS.size()):

@@ -21,7 +21,7 @@ func _test_the_client() -> void:
 	client.set(&"force_offline", true)
 	client.set(&"config_file", "user://cfg/headless-none.json")
 	add_child(client)
-	var platform: DotGameClient = client.get("platform")
+	var platform: GSGameClient = client.get("platform")
 	var covered := platform != null and platform.gate != null and not platform.is_shown() \
 		and platform.is_input_blocked()
 	for i in 240:
@@ -43,12 +43,12 @@ func _test_the_client() -> void:
 	var tab := InputEventKey.new()
 	tab.physical_keycode = KEY_TAB
 	tab.pressed = true
-	((client.get("settings") as Node).get("menu") as DotMenu).handle_event(tab)
-	var board: DotMenuScoreboard = client.get("board")
+	((client.get("settings") as Node).get("menu") as GSMenu).handle_event(tab)
+	var board: GSMenuScoreboard = client.get("board")
 	_check(board != null and board.is_open() and board.rows().any(func(r: Dictionary) -> bool: return bool(r.get("you", false))),
 		"Tab holds the scoreboard up, with this player picked out")
 	tab.pressed = false
-	((client.get("settings") as Node).get("menu") as DotMenu).handle_event(tab)
+	((client.get("settings") as Node).get("menu") as GSMenu).handle_event(tab)
 
 	var world: MmGame = client.get("game")
 	var hud: Node = client.get("hud")
@@ -65,7 +65,7 @@ func _test_the_client() -> void:
 
 
 
-func _client_knife(client: Node, world: MmGame, hud: Node, platform: DotGameClient) -> void:
+func _client_knife(client: Node, world: MmGame, hud: Node, platform: GSGameClient) -> void:
 	world.forced_roles = {&"local": &"murderer"}
 	world._on_round_started(world.round_number + 1)
 	for i in 4:
@@ -124,8 +124,8 @@ func _client_gunner(client: Node, world: MmGame, hud: Node) -> void:
 	_check(not MmViewArms.available() or (hands.holding() and hands.hand_error() >= 0.0 and hands.hand_error() < 0.05),
 		"a gunner's arms hold the gun in two hands, both within 5 cm of the grips", str(hands.hand_error()))
 	var icon_script: Script = load("res://game/mm_weapon_icons.gd")
-	var icons: DotWeaponIconStyle = icon_script.get("shared")
-	var icon_rect: DotWeaponIconPlate = hud.get("weapon_icon")
+	var icons: GSWeaponIconStyle = icon_script.get("shared")
+	var icon_rect: GSWeaponIconPlate = hud.get("weapon_icon")
 	var unmapped := PackedStringArray()
 	for weapon in icon_script.get("TAGS"):
 		if not icons.icon_set().has_icon(weapon):
@@ -141,19 +141,19 @@ func _client_gunner(client: Node, world: MmGame, hud: Node) -> void:
 
 
 func _client_hud(client: Node, world: MmGame, hud: Node) -> void:
-	# The clock is dot-ui's DotScoreStrip: everybody alive, and how many murderers are left.
+	# The clock is dot-ui's GSScoreStrip: everybody alive, and how many murderers are left.
 	hud.call("_process", 0.0)
-	var xh: DotCrosshair = hud.get("_crosshair")
+	var xh: GSCrosshair = hud.get("_crosshair")
 	_check(xh != null and not xh.suppressed and xh.alive_source.is_valid() and bool(xh.alive_source.call()), "a living player's crosshair is bound to their alive state")
-	var strip: DotScoreStrip = hud.get("strip")
+	var strip: GSScoreStrip = hud.get("strip")
 	_check(
-		strip.clock == DotScoreStrip.clock_text(world.seconds_left()) and strip.sides
+		strip.clock == GSScoreStrip.clock_text(world.seconds_left()) and strip.sides
 		and strip.left_score == world.alive_total() and strip.right_score == world.alive_on(MmGame.MURDERERS),
-		"the clock is DotScoreStrip's, with the living and the murderers left as its plates",
+		"the clock is GSScoreStrip's, with the living and the murderers left as its plates",
 		str(strip.describe())
 	)
 
-	var themed: DotMenu = (client.get("settings") as Node).get("menu")
+	var themed: GSMenu = (client.get("settings") as Node).get("menu")
 	var plate := strip.colour(&"plate")
 	_check(plate.get_luminance() < 0.1 and plate.a >= 0.7 and strip.colour(&"highlight") == (load("res://game/mm_hud.gd") as GDScript).get("MAP_COLOUR"),
 		"the HUD is dark by default, in the menu's theme, with this game's colour as its accent", str(plate))
@@ -168,7 +168,7 @@ func _client_hud(client: Node, world: MmGame, hud: Node) -> void:
 func _client_ragdoll(client: Node, world: MmGame) -> void:
 	# A slain stand-in falls as dot-player-char's ragdoll, copied from the figure, which is hidden.
 	world._set_phase(MmGame.Phase.PLAY)
-	var ragdolls: DotPlayerRagdolls = client.get("ragdolls")
+	var ragdolls: GSPlayerRagdolls = client.get("ragdolls")
 	var victim: MmPlayer = null
 	for id: StringName in world.players:
 		var p: MmPlayer = world.players[id]
@@ -197,7 +197,7 @@ func _client_ragdoll(client: Node, world: MmGame) -> void:
 		var dropped := ragdolls.get_node_or_null("DroppedWeapon") as RigidBody3D
 		_check(dropped != null and not victim.figure.held_node().visible,
 			"a slain player's weapon drops as a prop while the hand's copy hides")
-		_check(victim.death != null and DotPlayerDeathReactions.stock().has(victim.death.reaction),
+		_check(victim.death != null and GSPlayerDeathReactions.stock().has(victim.death.reaction),
 			"the world picked how the body falls", str(victim.death.describe()) if victim.death != null else "none")
 		var bodies := ragdolls.live()
 		_check(bodies.size() == 1 and not victim.figure.visible,
@@ -227,7 +227,7 @@ func _client_ragdoll(client: Node, world: MmGame) -> void:
 
 
 ## The same fall again and again at four facings from clear floor.
-func _face_plant_sweep(world: MmGame, ragdolls: DotPlayerRagdolls, victim: MmPlayer, spot: Array) -> void:
+func _face_plant_sweep(world: MmGame, ragdolls: GSPlayerRagdolls, victim: MmPlayer, spot: Array) -> void:
 	# Nobody pushing, which the pinned seed above dodged: one fall in six stays upright with no wall
 	# ahead, dot-player-char's to fix (nightly ragdoll-faceplant-upright-1). A wall ahead excuses it.
 	# Stands on clear floor, not seat 0, which has a cushion ahead.
@@ -259,8 +259,8 @@ func _face_plant_sweep(world: MmGame, ragdolls: DotPlayerRagdolls, victim: MmPla
 		victim.place_at(sweep_spot, float(s % 4) * 45.0)
 		for i in 4:
 			await get_tree().physics_frame
-		var d := DotPlayerDeath.decide(world.ragdoll_rules.reactions(), false, 0.0, Vector3.ZERO,
-			DotPlayerDeath.seed_of(victim.entity_id, 1000 + s * 37), null, -1.0, &"face_plant")
+		var d := GSPlayerDeath.decide(world.ragdoll_rules.reactions(), false, 0.0, Vector3.ZERO,
+			GSPlayerDeath.seed_of(victim.entity_id, 1000 + s * 37), null, -1.0, &"face_plant")
 		var fwd: Vector3 = -victim.figure.global_basis.z
 		var b := ragdolls.spawn(victim.figure, d, Vector3.ZERO)
 		# Settled, not a fixed 240 frames: a body mid-fall is not yet a lying one. max_sim_time ends it.
@@ -298,18 +298,18 @@ func _face_plant_sweep(world: MmGame, ragdolls: DotPlayerRagdolls, victim: MmPla
 
 func _client_death_and_prompt(client: Node, world: MmGame, hud: Node) -> void:
 	# The fall rides DEATH last and optional, so a death from an older server still reads.
-	var fall := DotPlayerDeath.new()
+	var fall := GSPlayerDeath.new()
 	fall.reaction = &"face_plant"
 	fall.roll_seed = 1234
 	fall.direction = Vector3(1, 0, 0)
-	var died := MmEvents.read_death(DotNetReader.new(MmEvents.write_death(5, 0, MmGame.DIED_STABBED, fall)))
-	var carried: DotPlayerDeath = died.get("death")
+	var died := MmEvents.read_death(GSNetReader.new(MmEvents.write_death(5, 0, MmGame.DIED_STABBED, fall)))
+	var carried: GSPlayerDeath = died.get("death")
 	_check(bool(died["ok"]) and carried != null and carried.reaction == &"face_plant" and carried.roll_seed == 1234
 		and carried.direction.distance_to(Vector3(1, 0, 0)) < 0.02, "a DEATH carries the fall the server picked")
-	var bare := MmEvents.read_death(DotNetReader.new(MmEvents.write_death(5, 0, MmGame.DIED_SHOT)))
+	var bare := MmEvents.read_death(GSNetReader.new(MmEvents.write_death(5, 0, MmGame.DIED_SHOT)))
 	_check(bool(bare["ok"]) and not bare.has("death"), "and one without a fall still reads")
 
-	# Somebody a step in front of a door is prompted by DotKeyPrompt with the use key as bound.
+	# Somebody a step in front of a door is prompted by GSKeyPrompt with the use key as bound.
 	var me: MmPlayer = client.get("player")
 	var frame := (world.map.doors.doors[0]["body"] as Node3D).global_transform
 	var size := MmMapDoc.v3((world.map.doors.doors[0]["spec"] as Dictionary)["size"])
@@ -318,29 +318,29 @@ func _client_death_and_prompt(client: Node, world: MmGame, hud: Node) -> void:
 	for i in 4:
 		await get_tree().process_frame
 	hud.call("_process", 0.0)
-	var prompt: DotKeyPrompt = hud.get("prompt")
+	var prompt: GSKeyPrompt = hud.get("prompt")
 	var bound := str(client.call("_key", MmBindings.USE))
 	_check(
 		prompt.visible and (prompt.words.begins_with("Open") or prompt.words.begins_with("Shut"))
 		and prompt.key == bound and bound != "",
-		"at a door, DotKeyPrompt names it with the use key as bound", prompt.text()
+		"at a door, GSKeyPrompt names it with the use key as bound", prompt.text()
 	)
 
 	# A pack naming these classes does not parse on a shell whose dot-ui predates them, so
 	# the requires.json dot-ci derives must ask for dot-ui 13, and nothing may lower it.
-	var asks := DotAddonApi.derive()
+	var asks := GSAddonApi.derive()
 	_check(
-		int(asks.get("dot_ui", 0)) >= 13 and FileAccess.file_exists("res://" + DotAddonApi.FLOOR_FILE),
+		int(asks.get("dot_ui", 0)) >= 13 and FileAccess.file_exists("res://" + GSAddonApi.FLOOR_FILE),
 		"the pack asks a shell for dot-ui level 13, the weapon icons (requires.floor.json)",
 		str(asks.get("dot_ui"))
 	)
 
 
 ## Why a body is not there: never built (the figure's state says why) or freed since.
-func _no_body(figure: Node3D, body: Object, ragdolls: DotPlayerRagdolls) -> String:
+func _no_body(figure: Node3D, body: Object, ragdolls: GSPlayerRagdolls) -> String:
 	return "%s intree=%s vis=%s meshes=%d style=%s live=%d" % [
 		"never built" if body == null else "freed", str(figure.is_inside_tree()), str(figure.visible),
-		DotPlayerRagdoll.meshes_of(figure).size(), str(ragdolls.rules.effective_style()), ragdolls.live().size()]
+		GSPlayerRagdoll.meshes_of(figure).size(), str(ragdolls.rules.effective_style()), ragdolls.live().size()]
 
 
 ## The family's rule since the first play test: H opens help in every game, nothing else in
@@ -352,7 +352,7 @@ func _test_spectate_tap() -> void:
 	var b := _p(game, &"u3b")
 	var id := b.player_id
 	game._kill(b, m, MmGame.DIED_STABBED)
-	game.spectate.manager.set_mode(String(id), DotSpectatorView.Mode.CHASE)
+	game.spectate.manager.set_mode(String(id), GSSpectatorView.Mode.CHASE)
 	var client: Node = (load("res://game/mm_client.gd") as GDScript).new()
 	client.set(&"game", game)
 	client.set(&"player", b)
@@ -398,14 +398,14 @@ func _test_help_and_menu() -> void:
 	_section("H opens help, and the Escape menu has Help and Leave")
 	var settings := MmSettings.new()
 	add_child(settings)
-	var built: DotResult = settings.setup(DotSettingsStoreMemory.new())
-	var keys: DotMenuBindings = settings.bindings
-	_check(built.ok and keys != null and keys.key_for(DotMenuBindings.HELP_ACTION) == "H", "help is on H")
+	var built: GSResult = settings.setup(GSSettingsStoreMemory.new())
+	var keys: GSMenuBindings = settings.bindings
+	_check(built.ok and keys != null and keys.key_for(GSMenuBindings.HELP_ACTION) == "H", "help is on H")
 	_check(keys.defaults_on("H").size() == 1, "and nothing else in the table defaults to H",
 		str(keys.defaults_on("H").map(func(r: Dictionary) -> String: return str(r["label"]))))
 	# Chat is a row, so the Controls page moves it; there is no team chat (roles are secret).
 	var _k := settings.settings.set_value(&"bind_chat", "K")
-	_check(keys.key_for(MmBindings.CHAT) == "K" and DotInputBinding.describe_action(MmBindings.CHAT) == "K"
+	_check(keys.key_for(MmBindings.CHAT) == "K" and GSInputBinding.describe_action(MmBindings.CHAT) == "K"
 		and keys.defaults_on("U").is_empty(), "chat is a row, rebinding it moves its key, and there is no team chat on U",
 		"%s %d" % [keys.key_for(MmBindings.CHAT), keys.defaults_on("U").size()])
 	_check(keys.key_for(MmBindings.ATTACK) != "" and keys.key_for(MmBindings.HOLSTER) != "", "attack and holster are bound",
@@ -437,9 +437,9 @@ func _test_gore() -> void:
 	var first := MmSettings.new()
 	first.directory = scratch
 	add_child(first)
-	var _b1 := first.setup(DotSettingsStoreFile.new(scratch))
-	var image: DotMenuSection = first.menu.page(&"video").section("Image")
-	var row: DotMenuRow = image.find_row(&"gore") if image != null else null
+	var _b1 := first.setup(GSSettingsStoreFile.new(scratch))
+	var image: GSMenuSection = first.menu.page(&"video").section("Image")
+	var row: GSMenuRow = image.find_row(&"gore") if image != null else null
 	_check(row != null and first.schema.has(&"gore") and first.settings.get_bool(&"gore", false),
 		"the Video page has a Blood splatters row on the gore setting, on by default")
 	var _g1 := first.settings.set_value(&"gore", false)
@@ -448,7 +448,7 @@ func _test_gore() -> void:
 	var second := MmSettings.new()
 	second.directory = scratch
 	add_child(second)
-	var _b2 := second.setup(DotSettingsStoreFile.new(scratch), false)
+	var _b2 := second.setup(GSSettingsStoreFile.new(scratch), false)
 	_check(second.settings.get_bool(&"gore", true) == false, "a fresh settings manager loading that file reads gore as off")
 
 	var floor_body := StaticBody3D.new()
@@ -494,9 +494,9 @@ func _test_the_map_menu() -> void:
 	await _step(game, 4)
 	var settings := MmSettings.new()
 	add_child(settings)
-	var _built: DotResult = settings.setup(DotSettingsStoreMemory.new())
-	var keys: DotMenuBindings = settings.bindings
-	_check(keys.key_for(DotMenuBindings.MAPS_ACTION) == "M" and keys.defaults_on("M").size() == 1,
+	var _built: GSResult = settings.setup(GSSettingsStoreMemory.new())
+	var keys: GSMenuBindings = settings.bindings
+	_check(keys.key_for(GSMenuBindings.MAPS_ACTION) == "M" and keys.defaults_on("M").size() == 1,
 		"the map menu is on M, and nothing else in the table defaults to M",
 		str(keys.defaults_on("M").map(func(r: Dictionary) -> String: return str(r["label"]))))
 	var rows: Array = game.map_rows()
@@ -510,7 +510,7 @@ func _test_the_map_menu() -> void:
 	_check(settings.menu.handle_event(m) and settings.menu.picker.is_open(), "M opens the picker")
 	var wanted: StringName = &""
 	var key := KEY_NONE
-	for row in range(1, DotMenuPicker.PAGE_SIZE + 1):
+	for row in range(1, GSMenuPicker.PAGE_SIZE + 1):
 		var it: Variant = settings.menu.picker.at_row(row)
 		if it is Dictionary and not bool((it as Dictionary)["current"]):
 			wanted = StringName(str((it as Dictionary)["id"]))
