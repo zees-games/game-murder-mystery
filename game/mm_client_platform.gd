@@ -3,7 +3,7 @@ extends "mm_client_board.gd"
 ## Settings, the workbench and the input block. Path-based base of [code]mm_client.gd[/code], no class_name.
 
 
-## dot-team's block rules followed from the server, and the F9 tuning panel where this process hosts the game.
+## gs-team's block rules followed from the server, and the F9 tuning panel where this process hosts the game.
 func _add_noblock_and_workbench() -> void:
 	if link != null:
 		GSLog.result(CHANNEL, "noblock", platform.add_noblock(game, Callable(game, "team_of_side")))
@@ -39,7 +39,7 @@ func _suspend_input(suspended: bool) -> void:
 		player.sampler.suspended = suspended
 
 
-## Where a roster row's player stands, for dot-game's look-to-gag key (G, K).
+## Where a roster row's player stands, for gs-game's look-to-gag key (G, K).
 func _look_position(row: Dictionary) -> Variant:
 	if game == null:
 		return null
@@ -59,7 +59,7 @@ func _build_settings() -> void:
 	platform.look_position_fn = _look_position
 	platform.board_snapshot_fn = board_snapshot
 	# M: the map list. Solo a choice changes the map here at once; connected the server decides,
-	# by the owner's `sv_map_menu_flag`, and anybody without it gets a vote instead (dot-vote's
+	# by the owner's `sv_map_menu_flag`, and anybody without it gets a vote instead (gs-vote's
 	# map menu, wired in [MmModule]).
 	platform.maps_rows_fn = func() -> Array: return game.map_rows() if game != null else []
 	platform.maps_change_fn = func(id: StringName) -> GSResult: return game.change_map_now(id)

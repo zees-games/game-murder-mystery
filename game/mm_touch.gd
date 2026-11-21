@@ -2,7 +2,7 @@ extends Control
 
 const MmPlayer := preload("mm_player.gd")
 
-## The on-screen buttons a phone needs: attack, use, draw or put away, and jump, through dot-mobile's
+## The on-screen buttons a phone needs: attack, use, draw or put away, and jump, through gs-mobile's
 ## [GSMobileControls]: a stick, drag-look and those buttons, driving the client's own [GSFpsTouchSampler]. Never auto-fires (see [method crosshair_kind]).
 
 const EDGE_MARGIN := 24.0
@@ -54,7 +54,7 @@ static func make_rules() -> GSMobileRules:
 
 
 var controls: GSMobileControls = null
-## dot-mobile's buttons inside the overlay, for the shell's DPI fit.
+## gs-mobile's buttons inside the overlay, for the shell's DPI fit.
 var buttons: GSMobileButtons:
 	get:
 		return controls.buttons if controls != null else null
@@ -81,7 +81,7 @@ static func wanted() -> bool:
 	return GSPlatform.has_touch() or "--touch" in OS.get_cmdline_user_args()
 
 
-## dot-game's fps preset less what this game has no use for. Holster (draw or put away) takes the secondary slot.
+## gs-game's fps preset less what this game has no use for. Holster (draw or put away) takes the secondary slot.
 static func touch_layout() -> GSGameTouchLayout:
 	var res := GSGameTouchLayout.build(GSGameTouchLayout.FPS, {
 		GSGameTouchLayout.ALT: null,
@@ -99,7 +99,7 @@ static func touch_layout() -> GSGameTouchLayout:
 	return res.value
 
 
-## The buttons as dot-mobile takes them: [method touch_layout]'s, with jump and duck held on the sampler.
+## The buttons as gs-mobile takes them: [method touch_layout]'s, with jump and duck held on the sampler.
 static func layout() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for b: Dictionary in touch_layout().buttons():

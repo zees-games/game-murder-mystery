@@ -3,7 +3,7 @@ extends GSGameNetchaosServer
 const MmConfig := preload("../game/mm_config.gd")
 const MmGame := preload("../game/mm_game.gd")
 
-## Murder Mystery's side of `tools/netchaos.sh` (dot-game's GSGameNetchaosServer): the practice map, no stand-ins, no warmup or grace.
+## Murder Mystery's side of `tools/netchaos.sh` (gs-game's GSGameNetchaosServer): the practice map, no stand-ins, no warmup or grace.
 
 var _game: MmGame = null
 

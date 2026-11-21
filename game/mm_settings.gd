@@ -3,15 +3,15 @@ extends GSMenuGameSettings
 const MmBindings := preload("mm_bindings.gd")
 
 ## A player's own settings and the menu that changes them: view turn rate, field of view,
-## volumes, the window and the menu's look. dot-menu's `GSMenuGameSettings` with this game's spec:
+## volumes, the window and the menu's look. gs-menu's `GSMenuGameSettings` with this game's spec:
 ## `sensitivity` is ACCOUNT, `field_of_view` SERVER_CLAMPED, the volumes this machine's.
 
 const SCHEMA_VERSION := 1
 
-## Where this game's own document lives. The shared account document is dot-settings'.
+## Where this game's own document lives. The shared account document is gs-settings'.
 const SETTINGS_DIR := "user://murder_settings"
 
-## The app's namespace. ACCOUNT settings are shared under dot-menu's `tmc_account`.
+## The app's namespace. ACCOUNT settings are shared under gs-menu's `tmc_account`.
 const APP_NAMESPACE := &"murder"
 
 ## The field of view the camera had before this existed, and still the default.

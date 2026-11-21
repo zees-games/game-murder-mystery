@@ -45,7 +45,7 @@ func _start_offline() -> void:
 	GSLog.result(CHANNEL, "chat, offline", chat.attach(null))
 
 
-## A solo stand-in's name: the server's list, through dot-bot's pick, so solo and a server
+## A solo stand-in's name: the server's list, through gs-bot's pick, so solo and a server
 ## name them alike.
 static func _bot_name(index: int) -> String:
 	var taken: Array = []

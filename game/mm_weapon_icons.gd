@@ -1,6 +1,6 @@
 extends RefCounted
 
-## Murder Mystery's weapon pictures: weapon id to sprite tag; the rest is dot-ui's [GSWeaponIconStyle].
+## Murder Mystery's weapon pictures: weapon id to sprite tag; the rest is gs-ui's [GSWeaponIconStyle].
 
 const GUN := &"gun"
 

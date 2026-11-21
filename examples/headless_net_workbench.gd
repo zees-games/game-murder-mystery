@@ -41,7 +41,7 @@ func _manager(server: bool, scope: StringName, peer_id: int) -> GSNetManager:
 func run() -> void:
 	host._section("[a flagged admin edits the server's profiles, and nobody else can]")
 	if not GSGameWorkbench.available():
-		print("  dot-workbench is not linked: skipped")
+		print("  gs-workbench is not linked: skipped")
 		host._passed += 16
 		host._finished()
 		return

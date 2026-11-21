@@ -1,11 +1,11 @@
 extends Node3D
 
-## Your own arms holding the knife or the gun in first person, on dot-player-char's
+## Your own arms holding the knife or the gun in first person, on gs-player-char's
 ## GSPlayerViewArms. Absent on a shell older than that API: the bare weapon is drawn alone.
 
 const MmWeapons := preload("mm_weapons.gd")
 
-## dot-player-char API level that has the held-weapon mode.
+## gs-player-char API level that has the held-weapon mode.
 const NEEDS_LEVEL := 8
 
 var arms: GSPlayerViewArms = null
@@ -14,7 +14,7 @@ var _grip: GSViewGrip = null
 
 
 static func available() -> bool:
-	return GSAddonApi.build_level("dot_player_char") >= NEEDS_LEVEL
+	return GSAddonApi.build_level("gs_player_char") >= NEEDS_LEVEL
 
 
 ## Holds [param weapon] (the view model, a node of boxes) as [param what] ("gun" or a weapon id);

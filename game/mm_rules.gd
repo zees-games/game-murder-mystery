@@ -1,6 +1,6 @@
 extends GSMatchRules
 
-## A round ends when the game says so, and the game says who won. dot-match's elimination rule
+## A round ends when the game says so, and the game says who won. gs-match's elimination rule
 ## nearly fits, but a mid-round joiner is benched and the clock's winner is a server setting, so
 ## the decision is [MmGame]'s and this rule only reads it (NONE every tick until it has decided).
 
@@ -9,14 +9,14 @@ var decision_fn: Callable = Callable()
 
 
 static func make() -> GSMatchRules:
-	# Not this class's own name, for dot-match's reason: a script that names itself in an
+	# Not this class's own name, for gs-match's reason: a script that names itself in an
 	# expression cuts Godot 4.7.2's exit teardown short. See docs/gdscript-hazards.md.
 	var rules := new()
 	rules.id = &"murder"
 	rules.display_name = "Murder Mystery"
 	rules.score_limit = 0
 	# The round keeps its own clock; this one is the BACKSTOP, set by [MmGame] to the grace, the hunt and a minute more.
-	# A round the game somehow never decided ends on it as a draw rather than running for ever, and dot-match stops
+	# A round the game somehow never decided ends on it as a draw rather than running for ever, and gs-match stops
 	# warning at every boot that nothing but a custom outcome can end a round.
 	rules.time_limit_sec = 600.0
 	rules.rounds_to_win = 999

@@ -268,7 +268,7 @@ func _wall_along(from: Vector3, aim: Vector3, limit: float) -> float:
 	return from.distance_to(hit["position"]) if not hit.is_empty() else limit
 
 
-## [param victim] killed by [param by] (null for nobody), as damage through dot-combat.
+## [param victim] killed by [param by] (null for nobody), as damage through gs-combat.
 func _kill(victim: MmPlayer, by: MmPlayer, how: StringName) -> void:
 	if combat == null or not victim.is_alive():
 		return

@@ -35,7 +35,7 @@ func _place_camera() -> void:
 			_fade.focus = null
 		return
 
-	# dot-core's boom, swept from the eye with the height above it added in the world's up:
+	# gs-core's boom, swept from the eye with the height above it added in the world's up:
 	# a pivot above the head can be inside a tree's canopy (the play test, 0:33), and the
 	# spring arm it replaced cast a ray from there and snapped to whatever it hit.
 	_arm = GSCameraBoom.new()

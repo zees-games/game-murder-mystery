@@ -157,7 +157,7 @@ func _player_of(peer_id: int) -> MmPlayer:
 	return (game as MmGame).players.get(MmNetBridge.player_key(session_id))
 
 
-# dot-moderation's live tools
+# gs-moderation's live tools
 
 ## What the admin set means here, one callable per ability. See `GSGameServices`. [b]Noclip gets a stuck player looked
 ## at, freeze stops a griefer, respawn puts somebody back at their side's start[/b] (alive, mid-round, said in the log).
@@ -248,7 +248,7 @@ func _mod_unsupported() -> Dictionary:
 	}
 
 
-## Toggles that outlive a new body here, beyond dot-moderation's own god and buddha. [b]Blind and beacon are about the
+## Toggles that outlive a new body here, beyond gs-moderation's own god and buddha. [b]Blind and beacon are about the
 ## person, not the body[/b]: noclip and freeze end with the round (a round started noclipped is broken), but a player an
 ## admin blinded or marked is still that player next round, else being found would be how a punished player ends it.
 const PERSIST_ON_RESPAWN: Array[String] = ["blind", "beacon"]
@@ -358,7 +358,7 @@ func _on_round_began_for_tools(_number: int, layout: StringName) -> void:
 var _tools_layout: StringName = &""
 
 
-## The team seam dot-chat and dot-voice both ask for, which the base cannot wire. [GSGameServices] knows nothing about
+## The team seam gs-chat and gs-voice both ask for, which the base cannot wire. [GSGameServices] knows nothing about
 ## teams (a lobby has none), so the two `team_fn` hooks are set here, after the base has built each router.
 func setup(p_server: GSServer, p_game: Object, p_link: Object) -> GSResult:
 	var ready_now: GSResult = await super.setup(p_server, p_game, p_link)

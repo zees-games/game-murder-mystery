@@ -12,7 +12,7 @@ clips=("$@")
 [[ ${#clips[@]} -gt 0 ]] || mapfile -t clips < <(python3 -c 'import json;print("\n".join(c["name"] for c in json.load(open("tools/filmstrip_scenarios.json"))["clips"]))')
 boxes=${GPU_SHOT_BOXES:-staging02}
 gpu_sh=${GPU_SH:-}
-for c in /home/gamedev/godot/dot-bootstrap/tools/gpu.sh ../gpu.sh; do
+for c in /home/gamedev/godot/gs-bootstrap/tools/gpu.sh ../gpu.sh; do
   [[ -z $gpu_sh && -f $c ]] && gpu_sh=$c
 done
 [[ -f $gpu_sh ]] || { echo "gpu.sh not found (set GPU_SH=path)" >&2; exit 1; }

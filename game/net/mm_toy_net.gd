@@ -1,6 +1,6 @@
 extends GSNetBehaviour
 
-## One of the map's toys on the wire (dot-props' [GSPropBody]): its pose, whether it is on, and a use count.
+## One of the map's toys on the wire (gs-props' [GSPropBody]): its pose, whether it is on, and a use count.
 ## The server's physics is never predicted; the client's toy is frozen and posed. Toys pair by index in map
 ## order, and a count (8 bits, wraps) rather than an event means a lost packet costs only a late sound.
 

@@ -197,7 +197,7 @@ func _on_player_died(player: MmPlayer, damage: GSDamage) -> void:
 		_check_round()
 
 
-## The fall a death gets: dot-player-char's reaction rule over the server's weights, seeded from
+## The fall a death gets: gs-player-char's reaction rule over the server's weights, seeded from
 ## the player and the tick. A stab or a shot pushes the body away from whoever did it (the
 ## direction `_kill` puts on the damage, or the attacker's position), and a fall pushes nothing.
 func decide_death(player: MmPlayer, damage: GSDamage) -> GSPlayerDeath:

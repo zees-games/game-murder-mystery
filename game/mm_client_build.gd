@@ -46,7 +46,7 @@ func _build_touch() -> void:
 	layer.add_child(touch)
 
 
-## dot-game's chat box and microphone, with this game's channels and voice format.
+## gs-game's chat box and microphone, with this game's channels and voice format.
 func _build_chat() -> void:
 	chat = GSGameChatClient.new()
 	chat.name = "Chat"

@@ -140,7 +140,7 @@ extends GSConfig
 @export var map_directory: String = "maps"
 
 ## The file that says which installed maps ROTATE: `cfg/maps.yml`, layered over the shipped `res://maps.yml`
-## (dot-map's `GSMapRotationFile`). Empty, or no file, rotates every map. A map the rotation leaves out stays installed
+## (gs-map's `GSMapRotationFile`). Empty, or no file, rotates every map. A map the rotation leaves out stays installed
 ## (`mm_map <id>` loads it) but is never drawn, balloted or nominated. `sv_map_rotation_file`.
 @export var map_rotation_file: String = "cfg/maps.yml"
 
@@ -154,7 +154,7 @@ extends GSConfig
 
 @export_group("Spawning")
 
-## dot-spawn strategies for the round's start: `spread` sends everybody to different parts of
+## gs-spawn strategies for the round's start: `spread` sends everybody to different parts of
 ## the map, `map` is the old seat-by-seat walk round the document's points.
 @export var spawn_strategy: String = "spread"
 
@@ -162,7 +162,7 @@ extends GSConfig
 @export_range(0.0, 200.0, 0.5, "or_greater") var spawn_spread_distance: float = 20.0
 @export_range(0.0, 200.0, 0.5, "or_greater") var spawn_spread_min: float = 4.0
 
-## The dot-spawn rules these make, for [method MmMap.spawn_batch].
+## The gs-spawn rules these make, for [method MmMap.spawn_batch].
 func spawn_rules() -> GSSpawnRules:
 	var rules := GSSpawnRules.new()
 	rules.strategy = spawn_strategy

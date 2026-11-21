@@ -86,7 +86,7 @@ var local_player_id: int = 0
 var local_role: int = 0
 
 ## Where the clock learns the link's ping in milliseconds.
-# dot-net cannot measure a transport; without a sample every command is stamped for a tick already simulated and discarded as late.
+# gs-net cannot measure a transport; without a sample every command is stamped for a tick already simulated and discarded as late.
 
 ## Where a voice frame goes on the server. Assigned by [GSGameModule] to the services
 ## layer's `relay_voice`, because the bridge is the only thing that names both ends.
@@ -103,7 +103,7 @@ var _entities: Node = null
 var _behaviours: Dictionary = {}
 
 ## The next session id handed to somebody the world made itself.
-# Above anything dot-server issues: a player called `bot` parses back to session 0, dot-net's broadcast address.
+# Above anything gs-server issues: a player called `bot` parses back to session 0, gs-net's broadcast address.
 const FIRST_BOT_SESSION := 900000
 
 var _next_bot_session: int = FIRST_BOT_SESSION
@@ -179,9 +179,9 @@ func _send_map(peer_id: int) -> void:
 		_tell(peer_id, message[0], message[1])
 
 
-## How every dot-net message reaches a peer, routed by delivery, not kind: snapshots unreliable, the
+## How every gs-net message reaches a peer, routed by delivery, not kind: snapshots unreliable, the
 ## rest reliable on the call that matches this end, else client requests are dropped. One peer, never
-## zero: `net.send(msg, 0)` broadcasts in dot-net, so a missing id would leak a private message.
+## zero: `net.send(msg, 0)` broadcasts in gs-net, so a missing id would leak a private message.
 func _tell(peer_id: int, kind: int, body: PackedByteArray) -> void:
 	if peer_id <= 0 or net == null or body.is_empty():
 		return

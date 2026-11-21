@@ -60,7 +60,7 @@ func _shut_down() -> void:
 func _boot() -> void:
 	_section("booting")
 
-	# `startup_config`, because `sv_tickrate` is startup-only and dot-server execs this file
+	# `startup_config`, because `sv_tickrate` is startup-only and gs-server execs this file
 	# before the listener for exactly that reason.
 	var cfg_path := "%s/server.cfg" % SERVER_DIR
 	var cfg := FileAccess.open(cfg_path, FileAccess.WRITE)

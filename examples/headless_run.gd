@@ -116,7 +116,7 @@ func _test_catalogue() -> void:
 			bad += 1
 	_check(bad == 0, "every prop's model is in the game", "%d missing" % bad)
 
-	# Part-shaped collision (props/pieces.json, dot-props' GSPropPieces): a tree is pieces, a
+	# Part-shaped collision (props/pieces.json, gs-props' GSPropPieces): a tree is pieces, a
 	# fridge stays its box, and no piece reaches outside the prop's measured box by more than
 	# the decomposition's slack, or a player would bump into air beside the model.
 	var outside := PackedStringArray()
@@ -431,7 +431,7 @@ func _test_free_roam() -> void:
 	var _gone := game.spectate_rules.set_cvar("mp_freeroam", "0")
 	game.spectate.advance(game._tick + 1)
 	_check(not game.spectate.is_roaming(id), "switching mp_freeroam off mid-roam puts the roamer back on a player")
-	_check(game.spectate is GSSpectatorHost and game.spectate.guard_roam, "spectating is dot-spectate's host, roaming guarded")
+	_check(game.spectate is GSSpectatorHost and game.spectate.guard_roam, "spectating is gs-spectate's host, roaming guarded")
 	var playing := StringName("nobody-out")
 	_check(not game.spectate.can_roam(playing) and game.spectate.toggle_roam(playing).error.code == GSError.CODE_STATE,
 		"somebody who is playing may not roam, and is told they are playing")
@@ -649,7 +649,7 @@ func _door_standin(game: MmGame) -> void:
 		"at %s; the door is %s" % [bot.controller.state.position.snapped(Vector3.ONE * 0.1), "open" if doors.is_open(GARDEN_DOOR) else "shut"])
 
 
-## The practice house's garden toys (dot-props'): the beach ball at 16.5, -2.5, the football at
+## The practice house's garden toys (gs-props'): the beach ball at 16.5, -2.5, the football at
 ## 14, 3, the tyre, and the lamp (3) on its switch (4) at 12, -3.
 func _test_toys() -> void:
 	_section("toys: walked into, kicked, switched, bounced on, home again at the next round")

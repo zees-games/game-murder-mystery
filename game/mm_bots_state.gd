@@ -323,7 +323,7 @@ func _finish_annotation(doc: Dictionary) -> GSNpcAiNavAnnotations:
 	return found
 
 
-## The bots' rays ask dot-sim's `GSSimSightRay` (bound in [method _sight_bind] each tick) when the library has it, to the
+## The bots' rays ask gs-sim's `GSSimSightRay` (bound in [method _sight_bind] each tick) when the library has it, to the
 ## script's bit (`headless_native_sight`); off, or with no library (the web), the game's `_clear_between` answers.
 static var native_sight := true
 ## With the native ray, re-runs the script beside every [method _los] and counts any difference (an error each); the

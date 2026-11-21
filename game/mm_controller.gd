@@ -44,7 +44,7 @@ func _on_pre_simulate(_tick: int, _delta: float) -> void:
 
 ## `func(feet: Vector3, delta: float, ground_id: int) -> Dictionary`: how far a turning
 ## roundabout under the feet carries this person this tick, `{offset, yaw, index}`, or empty.
-## The game's ([method MmGame._carry], dot-props' `carry_for`).
+## The game's ([method MmGame._carry], gs-props' `carry_for`).
 var carrier: Callable = Callable()
 
 

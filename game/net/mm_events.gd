@@ -64,7 +64,7 @@ enum Ask {
 }
 
 ## Every decoder returns an `ok` beside its fields, and every caller checks it. [b]A reader past its end returns
-## plausible zeros rather than failing[/b] (dot-net's exhaustion was not sticky), so a truncated packet would decode as
+## plausible zeros rather than failing[/b] (gs-net's exhaustion was not sticky), so a truncated packet would decode as
 ## a valid message about nothing.
 const NAME_BYTES := 64
 const ID_BYTES := 64
@@ -270,7 +270,7 @@ static func read_team(r: GSNetReader) -> Dictionary:
 	return {"player_id": player_id, "team": team, "ok": r.ok()}
 
 
-## [param death] is how the body falls (dot-player-char's [GSPlayerDeath], the server's pick),
+## [param death] is how the body falls (gs-player-char's [GSPlayerDeath], the server's pick),
 ## last and optional, so every client draws the same fall and an older one reads the rest.
 static func write_death(player_id: int, by: int, why: StringName, death: GSPlayerDeath = null) -> PackedByteArray:
 	var w := _w()
@@ -373,9 +373,9 @@ static func read_phase(r: GSNetReader) -> Dictionary:
 
 # Watching
 
-## A view dot-spectate decided, for the one player it belongs to. [b]The death position travels[/b]: a mirror without it
+## A view gs-spectate decided, for the one player it belongs to. [b]The death position travels[/b]: a mirror without it
 ## puts every death camera at the world origin, under the floor on most maps. Kept the game's own: bit-packed and keyed
-## by session (zero is nobody), where dot-spectate's is a string-keyed dictionary. The players are already in the mirror's world.
+## by session (zero is nobody), where gs-spectate's is a string-keyed dictionary. The players are already in the mirror's world.
 static func write_spectate(
 	viewer: int, mode: int, target: int, killer: int, death_at: Vector3
 ) -> PackedByteArray:
@@ -537,7 +537,7 @@ const CHAT_KEY_BYTES := 48
 const CHAT_KIND_BITS := 4
 
 
-## Whether every [enum GSChatMessage.Kind] fits in [constant CHAT_KIND_BITS]. dot-chat owns
+## Whether every [enum GSChatMessage.Kind] fits in [constant CHAT_KIND_BITS]. gs-chat owns
 ## that enum, so it can grow under this game; headless_net reads this.
 static func chat_kinds_fit() -> bool:
 	return GSChatMessage.KIND_NAMES.size() <= (1 << CHAT_KIND_BITS)

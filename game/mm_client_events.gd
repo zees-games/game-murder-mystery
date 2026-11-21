@@ -148,9 +148,9 @@ func _play_killcam(killer: int) -> void:
 	var _playing := killcam.match_ended()
 
 
-## The killcam's host, off unless dot-replay has it (API 6).
+## The killcam's host, off unless gs-replay has it (API 6).
 func _build_killcam() -> void:
-	if GSAddonApi.build_level("dot_replay") < 6:
+	if GSAddonApi.build_level("gs_replay") < 6:
 		return
 	killcam = GSKillcamHost.new()
 	MmKillcamBodies.configure(killcam)

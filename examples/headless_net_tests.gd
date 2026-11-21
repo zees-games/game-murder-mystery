@@ -1,7 +1,7 @@
 extends "headless_net_base.gd"
 
 ## Every encoder against its decoder. Nothing checks that two ends of a serialisation are
-## inverses for you: dot-moderation once wrote "voice muted" and read back a warning.
+## inverses for you: gs-moderation once wrote "voice muted" and read back a warning.
 func _test_the_codec() -> void:
 	_section("every event decodes to what was encoded")
 
@@ -167,7 +167,7 @@ func _test_roles_are_secret() -> void:
 	var _put_away := _server_game.set_weapon_drawn(_stand_in.player_id, false)
 	await _steps(8)
 
-	# The online board is dot-server's roster (sessions only); the stand-ins must be added by the
+	# The online board is gs-server's roster (sessions only); the stand-ins must be added by the
 	# game. Both stand-ins here have is_bot false on the client, as in a browser.
 	var client_script: GDScript = load("res://game/mm_client.gd")
 	var roster := {"players": [{"id": SESSION, "name": "Ada", "ping": 20, "seconds": 5, "bot": false}]}
@@ -573,7 +573,7 @@ func _test_a_door_crosses() -> void:
 	_finished()
 
 
-## A client whose MAP never came still reads every snapshot: dot-net stops at the first entity it
+## A client whose MAP never came still reads every snapshot: gs-net stops at the first entity it
 ## does not know, so the TOYS are registered as mirrors anyway and paired when the map arrives.
 ## Armed: registering them only after the map was built froze every player seated after them.
 func _test_a_client_without_the_map() -> void:

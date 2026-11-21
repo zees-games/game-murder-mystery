@@ -1,6 +1,6 @@
 extends "mm_bots_walk.gd"
 
-## The stand-ins, by role on dot-bot's settings: murderers that stalk, gunners that hunt, bystanders that keep
+## The stand-ins, by role on gs-bot's settings: murderers that stalk, gunners that hunt, bystanders that keep
 ## together. The map is surveyed once in `_prepare`. Nobody cheats: a bot knows another's weapon only by seeing it
 ## drawn ([method _sees]), a death only by seeing or hearing it, a murderer only its fellow murderers.
 

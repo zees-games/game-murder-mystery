@@ -4,7 +4,7 @@ const MmConfig := preload("../game/mm_config.gd")
 const MmGame := preload("../game/mm_game.gd")
 
 ## Bot soak on the real game: N stand-ins play rounds back to back on one map for M simulated
-## minutes through dot-bot's GSBotSoak (`./game.sh soak [map] [minutes]`). Writes
+## minutes through gs-bot's GSBotSoak (`./game.sh soak [map] [minutes]`). Writes
 ## `.godot/test-logs/soak-<map>.json`, prints the SOAK line, exits 1 when the run fails.
 
 const DEFAULT_MAP := "mm_mansion"

@@ -145,12 +145,12 @@ func _test_the_module_loads() -> void:
 
 	var module := _module()
 	_check(game != null and game.progress != null and game.progress.durable_key_fn.is_valid(),
-		"progress is filed under dot-game's stable stats key")
+		"progress is filed under gs-game's stable stats key")
 	_check(module != null and module.get("net") != null and module.get("bridge") != null,
 		"with its netcode and the game's bridge")
 
 	_check(game.progress.feed != null and game.progress.feed.tracker == game.progress.stats,
-		"kills go through dot-stats' event feed over the progress tracker")
+		"kills go through gs-stats' event feed over the progress tracker")
 	var stats: GSStatsTracker = game.progress.stats
 	var was_reporting := stats.report_to_backbone
 	stats.report_to_backbone = true
@@ -182,7 +182,7 @@ func _test_the_module_loads() -> void:
 	_finished()
 
 
-## Config cvars, the workbench's sync into a hand-written cvar, and dot-team's block rules through dot-game's GSGameNoblock.
+## Config cvars, the workbench's sync into a hand-written cvar, and gs-team's block rules through gs-game's GSGameNoblock.
 func _noblock_and_config(module: GSModule) -> void:
 	var teamblock := server.console.find_cvar("mp_teamblock")
 	var enemyblock := server.console.find_cvar("mp_enemyblock")
@@ -295,7 +295,7 @@ func _stand_ins_fill_for_people() -> void:
 	var quota_bridge: Object = quota_module.get("bridge") if quota_module != null else null
 	_check(server.console.find_cvar("bot_quota") != null and server.console.find_cvar("bot_quota_mode") != null,
 		"the shared bot_quota cvars are registered")
-	# How the stand-ins see, hear and know a map is dot-bot's: the family's names, medium by default.
+	# How the stand-ins see, hear and know a map is gs-bot's: the family's names, medium by default.
 	var bot_settings := GSBotSettings.of(game)
 	_check(server.console.get_string("bot_difficulty", "") == "medium" and bot_settings.difficulty() == "medium",
 		"bot_difficulty is the module's and medium is the default")
@@ -328,7 +328,7 @@ func _stand_ins_fill_for_people() -> void:
 	var _restored := _run_command("mm_min_players 3")
 
 
-## The murderer's avatar action is refused through the relay the module bound (dot-game's
+## The murderer's avatar action is refused through the relay the module bound (gs-game's
 ## relay path), but only while a round is in PLAY; bystanders and every other phase may act.
 func _test_the_murderer_plays_no_action() -> void:
 	_section("the murderer plays no avatar action in a round")

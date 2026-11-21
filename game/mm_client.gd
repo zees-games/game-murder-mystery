@@ -2,7 +2,7 @@ extends "mm_client_spectate.gd"
 
 ## One local player, a camera and a HUD over a [MmGame], offline or against a server. Offline is
 ## the same world class with `authoritative` true and stand-ins; a [GSClientLink] in the registry
-## under `dot_client_link` picks the connected half, `--offline` forces it. First person (F5 for third).
+## under `gs_client_link` picks the connected half, `--offline` forces it. First person (F5 for third).
 
 
 ## The game's own keys, from the bindings. True when one was used.

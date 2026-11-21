@@ -28,7 +28,7 @@ var tick_rate: int = 64
 ## [b]A swinging door opens away from whoever opens it[/b] unless the map says `away: false`, or none could be opened.
 var doors: Array[Dictionary] = []
 
-## [method door_for] asks dot-sim's `GSSimDoorReach` (the panels written as each door is posed) when the library has it, to the
+## [method door_for] asks gs-sim's `GSSimDoorReach` (the panels written as each door is posed) when the library has it, to the
 ## script's bit (`headless_native_doors`); off, or with no library (the web), the script answers. Read when a map is built.
 static var native_reach := true
 ## With the native ask, re-runs the script beside every [method door_for] and counts any difference (an error each); the parity
@@ -38,7 +38,7 @@ static var reach_verify := false
 static var reach_checked := 0
 static var reach_differ := 0
 
-## [method near_swing] asks dot-sim's `GSSimDoorReach` (each door's place, written when a map is built) when the library has it,
+## [method near_swing] asks gs-sim's `GSSimDoorReach` (each door's place, written when a map is built) when the library has it,
 ## to the script's bit (`headless_native_doors`); off, or with no library (the web), the script answers.
 static var native_near := true
 ## With the native ask, re-runs the script beside every [method near_swing] and counts any difference (an error each). On
@@ -416,7 +416,7 @@ func _near_reset() -> void:
 
 	_near = ClassDB.instantiate(&"GSSimDoorReach")
 	if not _near.has_method(&"set_spots"):
-		_near = null	# a library older than dot-sim v0.2.9 (the pin): the script answers
+		_near = null	# a library older than gs-sim v0.2.9 (the pin): the script answers
 		return
 	_near.set_spots(places, swing)
 	_near_doors = int(_near.spot_count())

@@ -31,7 +31,7 @@ const SERVICE := &"mm_game"
 
 ## Where a host that runs this game with no server (the client shell's Solo play) publishes
 ## the map packs it mounted for it. See [method solo_map_dirs].
-const SOLO_SERVICE := &"dot_solo"
+const SOLO_SERVICE := &"gs_solo"
 
 ## Snapshots a second.
 const NET_SNAPSHOT_RATE := 30
@@ -39,7 +39,7 @@ const NET_SNAPSHOT_RATE := 30
 ## How far a position may be from the origin, in metres, on the wire. Both ends read it here.
 const NET_WORLD_EXTENT := 512.0
 
-## The two sides, as dot-match keeps them on the server.
+## The two sides, as gs-match keeps them on the server.
 const BYSTANDERS := 1
 const MURDERERS := 2
 
@@ -152,17 +152,17 @@ var match_node: GSMatch = null
 var random: GSRandomManager = null
 var physics: GSPhysicsLayout = null
 
-## How a body falls when somebody dies: dot-player-char's rules, `mp_ragdoll*`.
+## How a body falls when somebody dies: gs-player-char's rules, `mp_ragdoll*`.
 var ragdoll_rules: GSPlayerRagdollRules = GSPlayerRagdollRules.new()
 
-## Playlot's toys' rules, when a Playlot map is played: dot-props'.
+## Playlot's toys' rules, when a Playlot map is played: gs-props'.
 var toy_rules: GSPropBodyRules = GSPropBodyRules.new()
 
 ## A person's weight on a toy, in kilograms.
 const PERSON_MASS := 70.0
 var effects: GSFxManager = null
 var spectate: MmSpectate = null
-## dot-spectate's `mp_forcecamera`, `mp_freeroam` and `mp_freeroam_speed`: one object shared with
+## gs-spectate's `mp_forcecamera`, `mp_freeroam` and `mp_freeroam_speed`: one object shared with
 ## [MmSpectate]'s manager, bound by the module (REPLICATED) and followed by a client.
 var spectate_rules: GSSpectatorRules = GSSpectatorRules.new()
 var progress: MmProgress = null
@@ -170,18 +170,18 @@ var progress: MmProgress = null
 ## Everybody in the world, by player id.
 var players: Dictionary = {}
 
-## dot-player-char's `mp_*` view and body rules.
+## gs-player-char's `mp_*` view and body rules.
 var view_rules: GSPlayerViewRules = GSPlayerViewRules.new()
 var body_rules: GSPlayerBodyRules = GSPlayerBodyRules.new()
 
-## dot-mobile's touch, aim assist and auto-fire cvars (`sv_mobile_*`, `sv_aim_assist*`, `sv_autofire*`): bound by the module
+## gs-mobile's touch, aim assist and auto-fire cvars (`sv_mobile_*`, `sv_aim_assist*`, `sv_autofire*`): bound by the module
 ## (REPLICATED), followed by the client's overlay. Auto-fire is off: nobody is known to be an enemy (mm_touch.gd).
 var mobile_rules: GSMobileRules = MmTouch.make_rules()
 
-## `sv_falldamage*`: landing hard hurts. On in this game (dot-combat's default is off); the
+## `sv_falldamage*`: landing hard hurts. On in this game (gs-combat's default is off); the
 ## server applies it through [member combat], a client never does.
 var fall_rules: GSFallDamageRules = make_fall_rules()
-## `sv_stomp*`: landing on a head hurts. Off by default (dot-combat's); the server applies it through [member combat].
+## `sv_stomp*`: landing on a head hurts. Off by default (gs-combat's); the server applies it through [member combat].
 var stomp: GSStomp = GSStomp.new()
 ## Each player's vertical speed going into this tick's movement, for [method _resolve_stomps].
 var _pre_vy: Dictionary = {}
@@ -210,7 +210,7 @@ func ensure_runtime() -> GSProfileRuntime:
 func _local_permit(actor: Variant, _flag: String) -> bool:
 	return typeof(actor) == TYPE_STRING_NAME and actor == &"local"
 
-## dot-team's block rules (`!block`, `!noblock`, `mp_teamblock`), set by the server module or `GSGameClient.add_noblock`. They feed [member body_rules]'s `pair_fn`.
+## gs-team's block rules (`!block`, `!noblock`, `mp_teamblock`), set by the server module or `GSGameClient.add_noblock`. They feed [member body_rules]'s `pair_fn`.
 var block_rules: Object = null:
 	set(value):
 		if block_rules != null and block_rules.is_connected(&"changed", body_rules.refresh):
@@ -265,10 +265,10 @@ var _winner_name: String = ""
 ## Players whose health ran out to a fall, put back on their feet at the top of the next tick.
 var _to_respawn: Array[StringName] = []
 
-## The stand-ins, by role ([code]mm_bots.gd[/code], on dot-bot).
+## The stand-ins, by role ([code]mm_bots.gd[/code], on gs-bot).
 var bots: MmBots = MmBots.new(self)
 
-## What the stand-ins are called, solo and on a server alike; past the end dot-bot numbers them.
+## What the stand-ins are called, solo and on a server alike; past the end gs-bot numbers them.
 const BOT_NAMES := ["Pip", "Moss", "Juniper", "Quill", "Basil", "Wren", "Clover", "Sorrel", "Fern", "Rowan", "Hazel", "Linden"]
 
 
@@ -281,7 +281,7 @@ func _init() -> void:
 ## The server's maps.yml, or null when there is none (every map rotates, as it always did).
 var rotation_file: GSMapRotationFile = null
 
-## The catalogue as dot-map sees it (one [GSMapDef] per document, rebuilt by
+## The catalogue as gs-map sees it (one [GSMapDef] per document, rebuilt by
 ## [method apply_rotation]) and the rotation over it. This game's own [MmCatalogue] holds
 ## documents, not defs; [GSMapRotationFile] marks defs, so the marks live here.
 var map_rotation_defs: GSMapCatalogue = null
@@ -289,7 +289,7 @@ var map_rotation_defs: GSMapCatalogue = null
 var map_rotation: GSMapRotation = null
 
 ## `func(player_id: StringName) -> bool`: whether a player may be hurt now, assigned by the
-## module from dot-game's `can_peer_be_harmed`. Unset offline, in a suite and for a bot, so
+## module from gs-game's `can_peer_be_harmed`. Unset offline, in a suite and for a bot, so
 ## everybody can be harmed.
 var harm_gate: Callable = Callable()
 

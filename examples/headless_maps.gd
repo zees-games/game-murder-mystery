@@ -299,7 +299,7 @@ func _check_placement(game: MmGame) -> void:
 	_check(floating.is_empty(), "every prop stands on something", "%d: %s" % [floating.size(), "; ".join(floating.slice(0, 6))])
 
 
-## The toys (dot-props'): all built, none standing in a wall, a prop or another toy, and two
+## The toys (gs-props'): all built, none standing in a wall, a prop or another toy, and two
 ## seconds of physics later every loose one still where the map put it.
 func _check_toys(game: MmGame, doc: Dictionary) -> void:
 	var box := game.map.toys
@@ -315,7 +315,7 @@ func _check_toys(game: MmGame, doc: Dictionary) -> void:
 		if hit != "":
 			stuck.append("%s %d at %s: %s" % [toy.def["id"], toy.index, toy.global_position.snapped(Vector3.ONE * 0.1), hit])
 	_check(box.count() == placed and box.missing.is_empty() and stuck.is_empty(),
-		"every toy is one dot-props has, and stands clear", "%d of %d built%s; %s" % [box.count(), placed,
+		"every toy is one gs-props has, and stands clear", "%d of %d built%s; %s" % [box.count(), placed,
 			" (missing %s)" % ", ".join(box.missing) if not box.missing.is_empty() else "", "; ".join(stuck.slice(0, 6))])
 	for _i in range(120):
 		await get_tree().physics_frame
@@ -542,7 +542,7 @@ func _world(id: StringName, drawn := false) -> MmGame:
 	return game
 
 
-## dot-core's [GSCollisionAudit] over the map as a client draws it: visible geometry with no shape near it. Fails on
+## gs-core's [GSCollisionAudit] over the map as a client draws it: visible geometry with no shape near it. Fails on
 ## any finding. The audit is lenient (a shape anywhere under the map that the mesh touches covers it); the exact half
 ## is that a non-solid box thicker than PAINT_THICKNESS must sit inside a solid one (embers in a hearth).
 func _audit_colliderless(id: StringName, doc: Dictionary) -> void:

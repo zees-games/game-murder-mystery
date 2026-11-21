@@ -8,7 +8,7 @@ const MmTouch := preload("mm_touch.gd")
 
 ## What a player needs on screen: the clock, how many are alive, this player's own role (roles
 ## are secret, so only `game.team_of(player)`, the ROLE sent to this player alone), what they
-## hold and when it is ready. The clock and door prompt are dot-ui glance pieces; hints read the bindings.
+## hold and when it is ready. The clock and door prompt are gs-ui glance pieces; hints read the bindings.
 
 const BLIND_FADE_SEC := 0.25
 const BLIND_COLOUR := Color(0.01, 0.01, 0.015)
@@ -37,9 +37,9 @@ static func piece_theme() -> Theme:
 	return t
 
 
-## The Escape menu, whose theme this HUD follows (dot-menu's `follow_hud`): the menu sets the theme on the HUD's
+## The Escape menu, whose theme this HUD follows (gs-menu's `follow_hud`): the menu sets the theme on the HUD's
 ## root now and at every theme change, and applies the player's HUD size. A play test asked for a darker HUD a
-## player can restyle in the menu. Duck-typed and called by name, for a client shell older than dot-menu 7.
+## player can restyle in the menu. Duck-typed and called by name, for a client shell older than gs-menu 7.
 var _menu: Object = null
 
 
@@ -251,7 +251,7 @@ func _build_crosshair() -> void:
 	_crosshair.dot_radius = 3.0
 	_crosshair.colour = Color(1.0, 1.0, 1.0, 0.75)
 	_crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if GSAddonApi.build_level("dot_ui") >= 14:
+	if GSAddonApi.build_level("gs_ui") >= 14:
 		_crosshair.set(&"alive_source", func() -> bool: return player != null and player.is_alive())
 	_root.add_child(_crosshair)
 

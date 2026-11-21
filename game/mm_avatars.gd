@@ -1,6 +1,6 @@
 extends RefCounted
 
-## What a player looks like, as a dot-user-avatar document: the schema, the stock avatar and
+## What a player looks like, as a gs-user-avatar document: the schema, the stock avatar and
 ## which skin a document asks for. One slot, because the six people differ only in atlas on one
 ## mesh. Data only: [constant SKINS] and `MmFigure.ATLASES` are one list, which `headless_run` checks.
 

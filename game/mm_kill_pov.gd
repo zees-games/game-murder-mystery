@@ -4,7 +4,7 @@ const MmWeapons := preload("mm_weapons.gd")
 const MmWeaponIcons := preload("mm_weapon_icons.gd")
 
 ## What the final killcam records of the killer's screen beyond the camera: the weapon in hand.
-## The game has no magazine or aim-down-sights, so the rest of dot-replay's aux stays zero.
+## The game has no magazine or aim-down-sights, so the rest of gs-replay's aux stays zero.
 
 ## Aux slot of the held weapon's id hash.
 const WEAPON := 0

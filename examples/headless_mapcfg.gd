@@ -19,9 +19,9 @@ func _ready() -> void:
 
 
 func _run() -> void:
-	print("game-murder-mystery: per-map rules from cfg/game/game-murder-mystery/dot_map/map")
-	if not ResourceLoader.exists("res://addons/dot_map/config/dot_map_config.gd"):
-		print("SKIPPED: dot-map is not linked at addons/dot_map")
+	print("game-murder-mystery: per-map rules from cfg/game/game-murder-mystery/gs_map/map")
+	if not ResourceLoader.exists("res://addons/gs_map/config/gs_map_config.gd"):
+		print("SKIPPED: gs-map is not linked at addons/gs_map")
 		get_tree().quit(0)
 		return
 	_sections_entered += 1
@@ -32,7 +32,7 @@ func _run() -> void:
 	console.cvar("mm_bots", "1", "", GSConVar.FLAG_ARCHIVE)
 	var cfg := GSGameMapConfig.for_console(MmMapConfig.GAME_ID, console, MmMapConfig.KEYS)
 
-	var dir := "res://cfg/server/game/%s/dot_map/map" % MmMapConfig.GAME_ID
+	var dir := "res://cfg/server/game/%s/gs_map/map" % MmMapConfig.GAME_ID
 	var real := ProjectSettings.globalize_path(dir)
 	DirAccess.make_dir_recursive_absolute(real)
 	var path := real.path_join("mm_testhouse.yml")

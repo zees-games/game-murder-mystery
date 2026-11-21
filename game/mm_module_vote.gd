@@ -29,7 +29,7 @@ func _on_bot_said(player_id: StringName, text: String) -> void:
 	var _said: Variant = chat.call("announce", "%s: %s" % [who.display_name, text], MmServices.CH_ALL)
 
 
-## The players' vote for the next map, over dot-vote: `!vote`, `!rtv`, `!nominate`.
+## The players' vote for the next map, over gs-vote: `!vote`, `!rtv`, `!nominate`.
 ## Opened into the last round on a map and applied when it ends (see `game/mm_vote.gd`); an
 ## unbuildable vote is a WARN and the rotation alone, never a server that will not start.
 func _build_vote(world: MmGame) -> void:
@@ -58,9 +58,9 @@ func _build_vote(world: MmGame) -> void:
 	var commanded := vote.install_commands(self)
 	GSLog.result(CHANNEL, "the map vote's commands", commanded)
 
-	# The map menu (M), dot-vote's: a player holding the owner's `sv_map_menu_flag` changes the
+	# The map menu (M), gs-vote's: a player holding the owner's `sv_map_menu_flag` changes the
 	# map now, not after its rounds, and sees the same rows a solo player does. Read by name,
-	# because a server on a dot-vote older than the menu has no `map_menu` and runs without it.
+	# because a server on a gs-vote older than the menu has no `map_menu` and runs without it.
 	var menu_half: Variant = vote.commands.get(&"map_menu") if vote.commands != null else null
 	if menu_half is Object:
 		(menu_half as Object).set(&"change_fn", world.change_map_now)
@@ -175,7 +175,7 @@ func _wire_progress(world: MmGame) -> void:
 	if bridge == null:
 		return
 
-	# Filed under dot-game's stable per-server key (guests too), so it outlives the connection
+	# Filed under gs-game's stable per-server key (guests too), so it outlives the connection
 	# and a restart; see [MmProgress].
 	if world.progress != null:
 		world.progress.durable_key_fn = func(id: StringName) -> String:

@@ -13,7 +13,7 @@ const AMBIENT_KIND := "ambience"
 ## The drawn ballot's notice topic. The client shell draws one menu per topic.
 const MAP_BALLOT_TOPIC := &"map_ballot"
 
-## dot-workbench over the config; the F9 panel off a dedicated server, the HTTP page only with `workbench.enabled`.
+## gs-workbench over the config; the F9 panel off a dedicated server, the HTTP page only with `workbench.enabled`.
 var workbench: GSGameWorkbench = null
 
 ## The bounds a cvar's value must lie in, [least, most]. INF is no most. Out of them a value is
@@ -33,7 +33,7 @@ const TUNABLE_BOUNDS := {
 ## `mp_forcecamera`, kept so the deprecated `mm_spectate_camera` writes through it.
 var _force_camera_cvar: Object = null
 
-## How many stand-ins, from how many people: dot-server's one rule for every game. See
+## How many stand-ins, from how many people: gs-server's one rule for every game. See
 ## [method _keep_the_round_full].
 var _quota: GSBotQuota = null
 
@@ -61,7 +61,7 @@ func _add_delivered_maps(world: MmGame) -> int:
 func _add_tunables(world: MmGame) -> void:
 	var config := world.config
 
-	# [b]How the stand-ins see, hear, turn and know a map is dot-bot's[/b]: `bot_difficulty`
+	# [b]How the stand-ins see, hear, turn and know a map is gs-bot's[/b]: `bot_difficulty`
 	# (easy, medium, hard, nightmare; medium by default) and every `bot_*` setting it bundles,
 	# the names every game in the family uses. On the game as metadata, never the registry.
 	var _bot_cvars := GSBotSettings.of(world).bind_cvars(add_cvar, GSConVar.FLAG_NOTIFY, add_command)
@@ -204,7 +204,7 @@ func _hand_cvar(key: String) -> String:
 	return name if console.has_name(name) else ""
 
 
-## Every config field as an `mm_<field>` cvar (the hand-written ones keep their handlers and follow workbench edits), the cfg/ diff commands, the workbench and dot-team's block rules.
+## Every config field as an `mm_<field>` cvar (the hand-written ones keep their handlers and follow workbench edits), the cfg/ diff commands, the workbench and gs-team's block rules.
 func _bind_config(world: MmGame) -> GSResult:
 	var _fl := world.flashlight_conf()
 	if world.flashlight_binder != null:

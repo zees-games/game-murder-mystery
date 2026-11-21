@@ -1,7 +1,7 @@
 extends GSVoteRoundGame
 
-## The players choose the next map: dot-vote's [GSVoteRoundGame] with Murder Mystery's names. A ballot opens into the LAST round on a
-## map ([member due_fn]) and applies at its end; the rest is dot-vote's settings (`user://cfg/murder_vote.json`, `game.yml` metadata
+## The players choose the next map: gs-vote's [GSVoteRoundGame] with Murder Mystery's names. A ballot opens into the LAST round on a
+## map ([member due_fn]) and applies at its end; the rest is gs-vote's settings (`user://cfg/murder_vote.json`, `game.yml` metadata
 ## `map_vote:`). This game offers its own maps only: no Workshop `map_kind` is accepted.
 
 const CHANNEL := "murder.vote"

@@ -3,7 +3,7 @@ extends GSGameCheckSuite
 const MmTouch := preload("../game/mm_touch.gd")
 const MmHud := preload("../game/mm_hud.gd")
 
-## The touch layout: dot-mobile's overlay drives the sampler and never auto-fires; the buttons fit a phone at three sizes without overlapping, and each GSTouchButtons is freed.
+## The touch layout: gs-mobile's overlay drives the sampler and never auto-fires; the buttons fit a phone at three sizes without overlapping, and each GSTouchButtons is freed.
 ## Run: `godot --headless --path . res://examples/headless_touch.tscn`
 
 const CHECKS := 25
@@ -67,7 +67,7 @@ func _check_chat_clear_of_role() -> void:
 	var screen := Control.new()
 	screen.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(screen)
-	var window: Control = load("res://addons/dot_ui/hud/dot_chat_window.gd").new()
+	var window: Control = load("res://addons/gs_ui/hud/gs_chat_window.gd").new()
 	for key: String in ["max_lines"]:
 		window.set(key, MmTouch.CHAT_LINES)
 	screen.add_child(window)
@@ -84,7 +84,7 @@ func _check_chat_clear_of_role() -> void:
 	vp.free()
 
 
-## dot-mobile's overlay on the client's own sampler: touches, a menu, the buttons' actions, and auto-fire held off.
+## gs-mobile's overlay on the client's own sampler: touches, a menu, the buttons' actions, and auto-fire held off.
 func _overlay() -> void:
 	var rules := MmTouch.make_rules()
 	_check(not rules.resolve(GSMobilePrefs.new(), true).autofire, "auto-fire is off for a touch player by default")

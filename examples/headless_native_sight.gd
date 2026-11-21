@@ -4,7 +4,7 @@ const MmBots := preload("../game/mm_bots.gd")
 const MmConfig := preload("../game/mm_config.gd")
 const MmGame := preload("../game/mm_game.gd")
 
-## The bots' line of sight ([code]_los[/code]) is asked of dot-sim's `GSSimSightRay.clear_to` when the library has it,
+## The bots' line of sight ([code]_los[/code]) is asked of gs-sim's `GSSimSightRay.clear_to` when the library has it,
 ## and it must answer as the game's `_clear_between(a, b, true)` does: seeded rays over every map (some too short to
 ## cast, some from inside the furniture) give the same answer to the bit; [member MmBots.native_sight] off keeps the
 ## script; and a bot round with [member MmBots.sight_verify] on re-runs the script beside every live ray with no
@@ -35,8 +35,8 @@ func _run() -> void:
 	print("the library has the sight ray")
 	var native := GSSim.has(&"sight") and ClassDB.class_has_method(&"GSSimSightRay", &"clear_to")
 	if not native:
-		print("  dot-sim's sight module (with clear_to) is not loaded: the native half is skipped")
-		var required := (OS.get_environment("GS_SIM_REQUIRE_NATIVE") if OS.has_environment("GS_SIM_REQUIRE_NATIVE") else OS.get_environment("DOT_SIM_REQUIRE_NATIVE")) == "1"
+		print("  gs-sim's sight module (with clear_to) is not loaded: the native half is skipped")
+		var required := (OS.get_environment("GS_SIM_REQUIRE_NATIVE") if OS.has_environment("GS_SIM_REQUIRE_NATIVE") else OS.get_environment("GS_SIM_REQUIRE_NATIVE")) == "1"
 		_check(not required, "the library is loaded (GS_SIM_REQUIRE_NATIVE=1)")
 		_finished += 1
 		_report_sections(_entered, _finished, 1, 1)

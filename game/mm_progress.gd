@@ -4,11 +4,11 @@ const MmPlayer := preload("mm_player.gd")
 
 ## What a player keeps from a round: the numbers only this game has (rounds as the murderer,
 ## kills, innocents shot, rounds survived), declared once in [method schema] and reported to
-## dot-stats as DELTAS; achievements are rules over them. Stand-ins are never counted.
+## gs-stats as DELTAS; achievements are rules over them. Stand-ins are never counted.
 
 const CHANNEL := "mm.progress"
 
-## The published skill figure the site orders by (dot-stats' GSStatsRank).
+## The published skill figure the site orders by (gs-stats' GSStatsRank).
 const RANK_SCORE := &"rank_score"
 
 # The numbers
@@ -45,10 +45,10 @@ var stats: GSStatsTracker = null
 var achievements: GSAchievementTracker = null
 var link: GSAchievementStatsLink = null
 
-## The skill rank (dot-stats' GSStatsRank): weighted lifetime figures, filed as rank_score.
+## The skill rank (gs-stats' GSStatsRank): weighted lifetime figures, filed as rank_score.
 var rank: GSStatsRank = null
 
-## Kills for the head-to-head table, through dot-stats' event feed; ids are player ids.
+## Kills for the head-to-head table, through gs-stats' event feed; ids are player ids.
 var feed: GSStatsEventFeed = null
 
 ## The world's own dictionaries, shared. See [MmSpectate] for why not a reference to it.
@@ -62,7 +62,7 @@ var _in_round: Dictionary = {}
 var _round_kills: Dictionary = {}
 
 ## `func(player_id: StringName) -> String`: the durable key to file this player under, or
-## "" for none. Set by the module from dot-platform; see the class note.
+## "" for none. Set by the module from gs-platform; see the class note.
 var durable_key_fn: Callable = Callable()
 
 ## World id -> the key their numbers are filed under, and back. Fixed at [method record]'s
@@ -462,7 +462,7 @@ func on_innocent(player_id: StringName) -> void:
 	record(player_id, INNOCENTS)
 
 
-## One gun shot for Accuracy (the gun is a hitscan of this game's own, so no dot-combat `shot_resolved` carries it).
+## One gun shot for Accuracy (the gun is a hitscan of this game's own, so no gs-combat `shot_resolved` carries it).
 func on_shot(player_id: StringName, landed: bool) -> void:
 	if feed != null:
 		var _filed := feed.report_shot_outcome(player_id, "gun", landed)

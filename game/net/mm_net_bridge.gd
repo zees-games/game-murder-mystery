@@ -130,7 +130,7 @@ func _on_player_added(id: StringName) -> void:
 		return
 
 	# [b]Every id on the wire is `u<session>`, and anything else parses back to zero.[/b] A player called `bot` would
-	# replicate under session 0, dot-net's broadcast address, and a second would replace the first in this table.
+	# replicate under session 0, gs-net's broadcast address, and a second would replace the first in this table.
 	# Refused with a line rather than accepted quietly: otherwise one stand-in plays and the other stands still for ever.
 	if player_key(session_id) != id:
 		GSLog.warn(CHANNEL, "a player whose id is not a session key is not replicated", {
@@ -435,7 +435,7 @@ func _on_request(message: GSNetMessage) -> void:
 	if ask == null or net == null or not net.is_server:
 		return
 
-	# [b]From the message, which dot-net stamped from the TRANSPORT.[/b] A peer id inside a
+	# [b]From the message, which gs-net stamped from the TRANSPORT.[/b] A peer id inside a
 	# body is a claim; `sender_peer_id` is what the socket said, which is the only version
 	# of it a server may act on.
 	var peer_id := ask.sender_peer_id

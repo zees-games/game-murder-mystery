@@ -1,4 +1,4 @@
-# game-murder-mystery: the flashlight (dot-flashlight), every shown key at its default here, commented out. Uncomment a line to change it;
+# game-murder-mystery: the flashlight (gs-flashlight), every shown key at its default here, commented out. Uncomment a line to change it;
 # an operator overrides in cfg/server/game/game-murder-mystery/flashlight/game.yml. Layers: defaults < this < env < argv.
 # enabled: true
 # key: F

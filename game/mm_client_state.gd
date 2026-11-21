@@ -39,7 +39,7 @@ var game: MmGame = null
 var player: MmPlayer = null
 var camera: Camera3D = null
 
-## The flashlight on the eye and the others' beams (dot-flashlight); the server owns on/off.
+## The flashlight on the eye and the others' beams (gs-flashlight); the server owns on/off.
 var flash: GSFlashlight = null
 var flash_crowd: GSFlashlightCrowd = null
 var _flash_msec := -100000
@@ -49,18 +49,18 @@ var _flash_retain := 0.0
 ## player and the camera are all in. It is [member GSGameClient.gate].
 var gate: GSLoadGate = null
 
-## dot-game's client platform: the cover, settings and menu, console, HUD theme, Tab, M, the
+## gs-game's client platform: the cover, settings and menu, console, HUD theme, Tab, M, the
 ## pointer and the input block. See [GSGameClient].
 var platform: GSGameClient = null
 var hud: MmHud = null
 
-## The final killcam ([GSKillcamHost]); null without dot-replay API 6.
+## The final killcam ([GSKillcamHost]); null without gs-replay API 6.
 var killcam: GSKillcamHost = null
 var board: GSMenuScoreboard = null
 var chat: GSGameChatClient = null
 var audio: MmAudio = null
 var settings: MmSettings = null
-## Maps dropped on the window or the executable (MmMapDrop); null on dot-map older than API 26.
+## Maps dropped on the window or the executable (MmMapDrop); null on gs-map older than API 26.
 var map_drop: Node = null
 
 ## The player's console (the platform's).
@@ -94,7 +94,7 @@ var _started_msec: int = Time.get_ticks_msec()
 var _beeped: int = -1
 
 
-## Where the dead lie: dot-player-char's ragdolls under the game's (the server's) rules.
+## Where the dead lie: gs-player-char's ragdolls under the game's (the server's) rules.
 var ragdolls: GSPlayerRagdolls = null
 
 

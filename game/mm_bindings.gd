@@ -2,7 +2,7 @@ extends RefCounted
 
 ## Every key this game reads, as one [GSMenuBindings] table: the action, its setting, the words
 ## a player sees, the default and the card. The client, settings, Controls page and help read it.
-## H is help in every game (dot-menu adds the row), so nothing here defaults to it.
+## H is help in every game (gs-menu adds the row), so nothing here defaults to it.
 
 const ATTACK := &"mm_attack"
 const HOLSTER := &"mm_holster"
@@ -13,17 +13,17 @@ const USE := &"mm_use"
 const ROAM := &"mm_roam"
 ## The flashlight, on and off, for everybody still in the round.
 const FLASHLIGHT := &"mm_flashlight"
-## dot-ui's chat window's actions, which dot-game's chat client leaves at their defaults.
+## gs-ui's chat window's actions, which gs-game's chat client leaves at their defaults.
 const CHAT := &"chat_open"
 
 
 static func make() -> GSMenuBindings:
 	var keys := GSMenuBindings.new()
 	keys.add_movement("Movement", "Ctrl", "Crouch")
-	# dot-player-controller's own sprint and walk actions, as rows so the Controls page and the
+	# gs-player-controller's own sprint and walk actions, as rows so the Controls page and the
 	# help screen have them.
-	keys.add(&"dot_fps_sprint", &"bind_sprint", "Sprint", "Shift", "Movement")
-	keys.add(&"dot_fps_walk", &"bind_walk", "Walk quietly", "Alt", "Movement")
+	keys.add(&"gs_fps_sprint", &"bind_sprint", "Sprint", "Shift", "Movement")
+	keys.add(&"gs_fps_walk", &"bind_walk", "Walk quietly", "Alt", "Movement")
 	keys.add(USE, &"bind_use", "Open or shut a door", "E", "General")
 	keys.add(FLASHLIGHT, &"bind_flashlight", "Flashlight", "F", "General")
 	keys.add(ATTACK, &"bind_attack", "Stab or shoot", "Mouse 1", "Weapons")

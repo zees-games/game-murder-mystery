@@ -7,7 +7,7 @@ const MmAvatars := preload("mm_avatars.gd")
 
 ## One person: how they move, what they carry, and how much blood is on them. Everybody looks
 ## alike; only [member armed] and a murderer's [member blood] differ, and the real role
-## ([member team]) is the server's. Stabs and shots are measured in `mm_game.gd`; health is dot-combat's.
+## ([member team]) is the server's. Stabs and shots are measured in `mm_game.gd`; health is gs-combat's.
 
 ## Metres above a player's feet that their eyes are.
 const EYE_HEIGHT := 1.6
@@ -31,7 +31,7 @@ const ARMED_NONE := 0
 const ARMED_WEAPON := 1
 const ARMED_GUN := 2
 
-## The use key, in the movement command's buttons: one dot-player-controller leaves to games,
+## The use key, in the movement command's buttons: one gs-player-controller leaves to games,
 ## so it rides in every input packet with the movement and needs no field of its own.
 const USE_BUTTON := GSFpsCommand.BUTTON_USER_0
 
@@ -40,7 +40,7 @@ const USE_BUTTON := GSFpsCommand.BUTTON_USER_0
 @export var samples_input: bool = false
 @export var is_bot: bool = false
 
-## What this player looks like, as a dot-user-avatar document; null is the stock person.
+## What this player looks like, as a gs-user-avatar document; null is the stock person.
 var avatar: GSAvatar = null
 
 var config: MmConfig = null

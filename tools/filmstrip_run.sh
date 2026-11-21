@@ -9,4 +9,4 @@ out=screenshots/filmstrip
 mkdir -p "$out"
 timeout 240 xvfb-run -a godot --path . --resolution 640x480 --fixed-fps "$fps" \
   --write-movie "$out/$clip.avi" --script res://tools/filmstrip_capture.gd -- "$clip" 2>&1 | grep -E "^(clip |PASS|FAIL|SKIP|SCRIPT ERROR|ERROR)" | head -n 30
-bash addons/dot_core/tools/dot_filmstrip.sh "$out/$clip.avi" "$out/$clip" --views tp
+bash addons/gs_core/tools/gs_filmstrip.sh "$out/$clip.avi" "$out/$clip" --views tp

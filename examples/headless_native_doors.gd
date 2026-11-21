@@ -6,7 +6,7 @@ const MmGame := preload("../game/mm_game.gd")
 const MmMapDoc := preload("../game/mm_map_doc.gd")
 const MmPlayer := preload("../game/mm_player.gd")
 
-## Which door somebody would use ([method MmDoors.door_for]) is asked of dot-sim's `GSSimDoorReach` when the library is
+## Which door somebody would use ([method MmDoors.door_for]) is asked of gs-sim's `GSSimDoorReach` when the library is
 ## there, and it must answer as the script does: seeded poses (shut, open, flipped, part way), eyes round each door and
 ## aims any way (some none at all) and reaches on every map with doors give the same door to the bit; a world built with
 ## [member MmDoors.native_reach] off keeps the script and answers the same; and a bot round with
@@ -46,8 +46,8 @@ func _run() -> void:
 	_entered += 1
 	print("the library has the door reach")
 	if not GSSim.has(&"doors"):
-		print("  dot-sim's doors module is not loaded: the native half is skipped")
-		var required := (OS.get_environment("GS_SIM_REQUIRE_NATIVE") if OS.has_environment("GS_SIM_REQUIRE_NATIVE") else OS.get_environment("DOT_SIM_REQUIRE_NATIVE")) == "1"
+		print("  gs-sim's doors module is not loaded: the native half is skipped")
+		var required := (OS.get_environment("GS_SIM_REQUIRE_NATIVE") if OS.has_environment("GS_SIM_REQUIRE_NATIVE") else OS.get_environment("GS_SIM_REQUIRE_NATIVE")) == "1"
 		_check(not required, "the library is loaded (GS_SIM_REQUIRE_NATIVE=1)")
 		_finished += 1
 		_report_sections(_entered, _finished, 1, 1)

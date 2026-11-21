@@ -1,24 +1,24 @@
 extends RefCounted
 
 ## Maps handed to Murder Mystery outside the game: a map document (`.json` of kind `murder_map`, or another game's it imports) or a folder holding
-## some, dragged onto the window, dropped on the executable or named by `--map-path=<path>`, through dot-map's
+## some, dragged onto the window, dropped on the executable or named by `--map-path=<path>`, through gs-map's
 ## GSMapDropIntake (API 30). Solo only: each document is checked as the catalogue checks one ([method
 ## MmMapDoc.parse_json]), copied to `user://maps/<id>.json` (read on every start) and joins the open catalogue at once,
 ## so M offers it. Anything else (a converted BSP folder, a zip, a text file) is refused out loud with what the game
-## takes. A shared document acceptor in dot-map would replace this file (nightly map-drop-games-1).
+## takes. A shared document acceptor in gs-map would replace this file (nightly map-drop-games-1).
 
 const MmConfig := preload("mm_config.gd")
 const MmMapDoc := preload("mm_map_doc.gd")
 
 const CHANNEL := "mm.map_drop"
-## dot-map's API level with GSMapDropIntake. Older builds take no dropped maps.
+## gs-map's API level with GSMapDropIntake. Older builds take no dropped maps.
 const NEEDS_LEVEL := 30
-const INTAKE_SCRIPT := "res://addons/dot_map/core/dot_map_drop_intake.gd"
+const INTAKE_SCRIPT := "res://addons/gs_map/core/gs_map_drop_intake.gd"
 ## What the refusal says this game takes.
 const TAKES := "a Murder Mystery map (.json of kind murder_map, or a hideseek, prophunt or playlot map) or a folder of them"
 ## The document kinds a drop may hold: this game's, and the ones [method MmMapDoc.parse_json] imports.
 const KINDS := [MmMapDoc.KIND] + MmMapDoc.FOREIGN_KINDS
-## Options dot-core reads whose next argument is their value (never read as a dropped path).
+## Options gs-core reads whose next argument is their value (never read as a dropped path).
 const VALUE_FLAGS := ["--config"]
 ## [method MmConfig.cli_prefix]: `--mm-<key> <value>`.
 const CONFIG_PREFIX := "--mm-"
@@ -26,7 +26,7 @@ const CONFIG_PREFIX := "--mm-"
 
 ## The intake, a child of [param host] watching its window, adding to [param game]'s catalogue; every result is said
 ## line by line through [param say] (`func(line: String)`), and the paths on this process's command line are handled
-## once, deferred. Null, with a warning, on dot-map older than API 30.
+## once, deferred. Null, with a warning, on gs-map older than API 30.
 static func attach(host: Node, game: Node, say: Callable) -> Node:
 	var intake := make(game)
 	if intake == null:
@@ -41,8 +41,8 @@ static func attach(host: Node, game: Node, say: Callable) -> Node:
 
 ## A GSMapDropIntake whose one acceptor takes this game's documents into [param game]'s catalogue.
 static func make(game: Node) -> Node:
-	if GSAddonApi.build_level("dot_map") < NEEDS_LEVEL or not ResourceLoader.exists(INTAKE_SCRIPT):
-		GSLog.warn(CHANNEL, "dropped maps are off: this build's dot-map is older than API %d" % NEEDS_LEVEL)
+	if GSAddonApi.build_level("gs_map") < NEEDS_LEVEL or not ResourceLoader.exists(INTAKE_SCRIPT):
+		GSLog.warn(CHANNEL, "dropped maps are off: this build's gs-map is older than API %d" % NEEDS_LEVEL)
 		return null
 	var intake: Node = load(INTAKE_SCRIPT).new()
 	intake.name = "MapDrop"

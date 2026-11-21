@@ -1,12 +1,12 @@
 extends RefCounted
 
-## MmPlayer hooks for dot-replay's [GSKillcamHost]: how a drawn body is read and posed.
+## MmPlayer hooks for gs-replay's [GSKillcamHost]: how a drawn body is read and posed.
 
 const MmFigure := preload("mm_figure.gd")
 const MmPlayer := preload("mm_player.gd")
 const MmKillPov := preload("mm_kill_pov.gd")
 
-const SKIP_ACTIONS: PackedStringArray = ["dot_fps_jump", "mm_attack", "ui_cancel"]
+const SKIP_ACTIONS: PackedStringArray = ["gs_fps_jump", "mm_attack", "ui_cancel"]
 
 
 ## Gives [param host] the skip keys and body hooks.

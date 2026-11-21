@@ -53,7 +53,7 @@ func _vote_map_menu(vote: Node) -> void:
 	_check(ids.has("mm_mansion") and ids.has("mm_motel"), "it offers the delivered maps", str(ids))
 
 	# The map menu's server half (M): the owner's flag changes the map now, anybody else
-	# gets a nomination and a rock-the-vote. Contexts as dot-server makes them for a chat line.
+	# gets a nomination and a rock-the-vote. Contexts as gs-server makes them for a chat line.
 	var menu_half: Object = vote.get("commands").get("map_menu")
 	_check(menu_half != null and server.console.find_command("mapmenu") != null
 		and server.console.find_cvar("sv_map_menu_flag").get_string() == "generic"
@@ -126,7 +126,7 @@ func _vote_ballot_decides(vote: Node) -> void:
 		"and the next map laid is the one voted for, once", "%s / %s" % [game.map_doc.get("id", ""), game.next_map_id])
 
 	# Rock the vote as !rtv reaches it, on the director alone so the map's own ballot timer
-	# opens nothing first; past dot-vote's cooldown between two ballots.
+	# opens nothing first; past gs-vote's cooldown between two ballots.
 	var laid := StringName(str(game.map_doc.get("id", "")))
 	_check(director.current_id() == laid and not director.is_voting(),
 		"the new map starts the vote over", "%s / %s" % [director.current_id(), laid])
@@ -186,7 +186,7 @@ func _test_finish_round_waits_for_a_live_round() -> void:
 
 
 ## A director under `time_up: finish_round` carrying [param hook], its clock run out with a
-## winner already decided: what dot-vote's own suite builds, with the game's answer in it.
+## winner already decided: what gs-vote's own suite builds, with the game's answer in it.
 func _finish_round_probe(hook: Callable, applied: Array) -> GSVoteDirector:
 	var source := GSVoteListSource.new()
 	var _a := source.add(GSVoteChoice.of(&"a", "A"))
@@ -230,10 +230,10 @@ func _finish_round_probe(hook: Callable, applied: Array) -> GSVoteDirector:
 
 
 ## A reload keeps the maps the server names: `mm_reload` re-reads the directory and must not
-## forget delivered ones. A mounted pack and a descriptor stand in for dot-cloud and the deployment.
+## forget delivered ones. A mounted pack and a descriptor stand in for gs-cloud and the deployment.
 func _test_a_reload_keeps_delivered_maps() -> void:
 	_section("a reload keeps the maps the server names")
-	var key := "dot-test/hs-delivered@1.0.0"
+	var key := "gs-test/hs-delivered@1.0.0"
 	var mount := GSGameContent.mount_of(key)
 	var dir := mount.path_join("maps")
 	var id := &"mm_delivered_check"
@@ -291,10 +291,10 @@ func _test_a_reload_keeps_delivered_maps() -> void:
 
 	DirAccess.remove_absolute(dir.path_join("delivered_check.json"))
 	var path := dir
-	while path != "res://dot_cloud":
+	while path != "res://gs_cloud":
 		DirAccess.remove_absolute(path)
 		path = path.get_base_dir()
-	DirAccess.remove_absolute("res://dot_cloud")
+	DirAccess.remove_absolute("res://gs_cloud")
 	_finished()
 
 

@@ -1,7 +1,7 @@
 extends RefCounted
 
 ## Where this game's own files are, wherever this copy lives. A delivered pack mounts under
-## `res://dot_cloud/<id>/<version>/`, so [method rebase] roots a path at this script's directory,
+## `res://gs_cloud/<id>/<version>/`, so [method rebase] roots a path at this script's directory,
 ## and anything holding such a path is a `static var`, never a `const`.
 
 const _SELF := preload("mm_paths.gd")

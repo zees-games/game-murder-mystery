@@ -123,7 +123,7 @@ func _release_toys() -> void:
 
 
 ## Client: TOYS. A mirror for every id at once, whether this end has built that map or not.
-# dot-net stops reading a snapshot at the first entity it does not know, so a client without the map would freeze every player listed after the toys.
+# gs-net stops reading a snapshot at the first entity it does not know, so a client without the map would freeze every player listed after the toys.
 func _apply_toys(reader: GSNetReader) -> void:
 	var told := MmEvents.read_toys(reader)
 	if not bool(told["ok"]) or net == null or net.is_server:

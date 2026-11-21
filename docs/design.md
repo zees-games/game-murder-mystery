@@ -6,7 +6,7 @@ Built from game-hide-n-seek (maps, doors, toys, the net bridge, the HUD and menu
 
 ## A round
 
-1. **The draw** (`MmGame._draw_roles`, at the round's start): `config.murderers_for(n)` murderers by dot-team's `GSTeamRotation` RANDOM over `murderer_history`, so nobody is the murderer twice running while anybody else can be; then `gunners_for(n)` gunners at random from the rest. Both counts are `players_per_*` with a min and a max, and never so many murderers that nobody is left. Every player gets a shirt colour of their own (`MmPlayer.shirt`), never a side colour.
+1. **The draw** (`MmGame._draw_roles`, at the round's start): `config.murderers_for(n)` murderers by gs-team's `GSTeamRotation` RANDOM over `murderer_history`, so nobody is the murderer twice running while anybody else can be; then `gunners_for(n)` gunners at random from the rest. Both counts are `players_per_*` with a min and a max, and never so many murderers that nobody is left. Every player gets a shirt colour of their own (`MmPlayer.shirt`), never a side colour.
 2. **The grace** (`grace_seconds`, default 10): everybody is told their own role and the HUD shouts it; nobody can draw a weapon (`set_weapon_drawn` refuses with "You cannot draw your knife yet.") or fire. People scatter.
 3. **Play** (`round_seconds`, default 180): the murderers stalk, the gunners watch, everybody else tries to stay in company.
 4. **The decision** (`_check_round`, every tick): bystanders win when no murderer is alive; murderers win when nobody else is; at the buzzer the bystanders win if any of them is alive. The sentence always ends by naming the murderers ("; Ada was the murderer"), the one moment a role becomes public (`revealed`).
@@ -47,7 +47,7 @@ What decides it: a client that drew every field it was sent would still not know
 
 ## The flashlight
 
-dot-flashlight's, on F, for everybody who is alive and in the round: the murderer, the gunner and every other bystander alike (the dead and the benched may not). The server owns on and off (`MmGame.toggle_flashlight`, asked by `MmEvents.Ask.FLASHLIGHT`) and replicates one flag per player (`net_flashlight`); a map whose `environment.ambient_energy` is under the config's floor starts everybody lit, any other starts dark. The flag is not a role tell, so it is public on the wire like blood. The design trade: a lit beam is visible to everyone who can see the player, so a lit beam reveals a hidden murderer (one waiting in the dark gives themselves away by lighting it), and a bystander who lights up is easy to find. Config: `mm_flashlight_*` cvars, `cfg/game/game-murder-mystery/flashlight/game.yml`, a workbench set.
+gs-flashlight's, on F, for everybody who is alive and in the round: the murderer, the gunner and every other bystander alike (the dead and the benched may not). The server owns on and off (`MmGame.toggle_flashlight`, asked by `MmEvents.Ask.FLASHLIGHT`) and replicates one flag per player (`net_flashlight`); a map whose `environment.ambient_energy` is under the config's floor starts everybody lit, any other starts dark. The flag is not a role tell, so it is public on the wire like blood. The design trade: a lit beam is visible to everyone who can see the player, so a lit beam reveals a hidden murderer (one waiting in the dark gives themselves away by lighting it), and a bystander who lights up is easy to find. Config: `mm_flashlight_*` cvars, `cfg/game/game-murder-mystery/flashlight/game.yml`, a workbench set.
 
 ## Falls and joiners
 
@@ -56,10 +56,10 @@ dot-flashlight's, on F, for everybody who is alive and in the round: the murdere
 
 ## Bots
 
-`MmBots` on dot-bot (`GSBotNav`, the shared walking code) and dot-npc-ai's annotations (the places they wander to):
+`MmBots` on gs-bot (`GSBotNav`, the shared walking code) and gs-npc-ai's annotations (the places they wander to):
 
 - **Bystanders keep company**: walk towards the nearest knot of living people and loiter there, repicking every few seconds; run from anybody they saw draw or saw standing over a body; fetch a gun they can see on the floor.
-- **Gunners hunt the suspicious**: suspicion is what they saw (a weapon drawn, blood, the nearest person to a body that fell in view); past `SURE` they turn and fire when dot-bot's aim is on target.
+- **Gunners hunt the suspicious**: suspicion is what they saw (a weapon drawn, blood, the nearest person to a body that fell in view); past `SURE` they turn and fire when gs-bot's aim is on target.
 - **Murderers stalk**: pick somebody with nobody else within `ALONE`, walk up at the crowd's pace, draw only when no third person can see it, stab at arm's length; late in the round they stop waiting for a clean moment.
 - **They talk** (`bot_chat`): canned lines from `mm_bot_chat.gd`, rationed per bot and for everybody.
 
@@ -69,17 +69,17 @@ The game plays its own maps (`mm_practice` built in; `mm_mansion` and `mm_motel`
 
 ## Each map's air
 
-A map document may carry `environment` fog fields (`fog_colour`, `fog_start`, `fog_end` in metres, `fog_max`), a `weather` block (dot-weather's `GSWeatherDoc`: snow or rain volumes, wind; refused when it does not parse) and `ambience` / `ambience_indoor` (names of dot-audio's stock beds). `MmMap` hands the fog to dot-lighting's `light_document` (never a second environment), applies the weather through a `GSWeather` child and advances it each frame with the camera; `MmAudio.on_map_doc` plays the beds. A map without them keeps the old 120 m haze. The importer fills them from the author's file; [murder-mystery-maps](../../murder-mystery-maps/README.md) says how.
+A map document may carry `environment` fog fields (`fog_colour`, `fog_start`, `fog_end` in metres, `fog_max`), a `weather` block (gs-weather's `GSWeatherDoc`: snow or rain volumes, wind; refused when it does not parse) and `ambience` / `ambience_indoor` (names of gs-audio's stock beds). `MmMap` hands the fog to gs-lighting's `light_document` (never a second environment), applies the weather through a `GSWeather` child and advances it each frame with the camera; `MmAudio.on_map_doc` plays the beds. A map without them keeps the old 120 m haze. The importer fills them from the author's file; [murder-mystery-maps](../../murder-mystery-maps/README.md) says how.
 
 ## Not done yet
 
-- **dot-server-deploy and dot-bootstrap do not know this game yet** (no content entries; not in `projects.tsv`).
+- **gs-server-deploy and gs-bootstrap do not know this game yet** (no content entries; not in `projects.tsv`).
 - **`GSGameClient`**: `MmClient` adds it as `platform` (API level 11): the cover, settings and menu, console, Tab, M, the pointer and the input block are its.
 - **Tuning with people**: reach, cooldowns, the grace and the blood are first guesses.
 
 ## Still loading
 
-A seat whose client is still behind its loading cover cannot see, so the server does not let it be killed or drawn a role. `MmGame.harm_gate` (filled by `MmModule` from dot-game's `can_peer_be_harmed`, unset offline so every bot suite is unchanged) is asked by the combat resolver's `adjust`, the one place every stab, shot and slain shooter passes, and by `stab_target` and `shot_target`, so a swing or a bullet goes past a covered seat and costs a gunner no innocent. An admin's slay or slap carries `context.admin` and passes; a fall is a respawn and passes. The draw (`_draw_roles`) picks murderers and gunners among loaded seats and falls back to everybody when too few are loaded. `GSGameClient` reports the cover from the gate's `opened` and `closed`. `examples/dedicated` checks it over a real socket; `tools/render_cover` renders the cover and the frames after it lifts (`screenshots/`).
+A seat whose client is still behind its loading cover cannot see, so the server does not let it be killed or drawn a role. `MmGame.harm_gate` (filled by `MmModule` from gs-game's `can_peer_be_harmed`, unset offline so every bot suite is unchanged) is asked by the combat resolver's `adjust`, the one place every stab, shot and slain shooter passes, and by `stab_target` and `shot_target`, so a swing or a bullet goes past a covered seat and costs a gunner no innocent. An admin's slay or slap carries `context.admin` and passes; a fall is a respawn and passes. The draw (`_draw_roles`) picks murderers and gunners among loaded seats and falls back to everybody when too few are loaded. `GSGameClient` reports the cover from the gate's `opened` and `closed`. `examples/dedicated` checks it over a real socket; `tools/render_cover` renders the cover and the frames after it lifts (`screenshots/`).
 
 ## Lag compensation
 
@@ -87,4 +87,4 @@ A stab and a shot are judged against the other bodies where the shooter drew the
 
 ## maps.yml: which maps rotate
 
-`cfg/maps.yml` (layered over a shipped `res://maps.yml`; the `--config` directory is searched; `sv_map_rotation_file`) is dot-map's `GSMapRotationFile`. This game's catalogue holds documents, not `GSMapDef`s, so `MmGame.apply_rotation` rebuilds a shadow `GSMapCatalogue` from it and lets the file mark `in_rotation` there; `MmGame.in_rotation(id)` reads the mark. The next-map draw (`rotation_pool`, in the file's order, `cycle` honoured) and the vote's ballot and nominations use it; `mm_maps` and the map menu mark the rest `(not in rotation)`, and `mm_map <id>` and the menu still play them. A rotation matching nothing plays every installed map; no file changes nothing. The file's `commands:` block renames dot-vote's commands and this game's own `mm_maps`, `mm_reload` and `mm_map` (roles of those names, no prefix).
+`cfg/maps.yml` (layered over a shipped `res://maps.yml`; the `--config` directory is searched; `sv_map_rotation_file`) is gs-map's `GSMapRotationFile`. This game's catalogue holds documents, not `GSMapDef`s, so `MmGame.apply_rotation` rebuilds a shadow `GSMapCatalogue` from it and lets the file mark `in_rotation` there; `MmGame.in_rotation(id)` reads the mark. The next-map draw (`rotation_pool`, in the file's order, `cycle` honoured) and the vote's ballot and nominations use it; `mm_maps` and the map menu mark the rest `(not in rotation)`, and `mm_map <id>` and the menu still play them. A rotation matching nothing plays every installed map; no file changes nothing. The file's `commands:` block renames gs-vote's commands and this game's own `mm_maps`, `mm_reload` and `mm_map` (roles of those names, no prefix).

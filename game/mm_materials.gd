@@ -7,7 +7,7 @@ extends RefCounted
 const MmPaths := preload("mm_paths.gd")
 
 ## [b]Photographs for the generic ids.[/b] The pastel grid above is the family's look for hand-built maps; converted
-## maps' ids (dot-map's `source_textures.tsv`) are drawn from CC0 photographs instead (Poly Haven, ambientCG; 512 px,
+## maps' ids (gs-map's `source_textures.tsv`) are drawn from CC0 photographs instead (Poly Haven, ambientCG; 512 px,
 ## diffuse and normal; `assets/polyhaven/License.txt`), in world space; without them a surface falls back to [constant FALLBACK].
 const PHOTO_DIR := "res://assets/polyhaven/"
 

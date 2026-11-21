@@ -403,7 +403,7 @@ static func _practice_props() -> Array:
 	]
 
 
-## Toys in the garden (dot-props'): balls to kick about, a tyre, and a lamp on a switch by the
+## Toys in the garden (gs-props'): balls to kick about, a tyre, and a lamp on a switch by the
 ## door. headless_net pushes the beach ball and presses the switch, and checks a client sees both.
 static func _practice_toys() -> Array:
 	return [

@@ -141,7 +141,7 @@ func _client_gunner(client: Node, world: MmGame, hud: Node) -> void:
 
 
 func _client_hud(client: Node, world: MmGame, hud: Node) -> void:
-	# The clock is dot-ui's GSScoreStrip: everybody alive, and how many murderers are left.
+	# The clock is gs-ui's GSScoreStrip: everybody alive, and how many murderers are left.
 	hud.call("_process", 0.0)
 	var xh: GSCrosshair = hud.get("_crosshair")
 	_check(xh != null and not xh.suppressed and xh.alive_source.is_valid() and bool(xh.alive_source.call()), "a living player's crosshair is bound to their alive state")
@@ -166,7 +166,7 @@ func _client_hud(client: Node, world: MmGame, hud: Node) -> void:
 
 
 func _client_ragdoll(client: Node, world: MmGame) -> void:
-	# A slain stand-in falls as dot-player-char's ragdoll, copied from the figure, which is hidden.
+	# A slain stand-in falls as gs-player-char's ragdoll, copied from the figure, which is hidden.
 	world._set_phase(MmGame.Phase.PLAY)
 	var ragdolls: GSPlayerRagdolls = client.get("ragdolls")
 	var victim: MmPlayer = null
@@ -229,7 +229,7 @@ func _client_ragdoll(client: Node, world: MmGame) -> void:
 ## The same fall again and again at four facings from clear floor.
 func _face_plant_sweep(world: MmGame, ragdolls: GSPlayerRagdolls, victim: MmPlayer, spot: Array) -> void:
 	# Nobody pushing, which the pinned seed above dodged: one fall in six stays upright with no wall
-	# ahead, dot-player-char's to fix (nightly ragdoll-faceplant-upright-1). A wall ahead excuses it.
+	# ahead, gs-player-char's to fix (nightly ragdoll-faceplant-upright-1). A wall ahead excuses it.
 	# Stands on clear floor, not seat 0, which has a cushion ahead.
 	var sweep_spot: Vector3 = spot[0]
 	var best_clear := -1.0
@@ -326,13 +326,13 @@ func _client_death_and_prompt(client: Node, world: MmGame, hud: Node) -> void:
 		"at a door, GSKeyPrompt names it with the use key as bound", prompt.text()
 	)
 
-	# A pack naming these classes does not parse on a shell whose dot-ui predates them, so
-	# the requires.json dot-ci derives must ask for dot-ui 13, and nothing may lower it.
+	# A pack naming these classes does not parse on a shell whose gs-ui predates them, so
+	# the requires.json gs-ci derives must ask for gs-ui 13, and nothing may lower it.
 	var asks := GSAddonApi.derive()
 	_check(
-		int(asks.get("dot_ui", 0)) >= 13 and FileAccess.file_exists("res://" + GSAddonApi.FLOOR_FILE),
-		"the pack asks a shell for dot-ui level 13, the weapon icons (requires.floor.json)",
-		str(asks.get("dot_ui"))
+		int(asks.get("gs_ui", 0)) >= 13 and FileAccess.file_exists("res://" + GSAddonApi.FLOOR_FILE),
+		"the pack asks a shell for gs-ui level 13, the weapon icons (requires.floor.json)",
+		str(asks.get("gs_ui"))
 	)
 
 
@@ -484,7 +484,7 @@ func _test_gore() -> void:
 
 
 ## The family's rule since the first play test: M opens the map list, and solo a choice
-## changes it now. The server's half (the owner's flag, the vote) is in `dedicated` and dot-vote.
+## changes it now. The server's half (the owner's flag, the vote) is in `dedicated` and gs-vote.
 func _test_the_map_menu() -> void:
 	_section("M opens the map list, and solo a choice changes it")
 	var game := await _world(func(c: MmConfig) -> void: c.map_ids = PackedStringArray())

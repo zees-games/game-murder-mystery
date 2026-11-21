@@ -4,7 +4,7 @@ const MmNetCommand := preload("mm_net_command.gd")
 const MmPlayer := preload("../mm_player.gd")
 const MmController := preload("../mm_controller.gd")
 
-## What a networked player replicates: the movement state (dot-player-controller's own table),
+## What a networked player replicates: the movement state (gs-player-controller's own table),
 ## health, what shows in a hand, blood and shirt. Which side somebody is on is deliberately NOT
 ## here: the owner learns it from a ROLE event (docs/design.md "Roles are secret").
 
@@ -19,7 +19,7 @@ var net_crouch: float = 0.0
 var net_flags: int = 0
 var net_modifiers: int = 0
 
-## The jump timers (coyote, jump buffer, cooldown), owner only, for the owner's rewind. Opt-in on dot-player-controller API 10; see its docs/networking.md.
+## The jump timers (coyote, jump buffer, cooldown), owner only, for the owner's rewind. Opt-in on gs-player-controller API 10; see its docs/networking.md.
 var net_timers: int = 0
 
 ## Hit points, and the one field with a hard cap on the wire. [b]Sent against 0..1000, not the player's own maximum[/b]:
@@ -95,7 +95,7 @@ func _register_net_vars() -> void:
 
 	# Owner-only jump timers, appended after the movement specs (declaration order is wire order).
 	# Guarded: a shell without API 10 has no GSFpsNetSync.rewind_specs().
-	if GSAddonApi.build_level("dot_player_controller") >= 10:
+	if GSAddonApi.build_level("gs_player_controller") >= 10:
 		for spec in GSFpsNetSync.rewind_specs():
 			var _timers := replicate(spec["property"], GSNetVar.Type[spec["type"]]).bits(int(spec["bits"])).to_owner_only()
 

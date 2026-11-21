@@ -11,8 +11,8 @@ const MmDoors := preload("mm_doors.gd")
 
 const CHANNEL := "mm.map"
 
-## dot-lighting's contact shade, loaded by path (API 4): see [method _add_contact_shade].
-const CONTACT_SHADE_SCRIPT := "res://addons/dot_lighting/runtime/dot_contact_shade.gd"
+## gs-lighting's contact shade, loaded by path (API 4): see [method _add_contact_shade].
+const CONTACT_SHADE_SCRIPT := "res://addons/gs_lighting/runtime/gs_contact_shade.gd"
 
 ## Metres of world one batched mesh covers. See the class notes.
 const CHUNK := 12.0
@@ -44,7 +44,7 @@ var doors: MmDoors = null
 ## The tick rate a door's seconds are counted in. Set by the game before it builds.
 var tick_rate: int = 64
 
-## The map's toys (dot-props' [GSPropBodyBox]): balls, swings, see-saws, switches. Simulated
+## The map's toys (gs-props' [GSPropBodyBox]): balls, swings, see-saws, switches. Simulated
 ## where [member authoritative], posed from snapshots elsewhere; under the game's `sv_toys*`
 ## [member toy_rules]. Set by the game before it builds.
 var toys: GSPropBodyBox = null
@@ -61,10 +61,10 @@ var _drawn: Node3D = null
 var _shade_boxes: Array = []
 var _environment: WorldEnvironment = null
 var _sun: DirectionalLight3D = null
-## The map's snow or rain (a dot-weather node), when its document has a `weather` block.
+## The map's snow or rain (a gs-weather node), when its document has a `weather` block.
 var _weather: GSWeather = null
 
-## Source units to metres, which dot-lighting's fog distances are written in.
+## Source units to metres, which gs-lighting's fog distances are written in.
 const METRES_PER_UNIT := 0.01905
 var _bounds: AABB = AABB()
 var _missing: PackedStringArray = PackedStringArray()
@@ -226,7 +226,7 @@ func _build_boxes() -> void:
 			cube.size = size
 			shape.shape = cube
 			shape.transform = frame
-			# What a footstep on it sounds like (dot-audio's GSAudioFootsteps reads the hit
+			# What a footstep on it sounds like (gs-audio's GSAudioFootsteps reads the hit
 			# shape's meta; "stone", "hedge", "fabric" and the rest fold onto its surfaces).
 			shape.set_meta(&"surface", str(box.get("mat", "")))
 			_solid.add_child(shape)
@@ -257,8 +257,8 @@ func _build_boxes() -> void:
 		mesh.name = "Boxes"
 		if not bool(batch["solid"]):
 			# Floor paint, water, a light fitting, embers in a hearth: drawn on purpose and
-			# walked over or through (dot-core GSCollisionAudit).
-			mesh.set_meta(&"dot_no_collision", true)
+			# walked over or through (gs-core GSCollisionAudit).
+			mesh.set_meta(&"gs_no_collision", true)
 		mesh.mesh = tool.commit()
 		mesh.material_override = MmMaterials.material(batch["mat"], batch["tint"])
 		mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF \
@@ -305,11 +305,11 @@ func _shades_floor(prop_id: StringName, raw: Dictionary) -> bool:
 	return is_zero_approx(float(raw.get("pitch", 0.0))) and is_zero_approx(float(raw.get("roll", 0.0)))
 
 
-## dot-lighting's contact shade (API 4) where a box meets the floor, a wall or another box, since the Compatibility
+## gs-lighting's contact shade (API 4) where a box meets the floor, a wall or another box, since the Compatibility
 ## renderer has no ambient occlusion. Glass and water neither cast nor take one; doors and secret panels are not boxes
 ## here. By path, behind the level, so a client shell older than the helper still runs the map without it.
 func _add_contact_shade(boxes: Array) -> void:
-	if boxes.is_empty() or _drawn == null or GSAddonApi.build_level("dot_lighting") < 4 \
+	if boxes.is_empty() or _drawn == null or GSAddonApi.build_level("gs_lighting") < 4 \
 			or not ResourceLoader.exists(CONTACT_SHADE_SCRIPT):
 		return
 	var shade: Variant = (load(CONTACT_SHADE_SCRIPT) as GDScript).call(&"node", boxes)
@@ -402,7 +402,7 @@ func _build_lights() -> void:
 		_drawn.add_child(omni)
 
 
-## The sky and the sun: a dot-lighting document made from the map's `environment` ([method light_document]), so every
+## The sky and the sun: a gs-lighting document made from the map's `environment` ([method light_document]), so every
 ## map has the family's light (warm sun, soft shadows, cool fill, filmic tone map, glow) while keeping its own sun
 ## angle, sun colour and sky.
 func _build_environment() -> void:
@@ -415,7 +415,7 @@ func _build_environment() -> void:
 
 	if _sun != null:
 		# The map's own angle, in Godot's degrees as the map document has always written it,
-		# rather than through dot-lighting's source convention.
+		# rather than through gs-lighting's source convention.
 		_sun.rotation_degrees = Vector3(float(env_doc["sun_pitch"]), float(env_doc["sun_yaw"]), 0.0)
 		# The rig aimed its fill opposite the sun it was given; turned with the sun here, or it
 		# lights the faces the sun already does.
@@ -440,7 +440,7 @@ func _build_environment() -> void:
 				material.sky_top_color = MmMapDoc.colour(env_doc["sky_top"])
 				material.ground_bottom_color = material.sky_top_color
 
-	# Weather is dot-weather's, on the lighting's own Environment (it never makes a second one).
+	# Weather is gs-weather's, on the lighting's own Environment (it never makes a second one).
 	if doc.has("weather"):
 		_weather = GSWeather.new()
 		_weather.name = "Weather"
@@ -456,7 +456,7 @@ func _process(delta: float) -> void:
 		_weather.advance_with_camera(delta)
 
 
-## The dot-lighting document a map's `environment` describes: brightness 380 times the square
+## The gs-lighting document a map's `environment` describes: brightness 380 times the square
 ## of `sun_energy`, a near-neutral ambient at the map's strength, and the map's own fog when it
 ## has `fog_end`, else a haze from 120 m out that never reaches a room.
 static func light_document(env_doc: Dictionary) -> Dictionary:
@@ -493,7 +493,7 @@ static func light_document(env_doc: Dictionary) -> Dictionary:
 	}
 
 
-## What this machine draws of a map's light: dot-lighting's `painted()` with the map's fill.
+## What this machine draws of a map's light: gs-lighting's `painted()` with the map's fill.
 ## Shadows stay on in the browser, since the boxes are batched into few meshes. The ambient is
 ## 4 times the map's `ambient_energy` and the fill 2.8, keeping rooms light and the ground dim.
 static func light_profile(ambient_energy: float = 0.5) -> GSLightProfile:
@@ -506,7 +506,7 @@ static func light_profile(ambient_energy: float = 0.5) -> GSLightProfile:
 	# trunks, pines and furniture in shade went to black at 1.12.
 	p.contrast = 1.04
 	# Glow only from what is brighter than white (the lamps), not from every pale wall: at
-	# dot-lighting's 0.85 a room of near-white pastels glowed into one milky veil.
+	# gs-lighting's 0.85 a room of near-white pastels glowed into one milky veil.
 	p.glow_threshold = 1.0
 	return p
 
@@ -543,7 +543,7 @@ func spawn(side: String, seat: int) -> Array:
 	return [at, float(base.get("yaw", 0.0))]
 
 
-## Starts for [param count] people at once, as `[position, yaw]` each, spread by [param rules] (dot-spawn). More people
+## Starts for [param count] people at once, as `[position, yaw]` each, spread by [param rules] (gs-spawn). More people
 ## than spawns fall back to [method spawn]'s rings for the rest. [param offset] is the round's shuffle: the seat to
 ## start from, and the tick that varies the pick.
 func spawn_batch(side: String, count: int, rules: GSSpawnRules, offset: int) -> Array:

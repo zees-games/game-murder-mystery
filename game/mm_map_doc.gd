@@ -60,7 +60,7 @@ const CHANNEL := "mm.map"
 ## How a door moves: about a hinge at one edge, sideways into the wall, or up like a shutter.
 const DOOR_MOTIONS := ["swing", "slide", "lift"]
 
-## The ambience beds dot-audio ships (CC0, its stock/CREDITS.md), which a map may name.
+## The ambience beds gs-audio ships (CC0, its stock/CREDITS.md), which a map may name.
 const AMBIENCE_BEDS := ["amb_wind", "amb_outdoor", "amb_night", "amb_city", "amb_indoor", "amb_eerie", "amb_industrial", "amb_cave", "amb_rain"]
 
 ## Every top-level field, and what a missing one becomes.
@@ -334,7 +334,7 @@ static func validate(source: Dictionary) -> GSResult:
 
 	doc["environment"] = env
 
-	# Weather: a dot-weather document, parsed by its own rules so a server and a client refuse the same maps.
+	# Weather: a gs-weather document, parsed by its own rules so a server and a client refuse the same maps.
 	if source.has("weather"):
 		var weather: Variant = source["weather"]
 		if not (weather is Dictionary):
@@ -344,7 +344,7 @@ static func validate(source: Dictionary) -> GSResult:
 			return _refuse("weather: %s" % parsed.error.message, source)
 		doc["weather"] = (parsed.value as GSWeatherDoc).to_dict()
 
-	# The beds under the map: outdoors, and indoors under any ceiling. Only dot-audio's stock ones.
+	# The beds under the map: outdoors, and indoors under any ceiling. Only gs-audio's stock ones.
 	for key: String in ["ambience", "ambience_indoor"]:
 		if source.has(key):
 			var bed := str(source[key])
@@ -380,7 +380,7 @@ static func _fill_lists(source: Dictionary, doc: Dictionary) -> String:
 
 	doc["boxes"] = boxes
 
-	# A converted map's displacement ground (dot-map's heightfield), which the boxes cannot be: a
+	# A converted map's displacement ground (gs-map's heightfield), which the boxes cannot be: a
 	# stepped field stops a walker at the first hill. `tint` is the colour it is drawn in.
 	if source.has("terrain"):
 		if not (source["terrain"] is Dictionary):
@@ -443,9 +443,9 @@ static func _fill_lists(source: Dictionary, doc: Dictionary) -> String:
 
 ## Fills the toys of [param doc]; the refusal, or "".
 static func _fill_toys(source: Dictionary, doc: Dictionary) -> String:
-	# Toys: dot-props' GSPropBodyBox placements, `{toy, at, yaw, links?, on?}`. Which ids exist
+	# Toys: gs-props' GSPropBodyBox placements, `{toy, at, yaw, links?, on?}`. Which ids exist
 	# is the catalogue's to say when the map is built (an unknown one is left out and listed),
-	# so a map with a toy a newer dot-props has still plays on an older server.
+	# so a map with a toy a newer gs-props has still plays on an older server.
 	var toys: Array = []
 	for raw: Variant in source.get("toys", []):
 		var toy := GSPropBodyBox.normal_placement(raw)

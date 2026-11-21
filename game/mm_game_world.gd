@@ -21,7 +21,7 @@ func _on_body_rules_changed() -> void:
 	apply_pass_through()
 
 
-## The side a player is on for dot-team's block rules: everybody is one, because a murderer who
+## The side a player is on for gs-team's block rules: everybody is one, because a murderer who
 ## blocked differently from the rest would give the role away through the body.
 func team_of_side(_id: Variant) -> Variant:
 	return "1"
@@ -105,7 +105,7 @@ func _build_map() -> void:
 
 
 ## Health, and the damage a stab and a shot do. The hits themselves are measured here (see
-## [method _advance_weapons]) and arrive at dot-combat as damage, so dot-moderation's god and
+## [method _advance_weapons]) and arrive at gs-combat as damage, so gs-moderation's god and
 ## buddha work as they do everywhere.
 func _build_combat() -> void:
 	combat = GSCombatManager.new()
@@ -114,7 +114,7 @@ func _build_combat() -> void:
 	combat.register_service = false
 
 	var damage_rules := GSDamageRules.new()
-	# Everybody is one team as dot-combat sees it, and the gunner shooting an innocent is the
+	# Everybody is one team as gs-combat sees it, and the gunner shooting an innocent is the
 	# rule working, so friendly fire is on.
 	damage_rules.friendly_fire = true
 	damage_rules.self_damage = true
@@ -130,7 +130,7 @@ func _build_combat() -> void:
 
 	combat.trace = trace
 	combat.resolver = GSDamageResolver.with_rules(damage_rules)
-	# dot-game's "still loading": every kill passes here, so a seat behind its client's cover is
+	# gs-game's "still loading": every kill passes here, so a seat behind its client's cover is
 	# neither stabbed, shot nor eliminated, and a round counts the living from health. An
 	# admin's slay or slap is the operator's word, and a fall is a respawn, not a death.
 	combat.resolver.adjust = func(damage: GSDamage) -> void:

@@ -1,6 +1,6 @@
 extends GSGameVisualQaCapture
 
-## Visual QA for the people and what they hold (dot-game docs/visual-qa.md): one item per person
+## Visual QA for the people and what they hold (gs-game docs/visual-qa.md): one item per person
 ## (the six atlases, empty-handed) and per held thing (each melee weapon and the gun, on a person),
 ## each with a first-person camera (your own arms on the weapon, as MmClient draws them) and the
 ## two outside cameras. Clips are seeked frame by frame, so reruns draw the same pictures.
@@ -20,7 +20,7 @@ const BODY_LAYER := 1 << 10
 const EYE_HEIGHT := 1.62
 ## Ground speed of each clip; the subject walks that fast along -Z so the feet have a floor to slide on.
 const SPEEDS := {"idle": 0.0, "walk": 2.0, "run": 5.5, "strike": 0.0}
-## bone_pop limit in the strike clip: a real strike turns the forearm about 1700 deg/s (dot-player-char's
+## bone_pop limit in the strike clip: a real strike turns the forearm about 1700 deg/s (gs-player-char's
 ## strike_turn_rate lets it through), ~117 deg in the 1/15 s window. Walk, run and idle keep the 90 default.
 const STRIKE_POP_DEG := 130.0
 

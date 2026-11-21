@@ -3,7 +3,7 @@ extends "headless_run_flashlight.gd"
 const MmBotChat := preload("../game/mm_bot_chat.gd")
 const MmProgress := preload("../game/mm_progress.gd")
 
-## The headless_run sections about what the round is worth and who plays it: the numbers dot-stats
+## The headless_run sections about what the round is worth and who plays it: the numbers gs-stats
 ## keeps, the bots' chat and the bots themselves. headless_run.gd runs them through its parents.
 
 

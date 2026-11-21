@@ -4,7 +4,7 @@ extends "mm_game_use.gd"
 ## change, the next map picked, the map built, everybody to a spawn. Path-based base, no class_name.
 
 ## The map menu's change: [param id] now, not after this map's rounds. The next map is set and
-## a fresh round begins on it (dot-match's `begin_round_now`: the round called off has no
+## a fresh round begins on it (gs-match's `begin_round_now`: the round called off has no
 ## winner); with no match running it is simply built. Authority only.
 func change_map_now(id: StringName) -> GSResult:
 	if not authoritative:

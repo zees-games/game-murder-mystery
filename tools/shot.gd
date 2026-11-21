@@ -51,7 +51,7 @@ func _ready() -> void:
 	_client.name = "Client"
 	_client.set("force_offline", true)
 	add_child(_client)
-	# --view=cover: the loading cover dot-game's GSGameClient puts up first, before it lifts.
+	# --view=cover: the loading cover gs-game's GSGameClient puts up first, before it lifts.
 	if _view == "cover":
 		for _i in 2:
 			await RenderingServer.frame_post_draw
@@ -185,7 +185,7 @@ func _pose_scene(game: MmGame, local: MmPlayer) -> void:
 			local.place_at(feet, rad_to_deg(atan2(normal.x, normal.z)))
 			await _seconds_of(maxf(_seconds, 1.0))
 		"spots":
-			# The annotator's spots, links and chokepoints over the map from above (dot-npc-ai's
+			# The annotator's spots, links and chokepoints over the map from above (gs-npc-ai's
 			# GSNpcAiNavDebug): where the stand-ins wander and a murderer looks for somebody alone.
 			await _seconds_of(1.0)
 			var ann: GSNpcAiNavAnnotations = game.bots.annotations

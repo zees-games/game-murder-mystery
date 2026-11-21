@@ -69,7 +69,7 @@ func _prepare_board(snap: Dictionary) -> void:
 	add_bot_rows(snap, game)
 
 
-## Online the board is dot-server's roster, which lists sessions only, so a stand-in needs a row
+## Online the board is gs-server's roster, which lists sessions only, so a stand-in needs a row
 ## of its own, keyed as `board_snapshot()` keys it. Static so a suite can run it on a world.
 static func add_bot_rows(snap: Dictionary, world: MmGame) -> void:
 	var rows: Array = snap.get("players", []) as Array

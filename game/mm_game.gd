@@ -186,7 +186,7 @@ func add_player(
 		var seated := match_node.add_player(String(player_id), display_name, _tick, side)
 
 		if not seated.ok:
-			GSLog.error(CHANNEL, "dot-match refused a player", {"id": String(player_id), "why": seated.error.message})
+			GSLog.error(CHANNEL, "gs-match refused a player", {"id": String(player_id), "why": seated.error.message})
 
 	place_one(player)
 
