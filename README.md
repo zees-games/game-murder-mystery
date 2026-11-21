@@ -8,6 +8,25 @@ Everything in this repository is open source under the MIT license. The only clo
 
 The game was built with Claude Code and is maintained with it. It has a full automated test suite, but few real players have tried it yet, so expect rough edges. Please report what you find, and tell the maintainer if you want to help.
 
+## Screenshots
+
+Captured in-game at 1280x720 on Factory Winter.
+
+<table>
+<tr>
+<td><img src="https://raw.githubusercontent.com/zees-games/game-murder-mystery/main/docs/screenshots/role-bystander.png" alt="Bystander: stay alive and watch who has a weapon out."><br>Bystander: stay alive and watch who has a weapon out.</td>
+<td><img src="https://raw.githubusercontent.com/zees-games/game-murder-mystery/main/docs/screenshots/role-murderer.png" alt="Murderer: the knife is drawn, and anybody who sees it knows."><br>Murderer: the knife is drawn, and anybody who sees it knows.</td>
+</tr>
+<tr>
+<td><img src="https://raw.githubusercontent.com/zees-games/game-murder-mystery/main/docs/screenshots/role-gunner.png" alt="Gunner: a bystander holding the one-shot gun."><br>Gunner: a bystander holding the one-shot gun.</td>
+<td><img src="https://raw.githubusercontent.com/zees-games/game-murder-mystery/main/docs/screenshots/stab.png" alt="A stab lands: the victim falls and the HUD logs the kill."><br>A stab lands: the victim falls and the HUD logs the kill.</td>
+</tr>
+<tr>
+<td><img src="https://raw.githubusercontent.com/zees-games/game-murder-mystery/main/docs/screenshots/body-found.png" alt="A body on the snow, with the blood left behind."><br>A body on the snow, with the blood left behind.</td>
+<td><img src="https://raw.githubusercontent.com/zees-games/game-murder-mystery/main/docs/screenshots/scoreboard.png" alt="The Tab scoreboard: alive and out, with points and time."><br>The Tab scoreboard: alive and out, with points and time.</td>
+</tr>
+</table>
+
 ## How it plays
 
 Each round starts with a short grace period (10 seconds by default). Everybody is told their own role, and only their own, and scatters. No weapon can come out yet. Then the round runs for 3 minutes by default.
