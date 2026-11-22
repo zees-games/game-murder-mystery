@@ -36,7 +36,7 @@ func _run() -> void:
 	var native := GSSim.has(&"sight") and ClassDB.class_has_method(&"GSSimSightRay", &"clear_to")
 	if not native:
 		print("  gs-sim's sight module (with clear_to) is not loaded: the native half is skipped")
-		var required := (OS.get_environment("GS_SIM_REQUIRE_NATIVE") if OS.has_environment("GS_SIM_REQUIRE_NATIVE") else OS.get_environment("GS_SIM_REQUIRE_NATIVE")) == "1"
+		var required := OS.get_environment("GS_SIM_REQUIRE_NATIVE") == "1"
 		_check(not required, "the library is loaded (GS_SIM_REQUIRE_NATIVE=1)")
 		_finished += 1
 		_report_sections(_entered, _finished, 1, 1)
