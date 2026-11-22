@@ -178,6 +178,7 @@ Admin commands come from [gs-moderation](https://github.com/gamespice-platform/m
 
 | Asset | Author / source | License |
 | --- | --- | --- |
+| Godot Engine logo (boot splash) | Andrea Calabró, [godotengine.org](https://godotengine.org/press/) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
 | Furniture (72 models rebuilt with their own palette) | Kenney, Furniture Kit, via `art-src/build_props.py` (see `assets/props/furniture/CREDITS.md`) | CC0 |
 | Trees, plants, rocks | Kenney, Nature Kit; colours toned down at load | CC0 |
 | The two climbing trees | Made for this game in the Nature Kit's style, `tools/climb_trees.py` | CC0 |
