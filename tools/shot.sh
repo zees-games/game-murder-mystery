@@ -7,7 +7,7 @@
 #   tools/shot.sh --view=grace                                    # the grace: roles told, weapons away
 #   tools/shot.sh --view=bystander                                # a bystander's eyes, in play
 #   tools/shot.sh --view=murderer                                 # the murderer, weapon drawn
-#   tools/shot.sh --view=murderer --mm-murderer-weapon=axe --third         # another weapon, from behind
+#   tools/shot.sh --view=murderer --mm-murderer-weapon=hatchet --third         # another weapon, from behind
 #   tools/shot.sh --view=gunner                                   # a bystander with the gun
 #   tools/shot.sh --view=action --action=emote:dance --seconds=0.5   # a stand-in playing an avatar action (pose:sit)
 #   tools/shot.sh --view=stab --seconds=0.6                       # a stab, 0.6 s into the fall

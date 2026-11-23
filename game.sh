@@ -222,6 +222,19 @@ parse_all() {
     return "$fails"
 }
 
+# Vendored weapon art that has drifted from the weapon addon draws as empty hands.
+check_weapon_art() {
+    [ -e addons/zee_weapons ] || return 0
+    local tool
+    tool="$(readlink -f addons/zee_weapons)/../../tools/sync-art.sh"
+    [ -x "$tool" ] || return 0
+    "$tool" . --check >/dev/null 2>&1 || {
+        printf '  %sFAIL%s weapon art is stale: run zee-gs-weapons/tools/sync-art.sh . and commit\n' "$RED" "$OFF"
+        return 1
+    }
+    printf '  %sok%s   weapon art is in sync\n' "$GRN" "$OFF"
+}
+
 # The shards of suite $1 (space separated), empty when it is not sharded.
 shards_of() {
     local kv
@@ -263,6 +276,8 @@ do_test() {
         fails=$?
         [ "$fails" -eq 0 ] && printf '  %sok%s   every script parses\n' "$GRN" "$OFF"
     fi
+
+    check_weapon_art || fails=$((fails + 1))
 
     echo "running the suites"
     local scene

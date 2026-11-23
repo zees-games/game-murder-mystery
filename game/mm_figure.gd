@@ -105,7 +105,7 @@ func hold(what: int, weapon: StringName) -> void:
 	var hand := person.attachment(&"right_hand")
 	if hand == null:
 		return
-	_held = MmWeapons.build(MmWeapons.GUN_PARTS if what == 2 else MmWeapons.entry(weapon)["parts"])
+	_held = MmWeapons.build(MmWeapons.GUN if what == 2 else weapon)
 	if what == 1:
 		# A blade held forward of the fist, not up the forearm.
 		_held.rotation = Vector3(-PI * 0.5, 0.0, 0.0)

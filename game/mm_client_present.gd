@@ -42,8 +42,7 @@ func _present_view_model() -> void:
 			_view_model.queue_free()
 		_view_model = null
 		if what != "":
-			var parts: Array = MmWeapons.GUN_PARTS if what == "gun" else MmWeapons.entry(StringName(what))["parts"]
-			_view_model = MmWeapons.build(parts, 1.0)
+			_view_model = MmWeapons.build(StringName(what), 1.0)
 			_view_model.scale = Vector3.ONE * VIEW_SCALE
 			_view_model.name = "ViewModel"
 			camera.add_child(_view_model)
@@ -89,7 +88,7 @@ func _present_guns() -> void:
 	for drop_id: int in game.gun_drops:
 		var node: Node3D = _gun_nodes.get(drop_id)
 		if node == null or not is_instance_valid(node):
-			node = MmWeapons.build(MmWeapons.GUN_PARTS, 2.0)
+			node = MmWeapons.build(MmWeapons.GUN, 2.0)
 			node.name = "DroppedGun%d" % drop_id
 			game.add_child(node)
 			_gun_nodes[drop_id] = node

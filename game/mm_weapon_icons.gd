@@ -5,8 +5,8 @@ extends RefCounted
 const GUN := &"gun"
 
 const TAGS := {
-	&"knife": &"knife", &"cleaver": &"hatchet", &"axe": &"axe", &"bat": &"hammer",
-	&"sword": &"sword", &"gun": &"pistol",
+	&"knife": &"knife", &"shiv": &"dagger", &"hatchet": &"hatchet", &"mallet": &"hammer",
+	&"pickaxe": &"pickaxe", &"spade": &"axe", &"gun": &"pistol",
 }
 
 ## The one instance the HUD and the console share.

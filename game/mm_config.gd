@@ -38,7 +38,7 @@ extends GSConfig
 @export_group("The murderer's weapon")
 
 ## Which melee weapon the murderer carries: an id from [code]game/mm_weapons.gd[/code]
-## (knife, cleaver, axe, bat, sword). Its reach and its cooldown are the weapon's unless the two
+## (knife, shiv, hatchet, mallet, pickaxe, spade). Its reach and its cooldown are the weapon's unless the two
 ## settings below override them.
 @export var murderer_weapon: String = "knife"
 

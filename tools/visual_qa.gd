@@ -7,7 +7,7 @@ extends GSGameVisualQaCapture
 ##
 ##   bash tools/visual_qa_shot.sh --only knife --clips walk,strike
 ##
-## Items: person_a .. person_k, knife, cleaver, axe, bat, sword, gun.
+## Items: person_a .. person_k, knife, shiv, hatchet, mallet, pickaxe, spade, gun.
 
 const MmFigure := preload("res://game/mm_figure.gd")
 const MmPlayer := preload("res://game/mm_player.gd")
@@ -89,8 +89,7 @@ func _stage(item: String, clip: String) -> GSResult:
 
 
 func _hold_in_view(what: StringName) -> void:
-	var parts: Array = MmWeapons.GUN_PARTS if what == &"gun" else MmWeapons.entry(what)["parts"]
-	_view_model = MmWeapons.build(parts, 1.0)
+	_view_model = MmWeapons.build(what, 1.0)
 	_view_model.scale = Vector3.ONE * MmClientPresent.VIEW_SCALE
 	first_person.add_child(_view_model)
 	_view_model.rotation = MmWeapons.view_rotation(what)

@@ -27,7 +27,7 @@ What decides it: a client that drew every field it was sent would still not know
 
 ## The weapon
 
-`MmWeapons` is a table (knife, cleaver, axe, bat, sword): a name, a reach, a cooldown, and the boxes a figure draws in a hand. The server owner picks one with `murderer_weapon` (`mm_murderer_weapon`); `melee_range` and `melee_cooldown`, when above 0, override the weapon's own.
+`MmWeapons` is a table over zee-gs-weapons (knife, shiv, hatchet, mallet, pickaxe, spade, and the gun is zee's pistol): a name, a reach and a cooldown per weapon, drawn from `ZeeWeaponArtTable`'s models in a hand. The art is vendored by `zee-gs-weapons/tools/sync-art.sh .` and `game.sh test` fails when it has drifted; the box shapes are gone. The server owner picks one with `murderer_weapon` (`mm_murderer_weapon`); `melee_range` and `melee_cooldown`, when above 0, override the weapon's own.
 
 - **Holstered by default, drawn with Q** (`HOLSTER_BUTTON`). Drawn, it is in the hand for everybody to see; a murderer bot draws only when nobody else is looking.
 - **A stab is a measurement** (`stab_target`): the nearest living body within reach of the eye measured flat (so a crouch or a step does not change it), inside `melee_cone`, with nothing solid between (`_clear_between`, the same shapes the walls are). A swing at nobody still costs the cooldown and is still seen.

@@ -27,9 +27,9 @@ func _test_the_codec() -> void:
 	var killed := MmEvents.read_round(GSNetReader.new(MmEvents.write_round(3, false, 1, "x", 7)))
 	_check(int(killed["killer"]) == 7 and int(round_info["killer"]) == 0, "ROUND carries the last killer only when given one (0 otherwise)")
 
-	var role := MmEvents.read_role(GSNetReader.new(MmEvents.write_role(MmGame.MURDERERS, false, &"cleaver")))
+	var role := MmEvents.read_role(GSNetReader.new(MmEvents.write_role(MmGame.MURDERERS, false, &"shiv")))
 	var gunner := MmEvents.read_role(GSNetReader.new(MmEvents.write_role(MmGame.BYSTANDERS, true, &"knife")))
-	_check(bool(role["ok"]) and int(role["side"]) == MmGame.MURDERERS and not bool(role["gun"]) and role["weapon_id"] == &"cleaver"
+	_check(bool(role["ok"]) and int(role["side"]) == MmGame.MURDERERS and not bool(role["gun"]) and role["weapon_id"] == &"shiv"
 		and bool(gunner["ok"]) and int(gunner["side"]) == MmGame.BYSTANDERS and bool(gunner["gun"]),
 		"ROLE carries the side, the gun and the weapon", "%s, %s" % [role, gunner])
 

@@ -10,7 +10,7 @@ const MmProps := preload("../game/mm_props.gd")
 
 const SECTIONS := 30
 
-const CHECKS := 213
+const CHECKS := 217
 
 ## The first chair round the kitchen table in the practice house: where it stands.
 const CHAIR_AT := Vector3(3.6, 0.0, 1.2)
@@ -85,16 +85,27 @@ func _test_weapons_table() -> void:
 	var bad := 0
 	for id in MmWeapons.ids():
 		var e := MmWeapons.entry(id)
-		if float(e["reach"]) <= 1.0 or float(e["cooldown"]) <= 0.0 or (e["parts"] as Array).is_empty():
+		if float(e["reach"]) <= 1.0 or float(e["cooldown"]) <= 0.0:
 			bad += 1
-	_check(MmWeapons.ids().size() >= 5 and bad == 0, "every weapon has a reach, a cooldown and a shape (%d)" % MmWeapons.ids().size())
+	_check(MmWeapons.ids().size() >= 5 and bad == 0, "every weapon has a reach and a cooldown (%d)" % MmWeapons.ids().size())
 	_check(not MmWeapons.known(&"spoon") and MmWeapons.entry(&"spoon")["name"] == "Knife", "a weapon nobody knows is the knife")
-	var held := MmWeapons.build(MmWeapons.entry(&"axe")["parts"])
-	_check(held.get_child_count() == 2, "a shape builds as its boxes")
+	var zee_missing := 0
+	for id in MmWeapons.ids():
+		var art := MmWeapons.art_of(id)
+		if art == null or not art.has_model() or art.pose != ZeeWeaponArtTable.POSE_MELEE:
+			zee_missing += 1
+	_check(zee_missing == 0, "every murderer weapon is a zee melee weapon with a model (%d without)" % zee_missing)
+	var pistol := MmWeapons.art_of(MmWeapons.GUN)
+	_check(pistol != null and pistol.id == &"pistol" and pistol.has_model(), "the gun is zee's pistol")
+	var held := MmWeapons.build(&"hatchet")
+	_check(held.get_child_count() == 1 and not MmWeapons.length_of(&"hatchet") < 0.2, "a weapon builds as zee's model, a hatchet longer than a hand (%.2f m)" % MmWeapons.length_of(&"hatchet"))
 	held.free()
+	var held_gun := MmWeapons.build(MmWeapons.GUN)
+	_check(held_gun.get_child_count() == 1, "the gun builds as zee's pistol")
+	held_gun.free()
 	var gunner := Node.new()
 	gunner.set_script(null)
-	_check(MmKillPov.weapon_name(MmKillPov.hash_of(&"gun")) != "" and MmKillPov.weapon_name(MmKillPov.hash_of(&"axe")) == String(MmWeapons.entry(&"axe")["name"]),
+	_check(MmKillPov.weapon_name(MmKillPov.hash_of(&"gun")) != "" and MmKillPov.weapon_name(MmKillPov.hash_of(&"hatchet")) == String(MmWeapons.entry(&"hatchet")["name"]),
 		"the killer's screen names the gun and a blade from the recorded hash")
 	_check(MmKillPov.aux_of(gunner) == [0.0] and MmKillPov.weapon_name(0.0) == "", "nothing out records nothing")
 	gunner.free()

@@ -1,75 +1,58 @@
 extends RefCounted
 
-## The murderer's melee weapons, and how each is drawn. A table, not a resource per weapon: a weapon is a reach, a
-## cooldown and a shape, picked by id (`mm_murderer_weapon`). The gun is not here. [b]A shape is boxes in the hand's
-## space[/b] (x right, y up the blade, z forward), so the figure and first-person view draw it with no model file.
+## The murderer's melee weapons, and how each is drawn. The weapons are zee-gs-weapons': an id here IS a zee weapon id
+## (knife, shiv, hatchet, mallet, pickaxe, spade) and the gun is zee's pistol, so the model, its size and its look come
+## from `ZeeWeaponArtTable` and the game vendors the art with `zee-gs-weapons/tools/sync-art.sh`. What stays here is
+## this game's own rule per weapon, a reach and a cooldown, picked by id (`mm_murderer_weapon`). [b]A weapon is drawn
+## in the hand's space[/b] (x right, y up the blade, z forward; the gun's barrel along -z).
+
+const MmPaths := preload("mm_paths.gd")
 
 const DEFAULT := &"knife"
 
+## The token for the gun in the figure, the first-person view and the kill cam; zee's art for it is [constant GUN_ART].
+const GUN := &"gun"
+const GUN_ART := &"pistol"
+
 const TABLE := {
-	&"knife": {"name": "Knife", "reach": 1.9, "cooldown": 0.9, "parts": [
-		[Vector3(0.0, 0.05, 0.0), Vector3(0.035, 0.11, 0.035), Color(0.12, 0.08, 0.05)],
-		[Vector3(0.0, 0.2, 0.0), Vector3(0.012, 0.2, 0.045), Color(0.82, 0.84, 0.88)],
-	]},
-	&"cleaver": {"name": "Cleaver", "reach": 1.8, "cooldown": 1.0, "parts": [
-		[Vector3(0.0, 0.05, 0.0), Vector3(0.035, 0.12, 0.035), Color(0.15, 0.1, 0.06)],
-		[Vector3(0.0, 0.2, 0.04), Vector3(0.012, 0.19, 0.12), Color(0.75, 0.77, 0.8)],
-	]},
-	&"axe": {"name": "Axe", "reach": 2.2, "cooldown": 1.3, "parts": [
-		[Vector3(0.0, 0.25, 0.0), Vector3(0.04, 0.55, 0.04), Color(0.45, 0.3, 0.16)],
-		[Vector3(0.0, 0.48, 0.07), Vector3(0.02, 0.14, 0.14), Color(0.6, 0.62, 0.66)],
-	]},
-	&"bat": {"name": "Bat", "reach": 2.1, "cooldown": 1.2, "parts": [
-		[Vector3(0.0, 0.3, 0.0), Vector3(0.06, 0.65, 0.06), Color(0.7, 0.55, 0.35)],
-	]},
-	&"sword": {"name": "Sword", "reach": 2.4, "cooldown": 1.1, "parts": [
-		[Vector3(0.0, 0.05, 0.0), Vector3(0.035, 0.12, 0.035), Color(0.2, 0.12, 0.06)],
-		[Vector3(0.0, 0.12, 0.0), Vector3(0.03, 0.025, 0.16), Color(0.7, 0.6, 0.2)],
-		[Vector3(0.0, 0.45, 0.0), Vector3(0.012, 0.65, 0.05), Color(0.85, 0.87, 0.9)],
-	]},
-}
-
-## The gun's shape, in the same space, its barrel along -z (the hand's forward).
-const GUN_PARTS := [
-	[Vector3(0.0, -0.03, 0.0), Vector3(0.035, 0.11, 0.05), Color(0.12, 0.12, 0.13)],
-	[Vector3(0.0, 0.03, -0.07), Vector3(0.035, 0.05, 0.2), Color(0.18, 0.18, 0.2)],
-]
-
-
-## Where the first-person hands go, in the shape's space: `grip` the firing hand's palm and
-## `support` the other hand (absent: one hand). Only the gun is spelled out; a melee weapon's
-## grip is derived from its handle (the first part) by [method grip_of].
-const GRIPS := {
-	&"gun": {"grip": Vector3(0.0, -0.07, 0.02), "support": Vector3(-0.02, -0.08, -0.03)},
-	# Rendered with tools/shot.sh: one hand low on every handle. A support hand on the bat or axe
-	# was tried and dropped: the second sleeve crosses the view and fills the lower third.
-	&"cleaver": {"grip": Vector3(0.0, 0.04, 0.0)},
-	&"sword": {"grip": Vector3(0.0, 0.04, 0.0)},
-	&"axe": {"grip": Vector3(0.0, 0.07, 0.0)},
-	&"bat": {"grip": Vector3(0.0, 0.09, 0.0)},
+	&"knife": {"name": "Knife", "reach": 1.9, "cooldown": 0.9},
+	&"shiv": {"name": "Shiv", "reach": 1.8, "cooldown": 1.0},
+	&"hatchet": {"name": "Hatchet", "reach": 2.2, "cooldown": 1.3},
+	&"mallet": {"name": "Mallet", "reach": 2.1, "cooldown": 1.2},
+	&"pickaxe": {"name": "Pickaxe", "reach": 2.3, "cooldown": 1.25},
+	&"spade": {"name": "Spade", "reach": 2.4, "cooldown": 1.1},
 }
 
 ## Weapons longer than this lean their tip away from the crosshair in first person.
 const LONG_REACH := 0.4
 
+## Metres up the handle the first-person hand takes a melee weapon, before the weapon's own scale.
+const GRIP_UP := 0.05
+## The pistol's grip in the hand's space: the model's origin is its grip.
+const GUN_GRIP := Vector3(0.0, 0.0, 0.0)
 
-## The grip for [param id]: the gun's from the table, a melee weapon's on its handle, a hand's
-## width above the pommel (or the middle of a short handle).
+
+## The zee art for a weapon id of this game ("gun" is the pistol), or null when the addon has none.
+static func art_of(id: StringName) -> ZeeWeaponArt:
+	var art: Variant = ZeeWeaponArtTable.table().get(GUN_ART if id == GUN else id)
+	return art as ZeeWeaponArt
+
+
+## Where the first-person hands go, in the weapon's space: `grip` the firing hand's palm. Every weapon is held in one
+## hand: a support hand on a long weapon crosses the view and fills the lower third.
 static func grip_of(id: StringName) -> Dictionary:
-	if GRIPS.has(id):
-		return GRIPS[id]
-	var handle: Array = entry(id)["parts"][0]
-	var size: Vector3 = handle[1]
-	var at: Vector3 = handle[0]
-	return {"grip": Vector3(at.x, at.y - size.y * 0.5 + minf(size.y * 0.5, 0.1), at.z)}
+	if id == GUN:
+		return {"grip": GUN_GRIP}
+	var art := art_of(id)
+	return {"grip": Vector3(0.0, GRIP_UP * (art.world_scale if art != null else 1.0), 0.0)}
 
 
-## Metres from the shape's origin to its farthest box edge along y.
+## Metres from the weapon's origin to its far end along y (the hand's space), 0 when the model is not there.
 static func length_of(id: StringName) -> float:
-	var top := 0.0
-	for part: Array in entry(id)["parts"]:
-		top = maxf(top, (part[0] as Vector3).y + (part[1] as Vector3).y * 0.5)
-	return top
+	var art := art_of(id)
+	if art == null or not art.has_model():
+		return 0.0
+	return ZeeModelCache.bounds(art.model_path).size.y * art.world_scale
 
 
 static func ids() -> Array[StringName]:
@@ -91,26 +74,34 @@ static func known(id: StringName) -> bool:
 ## How a weapon is turned in the first-person view: a blade tilted up and in, a long one leaning
 ## its tip off the crosshair. The gun points straight ahead.
 static func view_rotation(id: StringName) -> Vector3:
-	if id == &"gun":
+	if id == GUN:
 		return Vector3.ZERO
 	return Vector3(-PI / 2.6, 0.15, -0.4 if length_of(id) > LONG_REACH else 0.0)
 
 
-## A node of boxes for [param parts], unshaded where it has to read at a distance.
-static func build(parts: Array, scale: float = 1.0) -> Node3D:
+## A node holding zee's model of [param id] ("gun" is the pistol) in the hand's space, [param scale] times the art's own
+## third-person size. Empty (draws nothing, the weapon still works) when the art or the model is missing.
+static func build(id: StringName, scale: float = 1.0) -> Node3D:
 	var root := Node3D.new()
 	root.name = "Held"
-	for part: Array in parts:
-		var box := BoxMesh.new()
-		box.size = (part[1] as Vector3) * scale
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = part[2]
-		mat.roughness = 0.5
-		mat.metallic = 0.3 if (part[2] as Color).v > 0.6 else 0.0
-		box.material = mat
-		var mesh := MeshInstance3D.new()
-		mesh.mesh = box
-		mesh.position = (part[0] as Vector3) * scale
-		mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		root.add_child(mesh)
+	var art := art_of(id)
+	if art == null or not art.has_model():
+		return root
+	# The art is this game's copy: the table names `res://assets/...`, which a delivered pack lacks.
+	ZeeModelCache.set_asset_root(MmPaths.root())
+	var model := ZeeModelCache.instantiate(art.model_path)
+	if model == null:
+		return root
+	# A melee model already points up +y, the hand's blade axis; a gun is turned so its barrel runs along -z.
+	var basis := Basis.IDENTITY if id != GUN and art.model_forward == Vector3.UP else art.orientation()
+	model.transform = Transform3D(basis.scaled(Vector3.ONE * art.world_scale * scale), Vector3.ZERO)
+	_unshadow(model)
+	root.add_child(model)
 	return root
+
+
+static func _unshadow(node: Node) -> void:
+	if node is GeometryInstance3D:
+		(node as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for child in node.get_children():
+		_unshadow(child)

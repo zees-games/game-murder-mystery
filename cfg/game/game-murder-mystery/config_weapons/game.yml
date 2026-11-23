@@ -2,7 +2,7 @@
 # an operator overrides in cfg/server/game/game-murder-mystery/config_weapons/game.yml. Layers: defaults < this < env < argv.
 
 # --- The murderer's weapon
-# Which melee weapon the murderer carries: an id from game/mm_weapons.gd (knife, cleaver, axe, bat, sword). I...
+# Which melee weapon the murderer carries: an id from game/mm_weapons.gd (knife, shiv, hatchet, mallet, picka...
 # murderer_weapon: "knife"
 # Metres from the murderer's eye a stab reaches. 0 takes the weapon's own. [0.0..]
 # melee_range: 0.0

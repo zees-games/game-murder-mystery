@@ -33,7 +33,7 @@ Each round starts with a short grace period (10 seconds by default). Everybody i
 
 - **Bystanders** carry nothing. Stay with other people, watch who wanders off alone, and keep away from anybody with something in their hand.
 - **The gunner** is a bystander with a gun. One shot, then a few seconds to reload. A miss drops the gun where you stood, and you cannot pick one up again this round. Any other bystander can walk onto it and take it. Shooting an innocent bystander drops it too.
-- **The murderer** carries a knife (or the weapon the server picked: cleaver, axe, bat or sword). It is put away at first and nobody can see it. Press **Q** to draw it, and everybody near you can then see it. Get somebody alone, draw, and strike at arm's length.
+- **The murderer** carries a knife (or the weapon the server picked: shiv, hatchet, mallet, pickaxe or spade). It is put away at first and nobody can see it. Press **Q** to draw it, and everybody near you can then see it. Get somebody alone, draw, and strike at arm's length.
 - **Blood.** In the last minute, blood starts to show on the murderer, and more with every kill.
 - **Doors.** Press **E** at a door to open or shut it. A shut door blocks knives and bullets.
 - **Toys.** Every map has things to kick, push and press.
@@ -102,7 +102,7 @@ cd projects/game-murder-mystery
 
 ## Running a server
 
-Settings are console variables ("cvars"). Set them in the server's config, on the command line, or live from the console. Most take effect from the next round. All are listed in `game/mm_config.gd` with their defaults, and each can also be given as an option, for example `--mm-round-seconds=240` or `--mm-murderer-weapon=axe`. `--mm-map-ids=<ids>` limits a server to some maps.
+Settings are console variables ("cvars"). Set them in the server's config, on the command line, or live from the console. Most take effect from the next round. All are listed in `game/mm_config.gd` with their defaults, and each can also be given as an option, for example `--mm-round-seconds=240` or `--mm-murderer-weapon=hatchet`. `--mm-map-ids=<ids>` limits a server to some maps.
 
 | Setting | Default | What it does |
 | --- | --- | --- |
@@ -112,7 +112,7 @@ Settings are console variables ("cvars"). Set them in the server's config, on th
 | `mm_min_murderers` / `mm_max_murderers` | 1 / 2 | Fewest and most murderers (most 0 = unlimited) |
 | `mm_players_per_gunner` | 12 | One gun for every this many players |
 | `mm_min_gunners` / `mm_max_gunners` | 1 / 2 | Fewest and most guns (most 0 = unlimited) |
-| `mm_murderer_weapon` | `knife` | `knife`, `cleaver`, `axe`, `bat` or `sword` |
+| `mm_murderer_weapon` | `knife` | `knife`, `shiv`, `hatchet`, `mallet`, `pickaxe` or `spade` |
 | `mm_melee_range` | 0 | Metres a stab reaches (0 = the weapon's own) |
 | `mm_melee_cooldown` | 0 | Seconds between stabs (0 = the weapon's own) |
 | `mm_melee_cone` | 40 | Degrees either side of the aim a stab still lands |
@@ -186,6 +186,7 @@ Admin commands come from [gs-moderation](https://github.com/gamespice-platform/m
 | Converted maps: floors, walls, ceilings, roofs | [Poly Haven](https://polyhaven.com) and [ambientCG](https://ambientcg.com) photographs, resized to 512 px (see `assets/polyhaven/License.txt`) | CC0 |
 | Hand-built maps: floors, walls, roofs | Kenney, Prototype Textures under a pastel | CC0 |
 | Hollow Hill's flooded cellar | ambientCG [Foam003](https://ambientcg.com/a/Foam003), tinted blue-green | CC0 1.0 |
+| Weapons (melee and the pistol) | zee-gs-weapons, vendored by `tools/sync-art.sh`; Kenney Weapon Pack, Blaster Kit, Survival Kit and a low-poly gun set (licences beside the models in `assets/`) | CC0 |
 | Glass, boards, lockers, lines | Drawn in code | None needed |
 | Fog, sun, sky, snow and ambience of converted maps | Each map's own settings; sound is gs-audio's stock only | CC0 |
 | Footsteps | Kenney, Impact Sounds (see `addons/gs_audio/stock/CREDITS.md`) | CC0 |
