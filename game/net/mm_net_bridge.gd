@@ -28,6 +28,8 @@ func attach(p_game: Object, p_net: GSNetManager) -> GSResult:
 
 	game = world
 	net = p_net
+	# Where the other hulls stood on a mover's screen (mp_solidplayers_unlag): the game and the predicted step both ask it.
+	game.hull_view = MmHullView.new(game, net, _behaviours)
 
 	_entities = Node.new()
 	_entities.name = "Entities"
@@ -291,6 +293,8 @@ func ensure_game_ticked(tick: int) -> void:
 			behaviour.player.view_lag = behaviour.last_view_lag
 
 	game.tick_once(tick)
+	# Every player's feet after this tick, for the next ticks' rewinds.
+	game.hull_view.record(tick)
 
 
 ## How far behind [param tick] this client is drawing everybody else, in quarter ticks: what the server rewinds the
@@ -315,6 +319,7 @@ func client_tick(tick: int, command: GSFpsCommand) -> void:
 	packet.delta = net.clock.tick_duration()
 	packet.move = command if command != null else GSFpsCommand.new()
 	packet.view_lag_q = view_lag_q(tick)
+	game.hull_view.fill(packet, tick, _behaviours.get(local_player_id))
 
 	# Into the local history BEFORE predicting: reconciliation replays it.
 	net.local_inputs().push(packet)

@@ -173,6 +173,8 @@ var players: Dictionary = {}
 ## gs-player-char's `mp_*` view and body rules.
 var view_rules: GSPlayerViewRules = GSPlayerViewRules.new()
 var body_rules: GSPlayerBodyRules = GSPlayerBodyRules.new()
+## Lag-compensated hulls (`mp_solidplayers_unlag`): an `MmHullView`, set by a netcode bridge on both ends; null with no network, where nothing is lagged. Its rewind moves the bodies in `players`.
+var hull_view: RefCounted = null
 
 ## gs-mobile's touch, aim assist and auto-fire cvars (`sv_mobile_*`, `sv_aim_assist*`, `sv_autofire*`): bound by the module
 ## (REPLICATED), followed by the client's overlay. Auto-fire is off: nobody is known to be an enemy (mm_touch.gd).

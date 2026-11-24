@@ -1,13 +1,14 @@
 extends "headless_net_tests.gd"
 
 const WorkbenchSection := preload("headless_net_workbench.gd")
+const HullSection := preload("headless_net_hull.gd")
 
 ## The real path minus the socket: two worlds, managers, bridges and links with the RPC replaced by a queue, in one process.
 ## It holds the claims the game rests on over a wire: roles are secret (TEAM and JOIN carry everybody as a bystander,
 ## ROLE goes to its owner, DEATH never says by whom), then the map, doors, toys, the result. Sections and checks are both counted.
 
-const SECTIONS := 18
-const CHECKS := 119
+const SECTIONS := 19
+const CHECKS := 131
 
 
 func _ready() -> void:
@@ -36,6 +37,7 @@ func _run() -> void:
 		await _test_a_lagged_shot_over_the_link()
 		await _test_the_toys_cross()
 		await _test_a_client_without_the_map()
+		await HullSection.new(self).run()
 		await _test_leaving()
 
 	WorkbenchSection.new(self, SERVER_TICK_RATE).run()

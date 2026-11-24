@@ -491,6 +491,14 @@ func bot_say(id: StringName, text: String) -> void:
 		bot_said.emit(id, text)
 
 
+## Runs [param work] (a mover's step, at [param tick]) against the hulls where the mover's own view drew them when the rules ask (mp_solidplayers_unlag), else as it is.
+func step_against_view(id: StringName, tick: int, work: Callable) -> void:
+	if hull_view != null and body_rules.solid and body_rules.unlag:
+		hull_view.around(id, tick, work)
+	else:
+		work.call()
+
+
 func _step(delta: float) -> void:
 	_respawn_the_fallen()
 	_advance_phase(delta)
@@ -506,7 +514,10 @@ func _step(delta: float) -> void:
 
 		if player.is_alive() and not player.watching:
 			_pre_vy[id] = player.controller.state.velocity.y
-			player.simulate(_tick, delta)
+			if hull_view != null and body_rules.solid and body_rules.unlag:
+				step_against_view(id, _tick, player.simulate.bind(_tick, delta))
+			else:
+				player.simulate(_tick, delta)
 
 	_resolve_stomps()
 

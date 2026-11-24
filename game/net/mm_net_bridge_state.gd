@@ -5,6 +5,7 @@ extends GSGameNetIo
 
 const MmEvent := preload("mm_event.gd")
 const MmEvents := preload("mm_events.gd")
+const MmHullView := preload("mm_hull_view.gd")
 const MmNetCommand := preload("mm_net_command.gd")
 const MmNetLink := preload("mm_net_link.gd")
 const MmPlayerNet := preload("mm_player_net.gd")

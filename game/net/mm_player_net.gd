@@ -77,6 +77,12 @@ var last_move: GSFpsCommand = GSFpsCommand.new()
 ## The newest command's view lag in ticks, or -1; see [member MmNetCommand.view_lag_q].
 var last_view_lag: float = -1.0
 
+## The hull view the last command named ([MmNetCommand.hull_lag_q], `hull_back`, `hull_span`) and the tick it was for: what the hull rewind moves the other players' hulls by. -1 is no view.
+var last_hull_q: int = -1
+var last_hull_back: int = -1
+var last_hull_span: int = 0
+var last_hull_tick: int = -1
+
 var last_state_tick: int = -1
 
 
@@ -124,6 +130,10 @@ func _net_apply_input(input: GSNetInput, _tick: int) -> void:
 	if command != null:
 		last_move = command.move
 		last_view_lag = command.view_lag_ticks()
+		last_hull_q = command.hull_lag_q
+		last_hull_back = command.hull_back
+		last_hull_span = command.hull_span
+		last_hull_tick = command.tick
 
 
 ## On the authority the whole game ticks as one — every player moves, then the catches, the attacks and the
@@ -140,7 +150,11 @@ func _net_simulate(tick: int, delta: float) -> void:
 		# The prediction: the controller's own tick, with the same hold modifier the server
 		# applies, which travels in the movement state.
 		player.controller.apply_command(last_move.duplicate_command())
-		player.controller.simulate_tick(tick, delta)
+		var game = bridge.game
+		if game.hull_view != null and game.body_rules.solid and game.body_rules.unlag:
+			game.step_against_view(player.player_id, tick, player.controller.simulate_tick.bind(tick, delta))
+		else:
+			player.controller.simulate_tick(tick, delta)
 
 	pull()
 
